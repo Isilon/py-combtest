@@ -53,7 +53,7 @@ setup(
     author_email='matthew.bryan@isilon.com',
     url='https://github.west.com/mbryan/py-combtest',
     packages=[
-        'py-combtest',
+        'combtest',
     ],
     install_requires=requirements,
     keywords='combtest',
