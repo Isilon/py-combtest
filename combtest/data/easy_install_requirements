@@ -1,2 +1,2 @@
-py-ssh-session>0
-py-forkjoin>0
+paramiko>0
+rpyc>0
