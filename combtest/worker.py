@@ -31,7 +31,6 @@ ServiceGroup->CoordinatorService->ThreadPool. Responses can be sent back.
    interpreter crash hard enough that we don't run atexit handlers)
 """
 import copy
-import multiprocessing
 import rpyc
 import signal
 import sys
@@ -39,10 +38,14 @@ import threading
 import time
 import traceback
 
-
-import combtest.utils as utils
+import combtest.bootstrap as bootstrap
+from combtest.config import refresh_cfg, get_ssh_options, get_machine_ips, \
+        get_service_port, set_service_port, get_max_thread_count
 import combtest.central_logger as central_logger
 from combtest.central_logger import logger
+import combtest.config as config
+import combtest.encode as encode
+import combtest.utils as utils
 
 
 # We are going to force requests and responses to be pickled. The reason is
@@ -52,22 +55,6 @@ from combtest.central_logger import logger
 # form, which will cut the netrefs and do an actual copy.
 rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
-
-def ensure_service_handle_libs():
-    """
-    Only import ssh_session on request, since some users may not use it, and it
-    brings with it linkage to a metric ton of libs via paramiko.
-    Same with isi_config; we only need this for specific stuff below.
-    """
-    global ssh
-    import ssh_session as ssh
-
-
-# This is an arbitrary target. The idea is that we can't really use our
-# resources with just cpu_count threads, since we may spend a ton of time
-# sleeping on I/O. User can tweak.
-DEFAULT_MAX_THREAD_COUNT = multiprocessing.cpu_count() * 3
-DEFAULT_PORT = 6187
 
 
 class ThreadPool(object):
@@ -86,7 +73,7 @@ class ThreadPool(object):
                    objects that take 0 arguments unless a ctx is supplied, in
                    which case they take 1 argument.
         """
-        self._thread_count = max_thread_count or DEFAULT_MAX_THREAD_COUNT
+        self._thread_count = max_thread_count or get_max_thread_count()
         self._work_queue = work or []
         self._run_ctx = None
         self._running_threads = []
@@ -167,7 +154,8 @@ class ThreadPool(object):
 
                 start_time = time.time()
                 self._run_single(work_item, ctx)
-                logger.debug("Work item took %0.2fs", time.time() - start_time)
+                ## Left intentionally for future debugging
+                #logger.debug("Work item took %0.2fs", time.time() - start_time)
         finally:
             with self._rlock:
                 self._working +=1
@@ -269,8 +257,8 @@ class CoordinatorService(rpyc.Service):
     # User can override
     worker_type = ThreadPool
 
-    # Convenience override point for a base class
-    default_max_thread_count = DEFAULT_MAX_THREAD_COUNT
+    # Convenience override point for a child class
+    default_max_thread_count = get_max_thread_count()
 
     def on_connect(self):
         """
@@ -282,7 +270,7 @@ class CoordinatorService(rpyc.Service):
         # Maps same integer id->run ctx
         self._ctxs = {}
         self._next_worker_id = 0
-        self._rlock = threading.RLock()
+        self.rlock = threading.RLock()
         # Maps same integer id->resp
         self._resps = {}
 
@@ -291,7 +279,7 @@ class CoordinatorService(rpyc.Service):
         Get a serial id for the worker. The remote user can use this to refer
         back to the worker.
         """
-        with self._rlock:
+        with self.rlock:
             next_id = self._next_worker_id
             self._next_worker_id += 1
         return next_id
@@ -303,18 +291,18 @@ class CoordinatorService(rpyc.Service):
         Returns the worker of the given id, or raises an IndexError if the
         worker does not exist.
         """
-        with self._rlock:
+        with self.rlock:
             try:
                 return self._workers[worker_id]
             except IndexError:
                 raise IndexError("No known worker with id %d" % worker_id)
 
     def _set_worker_by_id(self, worker_id, worker):
-        with self._rlock:
+        with self.rlock:
             self._workers[worker_id] = worker
 
     def _del_worker_by_id(self, worker_id):
-        with self._rlock:
+        with self.rlock:
             del self._workers[worker_id]
 
     def work_repack(self, work, ctx=None, resp=None):
@@ -362,6 +350,7 @@ class CoordinatorService(rpyc.Service):
 
         central_logger.log_status("Started worker with id %d and type %s",
                 worker_id, str(type(worker)))
+
 
         return worker_id
 
@@ -475,7 +464,7 @@ class CoordinatorService(rpyc.Service):
         """
         Like join_workers, but tosses all outstanding workers.
         """
-        with self._rlock:
+        with self.rlock:
             worker_ids = [worker_id for worker_id in self._workers.keys()]
 
         for worker_id in worker_ids:
@@ -509,17 +498,22 @@ class CoordinatorService(rpyc.Service):
 
 
 # Called from e.g. an ssh session/array using python -c or some such
-def start_service(service_class, port=DEFAULT_PORT):
+def start_service(service_class, port=None):
     """
     Start an rpyc service given by provided class. Port can be overridden.
     Returns: a handle to the resulting ThreadedServer.
     """
+    if port is None:
+        port = get_service_port()
+    else:
+        set_service_port(port)
+
     from rpyc.utils.server import ThreadPoolServer
     t = ThreadPoolServer(service_class, port=port)
     t.start()
     return t
 
-def start_service_by_name(service_name, port=DEFAULT_PORT):
+def start_service_by_name(service_name, port=None):
     """
     Start the service which can be found at the given service_name. The
     service_name is the class's "__qualname__", though that is a python 3+
@@ -531,7 +525,13 @@ def start_service_by_name(service_name, port=DEFAULT_PORT):
     mentioned in the ServiceGroup.__init__ docstring: lets revisit this iff
     it is needed.
     """
+    if port is None:
+        port = get_service_port()
+    else:
+        set_service_port(port)
+
     service_class = utils.get_class_from_qualname(service_name)
+
     start_service(service_class, port=port)
 
 
@@ -562,8 +562,14 @@ class ServiceGroup(object):
     # this size at maximum.
     WORK_QUANTUM_SIZE = 1000
 
-    def __init__(self, service_name, ips, port=DEFAULT_PORT,
-            spawn_services=True, spawn_clients=True):
+    DEFAULT_INSTANCE_COUNT = 3
+
+    def __init__(self,
+                 service_name,
+                 service_infos=None,
+                 service_handler_class=bootstrap.ServiceHandler_Local,
+                 spawn_services=True,
+                 spawn_clients=True):
         """
         Args:
             service_name: path+name of rpyc.Service decendent. Fully qualified
@@ -571,24 +577,29 @@ class ServiceGroup(object):
                           This should give us enough info to import it on the
                           remote side. I'm sure there are edge cases this
                           doesn't allow; upgrade on request.
-            ips: should be the "external" interfaces of nodes until we update
-                 the logic below to allow anything else.
+            ips: should be an interfaces of nodes where an SSH server is
+                 running, due to paramiko use. We can rip this out with more
+                 modular connection logic later.
+                 TODO
+                 If None, we will look at the config file to see if machine_ips
+                 is provided.
         """
-        ensure_service_handle_libs()
-
         self._give_up = False
         ServiceGroup.INSTANCES.add(self)
 
-        # (defensive copy, since 'ips' may be mutable)
-        self.ips = copy.copy(ips)
+        # service_infos describe how we bootstrap the remote service which
+        #   will actually run the tests (CoordinatorService instances).
+        #   Example: a bootstrap_info should be an ip + ssh creds/keys if we
+        #   are using an SSH-based ServiceHandler.
+        self._service_infos = copy.copy(service_infos)
+        self._service_handler_class = service_handler_class
 
         self.service_name = service_name
-        self.port = port
 
-        # Will be ssh_session.SSHArray once we spawn
+        # Will be ServiceHandlers once we spawn
         self.service_handles = None
-        # Will be a dict mapping ip->rpyc.connect instances
-        self._clients = None
+        # Will be a dict mapping (ip, port)->rpyc.connect instances
+        self._clients = tuple()
 
         if spawn_services:
             self.spawn_services()
@@ -613,16 +624,35 @@ class ServiceGroup(object):
         assert not self.service_handles, "ERROR: services already running; " \
                 "shut them down before spawning again"
 
+        if self._service_infos is None:
+            self._service_infos = []
+
+            my_ip = utils.get_my_IP()
+            start_port = config.get_service_port()
+
+            for port in range(start_port, start_port +
+                    self.DEFAULT_INSTANCE_COUNT):
+                ci = bootstrap.ConnectionInfo(my_ip, port, None)
+                self._service_infos.append(ci)
+
+        bootstrap.ServiceHandleArray.REMOTE_CONNECTION_CLASS = \
+                self._service_handler_class
+        self.service_handles = \
+                bootstrap.ServiceHandleArray(self._service_infos)
+
         # First bring the services up on the remote side
-        self.service_handles = ssh.SSHArray(self.ips)
-        logger.debug("Spawned SSH handles for services")
-        cmd = ("python -c 'import %s; %s.start_service_by_name(\"%s\", %d)' > "
-              "/dev/null" % (ServiceGroup.__module__,
-                             ServiceGroup.__module__,
-                             self.service_name,
-                             self.port))
-        logger.debug("Attempting to start services: %s", cmd)
-        self.service_handles.start_cmd(cmd)
+        #ssh_kwargs = get_ssh_options()
+        #self.service_handles = ssh.SSHArray(self.ips, **ssh_kwargs)
+        #logger.debug("Spawned SSH handles for services")
+        #cmd = ("python -c 'import %s; %s.start_service_by_name(\"%s\", %d)' > "
+        #      "/dev/null" % (ServiceGroup.__module__,
+        #                     ServiceGroup.__module__,
+        #                     self.service_name,
+        #                     self.port))
+        #print cmd
+        logger.debug("Attempting to start services of type %s",
+                self.service_name)
+        self.service_handles.start_cmd(self.service_name)
 
         logger.debug("Signaled services should start")
 
@@ -634,19 +664,23 @@ class ServiceGroup(object):
         # Retry until all services are up, up to X seconds or whatever. This is
         # just heuristic, so we can be a little sloppy about accounting here.
         self._clients = {}
-        for ip in self.ips:
+        for si in self._service_infos:
+            ip = si.ip
+            port = si.port
             start_time = time.time()
             while (time.time() - start_time) < self.SPAWN_TIMEOUT and \
-                    not self._give_up:
+                   not self._give_up:
+
                 try:
-                    client = rpyc.connect(ip, port=self.port)
-                    self._clients[ip] = client
+                    client = rpyc.connect(ip, port=port)
+                    self._clients[(ip, port)] = client
                     break
-                except:
+                except Exception as e:
                     time.sleep(0.5)
 
-        assert all([ip in self.clients for ip in self.ips]), "ERROR: not " \
-            "all clients could connect. %s" % str(self._clients)
+        assert all([(si.ip, si.port) in self.clients for si in
+                self._service_infos]), "ERROR: not " \
+                "all clients could connect. %s" % str(self._clients)
 
     def spawn(self):
         """
@@ -710,68 +744,69 @@ class ServiceGroup(object):
         """
         out_queues = []
         clients = self.clients
-        ip_count = len(self.ips)
-        worker_ids = [None] * ip_count
-        for _ in range(ip_count):
+        service_count = len(clients)
+        worker_ids = [None] * service_count
+        keys = self.clients.keys()
+        for _ in range(service_count):
             out_queues.append([])
 
         # NOTE: do we want to track worker_ids of all the work we started?
         # Meaning: inside our instance?
-        ip_idx = 0
+        client_idx = 0
         work_item_counts = {}
         for work_item in work:
             if self._give_up:
                 break
 
-            current_q = out_queues[ip_idx]
-            current_q.append(work_item)
+            current_q = out_queues[client_idx]
+            current_q.append(encode.encode(work_item))
 
-            current_ip = self.ips[ip_idx]
+            current_key = keys[client_idx]
             if len(current_q) == self.WORK_QUANTUM_SIZE:
 
-                if worker_ids[ip_idx] is None:
+                if worker_ids[client_idx] is None:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            current_ip)
-                    worker_id = clients[current_ip].start_work(current_q,
+                            str(current_key))
+                    worker_id = clients[current_key].start_work(current_q,
                             max_thread_count=max_thread_count, ctx=ctx)
-                    worker_ids[ip_idx] = worker_id
+                    worker_ids[client_idx] = worker_id
                 else:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            current_ip)
-                    worker_id = worker_ids[ip_idx]
-                    clients[current_ip].add_work(worker_id, current_q)
+                            current_key)
+                    worker_id = worker_ids[client_idx]
+                    clients[current_key].add_work(worker_id, current_q)
 
-                out_queues[ip_idx] = []
+                out_queues[client_idx] = []
 
-            ip_idx += 1
-            ip_idx %= ip_count
+            client_idx += 1
+            client_idx %= service_count
 
-            if current_ip not in work_item_counts:
-                work_item_counts[current_ip] = 0
-            work_item_counts[current_ip] += 1
+            if current_key not in work_item_counts:
+                work_item_counts[current_key] = 0
+            work_item_counts[current_key] += 1
 
         # Tail dump any work not yet flushed
-        for ip_idx, current_q in enumerate(out_queues):
+        for client_idx, current_q in enumerate(out_queues):
             if self._give_up:
                 break
 
             if current_q:
-                current_ip = self.ips[ip_idx]
-                if worker_ids[ip_idx] is None:
+                current_key = keys[client_idx]
+                if worker_ids[client_idx] is None:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            current_ip)
-                    worker_id = clients[current_ip].start_work(current_q,
+                            str(current_key))
+                    worker_id = clients[current_key].start_work(current_q,
                             max_thread_count=max_thread_count, ctx=ctx)
-                    worker_ids[ip_idx] = worker_id
+                    worker_ids[client_idx] = worker_id
                 else:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            current_ip)
-                    worker_id = worker_ids[ip_idx]
-                    clients[current_ip].add_work(worker_id, current_q)
+                            str(current_key))
+                    worker_id = worker_ids[client_idx]
+                    clients[current_key].add_work(worker_id, current_q)
 
         worker_ids_out = {}
-        for ip_idx, ip in enumerate(self.ips):
-            worker_ids_out[ip] = worker_ids[ip_idx]
+        for client_idx, current_key in enumerate(keys):
+            worker_ids_out[current_key] = worker_ids[client_idx]
 
         central_logger.log_status("Started %s work items",
                 str(work_item_counts))
@@ -811,6 +846,28 @@ class ServiceGroup(object):
         """
         ctx = rpyc.utils.classic.obtain(self.clients[ip].gather_ctx(worker_id))
         return ctx
+
+    def gather_all_ctxs(self, worker_ids):
+        """
+        Gather ctxs from all the given workers.
+        Args:
+            worker_ids: a mapping ip->worker_id
+        Returns:
+            A list of ctxs in no particular order.
+        """
+        # Simple list of ctxs; no order implied.
+        ctxs = []
+        for ip, worker_id in worker_ids.iteritems():
+            if isinstance(worker_id, int):
+                wids = [worker_id,]
+            else:
+                wids = worker_id
+            if wids is not None:
+                for wid in wids:
+                    ctx = self.gather_ctx(ip, wid)
+                    ctxs.append(ctx)
+
+        return ctxs
 
     def gather_resp(self, ip, worker_id):
         """

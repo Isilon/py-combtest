@@ -54,6 +54,8 @@ setup(
     url='https://github.west.com/mbryan/py-combtest',
     packages=[
         'combtest',
+        'combtest.test.',
+        'combtest.test.classes',
     ],
     install_requires=requirements,
     keywords='combtest',

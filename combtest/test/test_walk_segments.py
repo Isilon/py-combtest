@@ -1,18 +1,16 @@
-from filesystem.layout.walk import Action, SyncPoint, OptionSet, WalkOptions
+from combtest.action import Action, SyncPoint, OptionSet
+from combtest.walk import WalkOptions
 
 class Action1(Action):
     def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
+        dynamic_ctx['l'].append(item)
 
     @classmethod
     def get_option_set(cls):
         options = (0, 1, 2)
         return OptionSet(options, action_class=cls)
 
-class Action2(Action):
-    def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
-
+class Action2(Action1):
     @classmethod
     def get_option_set(cls):
         options = (0, 1, 2)
@@ -20,7 +18,7 @@ class Action2(Action):
 
 class SyncPoint1(SyncPoint):
     def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
+        dynamic_ctx['l'].append(item)
 
     @classmethod
     def get_option_set(cls):
@@ -29,28 +27,19 @@ class SyncPoint1(SyncPoint):
         option_instances[0].is_nop = True
         return iter(option_instances)
 
-class Action3(Action):
-    def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
-
+class Action3(Action1):
     @classmethod
     def get_option_set(cls):
         options = (0, 1, 2)
         return OptionSet(options, action_class=cls)
 
-class Action4(Action):
-    def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
-
+class Action4(Action1):
     @classmethod
     def get_option_set(cls):
         options = (0, 1, 2)
         return OptionSet(options, action_class=cls)
 
-class SyncPoint2(SyncPoint):
-    def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
-
+class SyncPoint2(SyncPoint1):
     @classmethod
     def get_option_set(cls):
         options = (0, 1)
@@ -58,10 +47,7 @@ class SyncPoint2(SyncPoint):
         option_instances[0].is_nop = True
         return iter(option_instances)
 
-class Action5(Action):
-    def run(self, item, dynamic_ctx):
-        dynamic_ctx.append(item)
-
+class Action5(Action1):
     @classmethod
     def get_option_set(cls):
         options = (0, 1, 2)
@@ -109,7 +95,7 @@ assert options == range(3)
 print "Try running the walks"
 ctx = []
 for _ in range(972):
-    ctx.append([])
+    ctx.append({'l': []})
 max_walk_id = -1
 execution_count = {}
 
@@ -145,7 +131,7 @@ for epoch_list in wo:
                 execution_count[idx] += 1
 
 for walk_idx, branch_id in branch_ids.iteritems():
-    current_ctx = ctx[walk_idx]
+    current_ctx = ctx[walk_idx]['l']
     assert len(branch_id) == 2
     assert current_ctx[2] == branch_id[0]
     assert current_ctx[5] == branch_id[1]
@@ -155,7 +141,7 @@ ctx.sort()
 print "Compare to expected"
 ctx2 = []
 for _ in range(972):
-    ctx2.append([])
+    ctx2.append({'l': []})
 
 idx = 0
 for a1 in range(3):
@@ -165,7 +151,7 @@ for a1 in range(3):
                 for a4 in range(3):
                     for s2 in range(2):
                         for a5 in range(3):
-                            ctx_inner = ctx2[idx]
+                            ctx_inner = ctx2[idx]['l']
                             ctx_inner.append(a1)
                             ctx_inner.append(a2)
                             ctx_inner.append(s1)
@@ -204,7 +190,7 @@ assert s2._sync_point is not None
 print "Try running the walks"
 ctx = []
 for _ in range(108):
-    ctx.append([])
+    ctx.append({'l': []})
 
 # Map walk_idx->branch_id
 branch_ids = {}
@@ -238,7 +224,7 @@ for epoch_list in wo2:
                 execution_count[idx] += 1
 
 for walk_idx, branch_id in branch_ids.iteritems():
-    current_ctx = ctx[walk_idx]
+    current_ctx = ctx[walk_idx]['l']
     assert len(branch_id) == 2
     assert current_ctx[0] == branch_id[0]
     assert current_ctx[4] == branch_id[1]
@@ -248,14 +234,14 @@ ctx.sort()
 print "Compare to expected"
 ctx2 = []
 for _ in range(108):
-    ctx2.append([])
+    ctx2.append({'l': []})
 idx = 0
 for s1 in range(2):
     for a1 in range(3):
         for a2 in range(3):
             for a3 in range(3):
                 for s2 in range(2):
-                    ctx_inner = ctx2[idx]
+                    ctx_inner = ctx2[idx]['l']
                     ctx_inner.append(s1)
                     ctx_inner.append(a1)
                     ctx_inner.append(a2)
@@ -285,7 +271,7 @@ assert s1._sync_point is None
 print "Try running the walks"
 ctx = []
 for _ in range(81):
-    ctx.append([])
+    ctx.append({'l': []})
 for epoch_list in wo3:
     for epoch in epoch_list:
         if epoch.sync_point is not None:
@@ -298,13 +284,13 @@ ctx.sort()
 print "Compare to expected"
 ctx2 = []
 for _ in range(81):
-    ctx2.append([])
+    ctx2.append({'l': []})
 idx = 0
 for a1 in range(3):
     for a2 in range(3):
         for a3 in range(3):
             for a4 in range(3):
-                ctx_inner = ctx2[idx]
+                ctx_inner = ctx2[idx]['l']
                 ctx_inner.append(a1)
                 ctx_inner.append(a2)
                 ctx_inner.append(a3)

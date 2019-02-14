@@ -1,7 +1,9 @@
 import importlib
+import socket
 
-import combtest.central_logger as central_logger
-from combtest.walk import Walk
+
+DEFAULT_TEST_PATH = "."
+
 
 # Use this to override the IP we will use
 class _ExIP(object):
@@ -24,6 +26,9 @@ class _ExIP(object):
                 try:
                     s6.connect(("0:0:0:0:0:ffff:101:101", 1))
                     ip = str(s6.getsockname()[0])
+                except socket.error:
+                    # Loopback only?
+                    ip = '127.0.0.1'
                 finally:
                     s6.close()
             finally:
@@ -51,21 +56,6 @@ def set_my_IP(ip):
         ip as a string.
     """
     _EX_IP.ip = ip
-
-
-class WalkOpTracer(central_logger.OpTracer):
-    def trace(self, **op_info):
-        test_file = op_info['test_file']
-        walk = op_info['walk']
-        walk_id = op_info['walk_id']
-        file_config = op_info['file_config']
-
-        info = {'walk_id': walk_id,
-                'walk': repr(walk),
-                'path': test_file.path,
-                'lin': test_file.lin,
-                'config': file_config}
-        super(WalkOpTracer, self).trace(**info)
 
 
 class RangeTree(object):
@@ -124,51 +114,3 @@ def get_class_from_qualname(name):
     class_ref = getattr(module, class_name)
     return class_ref
 
-
-class CtxTypeFile(dict):
-    """
-    Elements:
-        test_file - a test_file.TestFile
-        target_range - something that directs the attention of the next
-                     action. e.g. this may be a ref to a PG that the
-                     next action should operate on.
-    """
-    def __init__(self, test_file, target_type=None, target_range=None):
-        self['test_file'] = test_file
-        self['target_type'] = target_type
-        self['target_range'] = target_range
-        self['walk'] = Walk()
-        super(CtxTypeFile, self).__init__()
-
-    @property
-    def test_file(self):
-        return self['test_file']
-
-    @test_file.setter
-    def test_file(self, value):
-        self['test_file'] = value
-
-    @property
-    def target_type(self):
-        return self['target_type']
-
-    @target_type.setter
-    def target_type(self, value):
-        self['target_type'] = value
-
-    @property
-    def target_range(self):
-        return self['target_range']
-
-    @target_range.setter
-    def target_range(self, value):
-        self['target_range'] = value
-
-    @property
-    def walk(self):
-        return self['walk']
-
-    def update_walk(self, walk_segment, sync_point=None):
-        if sync_point is not None:
-            self.walk.append(sync_point)
-        self.walk.extend(walk_segment)

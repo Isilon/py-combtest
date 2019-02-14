@@ -6,7 +6,6 @@ without some buffering I think.
 import atexit
 import cPickle
 import copy
-import json
 import logging
 from logging import ERROR, WARNING, INFO, DEBUG
 import logging.handlers
@@ -18,14 +17,15 @@ import sys
 import threading
 import time
 
+import combtest.encode as encode
 from combtest.utils import get_my_IP
 
 # Everything will ultimately log to this
-BASE_LOGGER_NAME = "test_layout"
+BASE_LOGGER_NAME = "combtest"
 base_logger = logging.getLogger(BASE_LOGGER_NAME)
 # The level is controlled here instead of in the handlers, which should all be
 # set to DEBUG.
-base_logger.setLevel(WARNING)
+base_logger.setLevel(DEBUG)
 logger_formatter = logging.Formatter('%(asctime)s: %(levelname)s: '
                                      '%(filename)s:%(lineno)s: '
                                      '%(message)s')
@@ -62,7 +62,7 @@ class OpTracer(object):
         fname += str(time.time()) + ".trace"
         self._fname = os.path.join(log_dir, fname)
         self._handle = os.open(self._fname, os.O_WRONLY | os.O_CREAT)
-        atexit.register(self._finalize)
+        atexit.register(self.finalize)
 
     @property
     def fname(self):
@@ -72,7 +72,7 @@ class OpTracer(object):
     def handle(self):
         return self._handle
 
-    def _finalize(self):
+    def finalize(self):
         try:
             os.close(self._handle)
         except OSError:
@@ -83,7 +83,7 @@ class OpTracer(object):
         os.fsync(self._handle)
 
     def trace(self, **op_info):
-        info = json.dumps(op_info) + "\n"
+        info = encode.encode(op_info) + "\n"
         self.write(info)
 
 def log_op(*args, **kwargs):
@@ -187,10 +187,21 @@ class LoggerProxy(object):
         trace = trace_class(log_dir, *namespace)
         self.op_trace = trace
 
+    def dettach_op_trace(self):
+        if self.op_trace is None:
+            raise RuntimeError("We don't have an op trace to dettach")
+
+        self.op_trace.finalize()
+        self.op_trace = None
+
     def trace_op(self, **op_info):
         if self.op_trace is not None:
             self.op_trace.trace(**op_info)
-        self.debug("%s", str(op_info))
+        else:
+            # Log to debug() only if we aren't tracing. The trace data is
+            # truely huge, so it doesn't seem wise to double log. Maybe
+            # this should be a tunable. Somebody file an issue :)
+            self.debug("%s", str(op_info))
 
     def error(self, *args, **kwargs):
         self.log_net(ERROR, *args, **kwargs)

@@ -10,6 +10,7 @@ different domains. An overview of the moving parts:
                      more OptionSets.
 """
 import copy
+from collections import Iterable
 import importlib
 import itertools
 import json
@@ -19,9 +20,12 @@ import threading
 import traceback
 
 
-from action import SyncPoint, Action
-from central_logger import logger
-from utils import RangeTree, get_class_qualname, get_class_from_qualname
+from combtest.action import SyncPoint, Action
+import combtest.central_logger as central_logger
+from combtest.central_logger import logger
+import combtest.encode as encode
+from combtest.utils import RangeTree, get_class_qualname, \
+                           get_class_from_qualname
 
 
 class CancelWalk(RuntimeError):
@@ -30,12 +34,50 @@ class CancelWalk(RuntimeError):
 class WalkFailedError(RuntimeError):
     pass
 
-class Walk(list):
+
+
+class Walk(object):
     """
     A Walk, named after the graph theory concept, is a list of Actions to
     execute. The notion here is that each action takes us through a transition
     in state/action space.
     """
+    def __init__(self, *elems):
+        _elems = []
+        if len(elems) == 1 and isinstance(elems, Iterable):
+            for elem in elems[0]:
+                _elems.append(elem)
+        else:
+            _elems = []
+            for elem in elems:
+                if not isinstance(elem, Action):
+                    raise ValueError("Walks must contain only Actions; "
+                            "got: %s" % str(type(elem)))
+                _elems.append(elem)
+
+        self._elems = _elems
+
+    def append(self, elem):
+        self._elems.append(elem)
+
+    def __len__(self):
+        return len(self._elems)
+
+    def __eq__(self, other):
+        if not isinstance(other, Walk):
+            return False
+        return other._elems == self._elems
+
+    def __add__(self, other):
+        if not isinstance(other, Walk):
+            raise TypeError("Cannot add a Walk with object of type %s" %
+                    str(type(other)))
+        elems = self._elems + other._elems
+        return self.__class__(*elems)
+
+    def __iter__(self):
+        return iter(self._elems)
+
     def execute(self, dynamic_ctx, log_errors=True):
         """
         Execute the ops in order.
@@ -52,8 +94,8 @@ class Walk(list):
             # Likewise here: let the user decide to log or not in their layer
             return True
         except Exception as e:
-            msg_ctx = "Walk was: %s\nctx: %s" % (repr(self), str(dynamic_ctx))
-            msg_ctx += "\n" + dynamic_ctx.test_file.path
+            # PORT/WRAP: no dynamic_ctx specifics here.
+            msg_ctx = "Walk was: %s\nctx: %s" % (repr(self), repr(dynamic_ctx))
             exc = type(e)(str(e) + "\n" + msg_ctx)
             if log_errors:
                 logger.exception(exc)
@@ -70,14 +112,27 @@ class Walk(list):
         return False
 
     def __repr__(self):
-        return json.dumps(self, cls=WalkEncoder)
+        return self.as_json()
 
     def as_json(self):
-        return repr(self)
+        encoded = encode.encode(self)
+        return encoded
 
-    @staticmethod
-    def from_json(json_str):
-        return json.loads(json_str, cls=WalkDecoder_FromCache)
+    def to_json(self):
+        return list(self._elems)
+
+    @classmethod
+    def from_json(cls, obj):
+        try:
+            assert not isinstance(obj, basestring), str(obj)
+            out = cls()
+            for act in obj:
+                out.append(act)
+        except TypeError:
+            raise ValueError("Not recognized as an encoded walk: %s" %
+                    str(json_str))
+
+        return out
 
 
 class Segment(object):
@@ -85,7 +140,8 @@ class Segment(object):
 
     def __init__(self, walk_count, options=(),
             sync_point_instance=None,
-            parent_period=1):
+            parent_period=1,
+            level=0):
 
         assert options or sync_point_instance
         assert sync_point_instance is None or isinstance(sync_point_instance,
@@ -93,6 +149,7 @@ class Segment(object):
 
         self._walk_count = walk_count
         self._count_walks_produced = 0
+        self._level = level
 
         # Run *after* the SyncPoint, if there is one. That means that if this
         # Segment represents the leaf of the tree and we have a SyncPoint,
@@ -135,6 +192,10 @@ class Segment(object):
     @property
     def walk_count(self):
         return self._walk_count
+
+    @property
+    def level(self):
+        return self._level
 
     def reset(self):
         self._count_walks_produced = 0
@@ -179,7 +240,7 @@ class Epoch(object):
     # Not threadsafe
 
     def __init__(self, walk_idx_start, walk_idx_end, range_tree,
-            sync_point=None, walks=None, child=None):
+            sync_point=None, walks=None, child=None, level=0):
         """
         Represents a set of stuff (e.g. walk segments) that can run
         in parallel to other such sets of stuff. The sync point will be
@@ -193,6 +254,8 @@ class Epoch(object):
         self.walk_idx_end = walk_idx_end
         self.range_tree = range_tree
 
+        self._level = level
+
         # This means we calculate once here and once in next(), which is 2 *
         # O(N). I've gone this route instead of saving a map of
         # walk_idx->branch_id since that would be O(N) in mem, which is worse
@@ -201,6 +264,10 @@ class Epoch(object):
                 range(walk_idx_start, walk_idx_end)])
 
         self._current_walk_idx = self.walk_idx_start
+
+    @property
+    def level(self):
+        return self._level
 
     def __iter__(self):
         return self
@@ -293,7 +360,7 @@ class WalkOptions(object):
         return walk_options, idx, count
 
     def _ensure_tree_impl(self, walk_count, segment_options, start_idx=0,
-            period=1):
+            period=1, level=0):
         # Called recursively with SyncPoint at start, or this is the first
         # time it is called.
 
@@ -314,10 +381,12 @@ class WalkOptions(object):
             assert (walk_count % walk_option_count) == 0
             children = self._ensure_tree_impl(walk_count,
                     segment_options, start_idx=end_idx,
-                    period=(period * walk_option_count))
+                    period=(period * walk_option_count),
+                    level=(level + 1))
 
             new_segment = Segment(walk_count, options=walk_options,
-                    parent_period=period)
+                    parent_period=period,
+                    level=level)
             for child in children:
                 new_segment.add_child(child)
 
@@ -339,11 +408,13 @@ class WalkOptions(object):
 
             children = self._ensure_tree_impl(segment_walk_count,
                     segment_options, start_idx=end_idx,
-                    period=(period * walk_option_count))
+                    period=(period * walk_option_count),
+                    level=(level + 1))
 
             for sync_point in sync_points:
                 new_segment = Segment(segment_walk_count, options=walk_options,
-                        sync_point_instance=sync_point, parent_period=period)
+                        sync_point_instance=sync_point, parent_period=period,
+                        level=level)
                 for child in children:
                     new_segment.add_child(child)
                 root_segments.append(new_segment)
@@ -433,8 +504,10 @@ class WalkOptions(object):
                 current_epoch = Epoch(current_walk_idx_start,
                         current_walk_idx_start + walks_per_child,
                         self._branch_ids,
-                        sync_point=segment.sync_point, walks=current_walks,
-                        child=child)
+                        sync_point=segment.sync_point,
+                        walks=current_walks,
+                        child=child,
+                        level=segment.level)
                 epochs.append(current_epoch)
 
                 slice_idx += walks_per_child
@@ -445,7 +518,8 @@ class WalkOptions(object):
                     self._branch_ids,
                     sync_point=segment.sync_point,
                     walks=walks,
-                    child=None)
+                    child=None,
+                    level=segment.level)
             epochs.append(current_epoch)
 
         return epochs
@@ -573,126 +647,22 @@ class StateCombinator(object):
                 return inner_self
 
             def next(inner_self):
-                return json.dumps(inner_self.sc.next(), cls=WalkEncoder)
+                encoded = encode.encode(inner_self.sc.next())
+                return encoded
 
         return json_iter()
 
-#### JSON encode/decode
-class WalkEncoder(json.JSONEncoder):
-    def encode(self, obj):
-        super_e = super(WalkEncoder, self).encode
-        if isinstance(obj, Walk):
-            # [WalkTypeName, [list, of, Actions]]
-            my_type = type(obj)
-            encoded_action_list = super_e(list(obj))
+# PORT/WRAP: add back path, lin, file_config
+class WalkOpTracer(central_logger.OpTracer):
+    def trace(self, **op_info):
+        sync_point = op_info.get('sync_point', None)
+        walk = op_info['walk']
+        walk_id = op_info['walk_id']
 
-            rep = [get_class_qualname(my_type),
-                    encoded_action_list]
-            return super_e(rep)
-        return super_e(obj)
+        info = {
+                'walk_id': walk_id,
+                'walk': walk,
+                'sync_point': sync_point,
+               }
+        super(WalkOpTracer, self).trace(**info)
 
-    def default(self, obj):
-        if isinstance(obj, Action):
-            # (MyActionType, my_static_ctx_as_json)
-            # XXX use __qualname__ if/when we move to python 3.3
-            my_type = type(obj)
-            return [get_class_qualname(my_type),
-                    obj.static_ctx]
-        elif hasattr(obj, 'to_json'):
-            return obj.to_json()
-
-        return json.JSONEncoder.default(self, obj)
-
-class WalkDecoder(json.JSONDecoder):
-    def _decode_action(self, action_list):
-        action_class_name, static_ctx = action_list
-        action_class = get_class_from_qualname(action_class_name)
-
-        if isinstance(static_ctx, basestring) and \
-                static_ctx.startswith(rop.__name__):
-            static_ctx = get_class_from_qualname(static_ctx)
-
-        if isinstance(static_ctx, (list, tuple)):
-            ctx_out = []
-            for item in static_ctx:
-                if isinstance(item, basestring):
-                    if item.startswith(rop.__name__):
-                        ctx_out.append(get_class_from_qualname(item))
-                    elif item.startwith(get_class_qualname(Walk)):
-                        ctx_out.append(get_class_from_qualname(item))
-                    else:
-                        ctx_out.append(item)
-                else:
-                    ctx_out.append(item)
-            if isinstance(static_ctx, tuple):
-                static_ctx = tuple(ctx_out)
-            else:
-                static_ctx = ctx_out
-
-        return action_class(static_ctx)
-
-    def decode(self, json_str):
-        meta_obj = super(WalkDecoder, self).decode(json_str)
-        walk_class_name, encoded_action_list = meta_obj
-
-        walk_class = get_class_from_qualname(walk_class_name)
-
-        encoded_action_list = super(WalkDecoder, self).decode(
-                encoded_action_list)
-        action_list = []
-        for action_args in encoded_action_list:
-            action = self._decode_action(action_args)
-            action_list.append(action)
-
-        return walk_class(action_list)
-
-#### Action Cache
-# Maps (action_class, jsonified static_ctx) -> instance
-ACTION_CACHE = {}
-ACTION_CACHE_LOCK = threading.RLock()
-
-def get_cached_action(action_class, static_ctx):
-    key = (action_class, json.dumps(static_ctx, cls=WalkEncoder))
-    if key not in ACTION_CACHE:
-        with ACTION_CACHE_LOCK:
-            if key not in ACTION_CACHE:
-                 instance = action_class(static_ctx)
-                 ACTION_CACHE[key] = instance
-                 return instance
-    return ACTION_CACHE[key]
-
-def action_cached_from_json(action_string):
-    # It seems odd to use Walk.from_json to decode an Action, so lets make a
-    # separate function here that does essentially the same call but for
-    # Action. Later this may advantage us in terms of factoring out multiple
-    # encoder/decoder classes.
-    # Note we can't put this in action.py because of dependency order.
-    return json.loads(action_string, cls=WalkDecoder_FromCache)
-
-class WalkDecoder_FromCache(WalkDecoder):
-    def _decode_action(self, action_list):
-        action_class_name, static_ctx = action_list
-        action_class = get_class_from_qualname(action_class_name)
-
-        if isinstance(static_ctx, basestring) and \
-                static_ctx.startswith(rop.__name__):
-            static_ctx = get_class_from_qualname(static_ctx)
-
-        if isinstance(static_ctx, (list, tuple)):
-            ctx_out = []
-            for item in static_ctx:
-                if isinstance(item, basestring):
-                    if item.startswith(rop.__name__):
-                        ctx_out.append(get_class_from_qualname(item))
-                    elif item.startwith(get_class_qualname(Walk)):
-                        ctx_out.append(get_class_from_qualname(item))
-                    else:
-                        ctx_out.append(item)
-                else:
-                    ctx_out.append(item)
-            if isinstance(static_ctx, tuple):
-                static_ctx = tuple(ctx_out)
-            else:
-                static_ctx = ctx_out
-
-        return get_cached_action(action_class, static_ctx)

@@ -3,11 +3,10 @@ import copy
 import rpyc
 import time
 
+import combtest.encode as encode
 import combtest.worker as worker
-import combtest.layout.utils as utils
+import combtest.utils as utils
 
-
-Work = namedtuple("Work", "func_name arg")
 
 def echo(arg=None, ctx=None):
     """
@@ -23,32 +22,35 @@ def echo(arg=None, ctx=None):
     return arg
 
 class SimpleRunner(object):
-    def __init__(self, arg, resp):
+    def __init__(self, arg):
         self._arg = arg
-        self._my_dict = resp
 
     def __call__(self, ctx):
         resp = echo(self._arg)
-        self._my_dict[resp] = resp
+        ctx[resp] = resp
+
+    def to_json(self):
+        return self._arg, self._my_dict
+
+    @classmethod
+    def from_json(cls, obj):
+        return cls(*obj)
 
 class SimpleImportService(worker.CoordinatorService):
     def work_repack(self, work, ctx=None, resp=None):
-        work = Work(*work)
-        class_ref = utils.get_class_from_qualname(work.func_name)
-        work_out = class_ref(work.arg, resp)
+        work = int(work)
+        work_out = SimpleRunner(work)
         return work_out
 
 if __name__ == "__main__":
     this_module = "combtest.test.test_worker."
+    my_ip = utils.get_my_IP()
     sg = worker.ServiceGroup(this_module + SimpleImportService.__name__)
 
     # Test sending a batch of work
     WORK_SIZE = 100006
     print "Test: scattering %d units of work" % WORK_SIZE
-    a_bunch_of_work = []
-    for i in range(WORK_SIZE):
-        current_work = Work(this_module + SimpleRunner.__name__, i)
-        a_bunch_of_work.append(tuple(current_work))
+    a_bunch_of_work = range(WORK_SIZE)
 
     start_time = time.time()
     worker_ids = sg.scatter_work(a_bunch_of_work, ctx={})
@@ -58,33 +60,30 @@ if __name__ == "__main__":
     master = {}
     start_time = time.time()
     for ip, worker_id in worker_ids.iteritems():
-        resp = sg.gather_resp(ip, worker_id)
-        d_resp = rpyc.utils.classic.obtain(resp)
-        master.update(d_resp)
+        ctx = sg.gather_ctx(ip, worker_id)
+        d_ctx = rpyc.utils.classic.obtain(ctx)
+        master.update(d_ctx)
     print "resp retrieval took", time.time() - start_time
     print "total", len(master)
     assert set(master.keys()) == set(range(WORK_SIZE))
 
-
     # Now test starting all threads on a single work item. Used e.g. to send a
     # fuzz recipe that all threads should execute.
     print "\nTest: get all nodes running the same unit of work"
-    new_ctx = {}
-    work = Work(this_module + SimpleRunner.__name__, None)
-    work = tuple(work)
     start_time = time.time()
-    worker_ids = sg.start_all_on(work, shared_ctx=new_ctx)
+    work = 1
+    worker_ids = sg.start_all_on(work, shared_ctx={})
     print "starting the job took", time.time() - start_time
     sg.join()
 
     start_time = time.time()
     master = {}
     for ip, worker_id in worker_ids.iteritems():
-        resp = sg.gather_resp(ip, worker_id)
+        resp = sg.gather_ctx(ip, worker_id)
         master.update(resp)
     print "resp retrieval took", time.time() - start_time
     print "resp is", master
-    assert set(master.keys()) == set(range(1, len(array.getNodes()) + 1))
+    assert master == {1: 1}
 
     print "\nTest: shutdown + restart"
     sg.shutdown()
