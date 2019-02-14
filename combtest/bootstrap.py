@@ -18,10 +18,8 @@ import time
 import combtest.central_logger as central_logger
 import combtest.config as config
 import combtest.utils as utils
-# TODO: upstream forkjoin
-import forkjoin
-# TODO?: upstream ssh_session
-#import combtest.forkjoin as forkjoin
+# TODO: upstream forkjoin as a separate lib
+import combtest.forkjoin as forkjoin
 
 
 # We want to provide a default function for bootstrapping services. Our default
