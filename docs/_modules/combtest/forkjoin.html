@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>combtest.forkjoin &mdash; py-combtest 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for combtest.forkjoin</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Simple fork/join implementation, modelled after Java&#39;s lib for the same. This</span>
+<span class="sd">doesn&#39;t attempt to make any scheduling optimizations for e.g. the sake of</span>
+<span class="sd">minimizing makespan. Threads simply share a queue and pop work off of it until</span>
+<span class="sd">the queue is drained.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    This is not designed well for bytecode-level work. This is for I/O heavy</span>
+<span class="sd">    work like e.g. performing network roundtrips, doing disk I/O, etc. If you</span>
+<span class="sd">    need to dodge the GIL, you&#39;ll want to use something else.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+
+<span class="c1"># Max simultaneous outstanding threads. 60 happens to be a common default</span>
+<span class="c1"># number of SSH connections, which is likely to be a common way of</span>
+<span class="c1"># bootstrapping, so let&#39;s take that as a semi-arbitrary default.</span>
+<span class="n">MAX_SPAWN_THREADS</span> <span class="o">=</span> <span class="mi">60</span>
+
+
+<div class="viewcode-block" id="WorkItem"><a class="viewcode-back" href="../../api.html#combtest.forkjoin.WorkItem">[docs]</a><span class="k">class</span> <span class="nc">WorkItem</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple container representing a work item to be done.</span>
+
+<span class="sd">    :param function func: A pointer to the work callback</span>
+<span class="sd">    :param args: args to pass to the work callback</span>
+<span class="sd">    :param kwargs: kwargs to pass to the work callback</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span></div>
+
+<span class="c1"># We will use this to wrap our threads, work items, and results together for</span>
+<span class="c1"># tracking.</span>
+<span class="n">_RunningWorkItem</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;_RunningWorkItem&quot;</span><span class="p">,</span> <span class="s2">&quot;thread work_item result&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="fork_join"><a class="viewcode-back" href="../../api.html#combtest.forkjoin.fork_join">[docs]</a><span class="k">def</span> <span class="nf">fork_join</span><span class="p">(</span><span class="n">work</span><span class="p">,</span>
+              <span class="n">suppress_errors</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+              <span class="n">max_spawn_threads</span><span class="o">=</span><span class="n">MAX_SPAWN_THREADS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Poor man&#39;s fork/join implementation.  Run all work items in parallel up to some</span>
+<span class="sd">    maximum number of simultaneous threads.  Wait for all work to finish, then</span>
+<span class="sd">    return results.  Maximum number of threads that will run in parallel</span>
+<span class="sd">    for a given job will be max_spawn_threads.</span>
+
+<span class="sd">    :param iterable work: an iterable of WorkItems that supports direct</span>
+<span class="sd">                          indexing and len</span>
+
+<span class="sd">    :param bool suppress_errors: if False, we will print any exceptions to</span>
+<span class="sd">                                 stderr, otherwise we won&#39;t. Does not affect</span>
+<span class="sd">                                 the return value.</span>
+
+<span class="sd">    :param int max_spawn_threads: The max number of threads running</span>
+<span class="sd">                                  simultaneously.</span>
+
+<span class="sd">    :return: A list of returned items, in 1:1 correspondence to the WorkItems</span>
+<span class="sd">             in &#39;work&#39;. That is: the first result corresponds to the first</span>
+<span class="sd">             WorkItem, etc. If nothing is explicitly returned by an item,</span>
+<span class="sd">             its &#39;return value&#39; in this list will be None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">work_runner</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">result_container</span><span class="p">):</span>
+        <span class="c1"># Inner func we use to catch exceptions</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">return_item</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="n">result_container</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">return_item</span> <span class="o">=</span> <span class="n">tb</span>
+        <span class="n">result_container</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">return_item</span><span class="p">)</span>
+
+    <span class="n">returned_items</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">running_work</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">remaining_work</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">remaining_work</span> <span class="ow">or</span> <span class="n">running_work</span><span class="p">:</span>
+        <span class="c1"># Loop over running threads to collect any that have finished</span>
+        <span class="c1"># TODO: whack threads after some timeout and then abort</span>
+        <span class="n">new_running_work</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">running_item</span> <span class="ow">in</span> <span class="n">running_work</span><span class="p">:</span>
+            <span class="n">running_work_idx</span> <span class="o">=</span> <span class="n">running_item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">running_work_item</span> <span class="o">=</span> <span class="n">running_item</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">running_thread</span> <span class="o">=</span> <span class="n">running_work_item</span><span class="o">.</span><span class="n">thread</span>
+            <span class="k">if</span> <span class="n">running_thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">:</span>
+                <span class="n">new_running_work</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">running_item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">:</span>
+                    <span class="n">returned_item</span> <span class="o">=</span> <span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">suppress_errors</span> <span class="ow">and</span> \
+                            <span class="nb">len</span><span class="p">(</span><span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> \
+                            <span class="nb">isinstance</span><span class="p">(</span><span class="n">returned_item</span><span class="p">,</span> <span class="ne">BaseException</span><span class="p">):</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">running_work_item</span><span class="o">.</span><span class="n">work_item</span><span class="p">)</span> <span class="o">+</span>
+                                <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">returned_item</span> <span class="o">=</span> <span class="bp">None</span>
+
+                <span class="n">returned_items</span><span class="p">[</span><span class="n">running_work_idx</span><span class="p">]</span> <span class="o">=</span> \
+                        <span class="n">returned_item</span>
+        <span class="n">running_work</span> <span class="o">=</span> <span class="n">new_running_work</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">running_work</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_spawn_threads</span> <span class="ow">and</span> <span class="n">remaining_work</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining_work</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">work_item</span> <span class="o">=</span> <span class="n">remaining_work</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">result_container</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">work_runner</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">work_item</span><span class="o">.</span><span class="n">func</span><span class="p">,</span>
+                    <span class="n">work_item</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="n">work_item</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">result_container</span><span class="p">))</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">running_work</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">idx</span><span class="p">,</span> <span class="n">_RunningWorkItem</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">work_item</span><span class="p">,</span>
+                    <span class="n">result_container</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># There is no reason to have a hash here since we are indexed on</span>
+    <span class="c1"># consecutive integers. So let&#39;s coerce this guy to a list.</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">work</span><span class="p">)):</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">returned_items</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

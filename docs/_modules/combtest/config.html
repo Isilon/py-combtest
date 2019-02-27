@@ -1,0 +1,275 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>combtest.config &mdash; py-combtest 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for combtest.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Getters, setters, and loaders of config. Config includes e.g. SSH</span>
+<span class="sd">authentication stuff, port numbers to use, etc.</span>
+
+<span class="sd">There are two layers of config provided: config loaded from file via</span>
+<span class="sd">``refresh_cfg``, and runtime-provided overrides to those. The getters given</span>
+<span class="sd">below will enforce that ordering. The user provides overrides via the setters.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+
+<span class="c1">#: Location of a config file to load, if the user wants to load config values</span>
+<span class="c1">#: that way</span>
+<span class="n">CONFIG_LOC</span> <span class="o">=</span> <span class="s2">&quot;combtest.cfg&quot;</span>
+
+<span class="c1"># Keys:</span>
+<span class="c1"># ssh_rsakey_override: single rsa key file path</span>
+<span class="c1"># ssh_rsakey_overrides: json formatted mapping ip-&gt;rsa key file path</span>
+<span class="n">SSH_CONF</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># Keys:</span>
+<span class="c1"># machine_ips: list of strings</span>
+<span class="c1"># service_port, logger_port: port nums for walk running service and logger</span>
+<span class="n">NET_CONF</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># Worker-related config (e.g. number of worker threads)</span>
+<span class="n">WORKER_CONF</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="c1"># Keys:</span>
+<span class="c1"># Same as WORKER_CONF.</span>
+<span class="c1"># This is a per-key override of WORKER_CONF that can be set at runtime.</span>
+<span class="c1"># The reason I don&#39;t modify WORKER_CONF is that it can be overridden</span>
+<span class="c1"># when refresh_cfg() is called. I want the runtime-provided overrides to</span>
+<span class="c1"># persist and lay &quot;over top&quot; of the config loaded from file. Probably I</span>
+<span class="c1"># should make a clean &quot;ConfigCache&quot; object for this instead of using a pair</span>
+<span class="c1"># of dicts?</span>
+<span class="n">WORKER_CONF_OVERRIDE</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="c1">#: Default port number for interproc communication for the logger</span>
+<span class="n">DEFAULT_LOGGER_PORT</span> <span class="o">=</span> <span class="mi">6186</span>
+
+<span class="c1">#: Default port an rpyc service should listen on e.g. if we start up a remote</span>
+<span class="c1">#: service</span>
+<span class="n">DEFAULT_SERVICE_PORT</span> <span class="o">=</span> <span class="mi">6187</span>
+
+<span class="c1">#: Default number of workers executing a ``combtest.walk.Walk`` at a time</span>
+<span class="c1">#: for a given service instance.</span>
+<span class="n">DEFAULT_MAX_THREAD_COUNT</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">*</span> <span class="mi">3</span>
+<span class="c1"># ^^ This is an arbitrary target. The idea is that we can&#39;t really use our</span>
+<span class="c1"># resources with just cpu_count threads, since we may spend a ton of time</span>
+<span class="c1"># sleeping on I/O. User can tweak.</span>
+
+
+<div class="viewcode-block" id="refresh_cfg"><a class="viewcode-back" href="../../api.html#combtest.config.refresh_cfg">[docs]</a><span class="k">def</span> <span class="nf">refresh_cfg</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Call to refresh config loaded from file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CONFIG_LOC</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">()</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">readfp</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="n">sections</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">sections</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="s1">&#39;SSH&#39;</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;SSH&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;rsakey&#39;</span><span class="p">:</span>
+                        <span class="n">SSH_CONF</span><span class="p">[</span><span class="s1">&#39;ssh_rsakey_override&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;rsakey_map&#39;</span><span class="p">:</span>
+                        <span class="n">overrides</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                        <span class="n">SSH_CONF</span><span class="p">[</span><span class="s1">&#39;ssh_rsakey_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overrides</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;username&#39;</span><span class="p">:</span>
+                        <span class="n">SSH_CONF</span><span class="p">[</span><span class="s1">&#39;ssh_username_override&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;username_map&#39;</span><span class="p">:</span>
+                        <span class="n">SSH_CONF</span><span class="p">[</span><span class="s1">&#39;ssh_username_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;password&#39;</span><span class="p">:</span>
+                        <span class="n">SSH_CONF</span><span class="p">[</span><span class="s1">&#39;ssh_password_override&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;password_map&#39;</span><span class="p">:</span>
+                        <span class="n">SSH_CONF</span><span class="p">[</span><span class="s1">&#39;ssh_password_map&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Key not regonized: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="s1">&#39;NET&#39;</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;NET&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;machine_ips&#39;</span><span class="p">:</span>
+                        <span class="n">NET_CONF</span><span class="p">[</span><span class="s1">&#39;machine_ips&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ip</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span>
+                                <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;service_port&#39;</span><span class="p">:</span>
+                        <span class="n">NET_CONF</span><span class="p">[</span><span class="s1">&#39;service_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;logger_port&#39;</span><span class="p">:</span>
+                        <span class="n">NET_CONF</span><span class="p">[</span><span class="s1">&#39;logger_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Key not regonized: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="s1">&#39;WORKER&#39;</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="s1">&#39;WORKER&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;max_thread_count&#39;</span><span class="p">:</span>
+                        <span class="n">WORKER_CONF</span><span class="p">[</span><span class="s1">&#39;max_thread_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Key not regonized: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+    <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="get_ssh_rsa_keys"><a class="viewcode-back" href="../../api.html#combtest.config.get_ssh_rsa_keys">[docs]</a><span class="k">def</span> <span class="nf">get_ssh_rsa_keys</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get paths to RSA keys that we can use for SSH authentication. This can</span>
+<span class="sd">    include a single file, or one file per e.g. IP.</span>
+<span class="sd">    :return: path, map of ip-&gt;path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="n">SSH_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ssh_rsakey_override&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">override_map</span> <span class="o">=</span> <span class="n">SSH_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ssh_rsakey_map&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">override</span><span class="p">,</span> <span class="n">override_map</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_ssh_usernames"><a class="viewcode-back" href="../../api.html#combtest.config.get_ssh_usernames">[docs]</a><span class="k">def</span> <span class="nf">get_ssh_usernames</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get usernames for SSH authentication.</span>
+<span class="sd">    :return: username, map of ip-&gt;username</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="n">SSH_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ssh_username_override&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">override_map</span> <span class="o">=</span> <span class="n">SSH_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ssh_username_map&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">override</span><span class="p">,</span> <span class="n">override_map</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_ssh_passwords"><a class="viewcode-back" href="../../api.html#combtest.config.get_ssh_passwords">[docs]</a><span class="k">def</span> <span class="nf">get_ssh_passwords</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get passwords for SSH authentication.</span>
+<span class="sd">    :return: password, map of ip-&gt;password</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="n">SSH_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ssh_password_override&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">override_map</span> <span class="o">=</span> <span class="n">SSH_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ssh_password_map&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">override</span><span class="p">,</span> <span class="n">override_map</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_ssh_options"><a class="viewcode-back" href="../../api.html#combtest.config.get_ssh_options">[docs]</a><span class="k">def</span> <span class="nf">get_ssh_options</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get all SSH authentication options in a single call.</span>
+<span class="sd">    :returns: a dict of options</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rsakey_override</span><span class="p">,</span> <span class="n">rsakey_map</span> <span class="o">=</span> <span class="n">get_ssh_rsa_keys</span><span class="p">()</span>
+    <span class="n">username_override</span><span class="p">,</span> <span class="n">username_map</span> <span class="o">=</span> <span class="n">get_ssh_usernames</span><span class="p">()</span>
+    <span class="n">password_override</span><span class="p">,</span> <span class="n">password_map</span> <span class="o">=</span> <span class="n">get_ssh_passwords</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;rsakey_override&#39;</span><span class="p">:</span> <span class="n">rsakey_override</span><span class="p">,</span>
+            <span class="s1">&#39;rsakey_map&#39;</span><span class="p">:</span> <span class="n">rsakey_map</span><span class="p">,</span>
+            <span class="s1">&#39;username_override&#39;</span><span class="p">:</span> <span class="n">username_override</span><span class="p">,</span>
+            <span class="s1">&#39;username_map&#39;</span><span class="p">:</span> <span class="n">username_map</span><span class="p">,</span>
+            <span class="s1">&#39;password_override&#39;</span><span class="p">:</span> <span class="n">password_override</span><span class="p">,</span>
+            <span class="s1">&#39;password_map&#39;</span><span class="p">:</span> <span class="n">password_map</span><span class="p">,</span>
+           <span class="p">}</span></div>
+
+<div class="viewcode-block" id="get_machine_ips"><a class="viewcode-back" href="../../api.html#combtest.config.get_machine_ips">[docs]</a><span class="k">def</span> <span class="nf">get_machine_ips</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a list of IPs where we should try to set services up</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NET_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;machine_ips&#39;</span><span class="p">,</span> <span class="p">[])</span></div>
+
+<div class="viewcode-block" id="set_service_port"><a class="viewcode-back" href="../../api.html#combtest.config.set_service_port">[docs]</a><span class="k">def</span> <span class="nf">set_service_port</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set the port number where we should expect to find an rpyc service running,</span>
+<span class="sd">    once it is bootstrapped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">WORKER_CONF_OVERRIDE</span><span class="p">[</span><span class="s1">&#39;service_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">port</span></div>
+
+<div class="viewcode-block" id="get_service_port"><a class="viewcode-back" href="../../api.html#combtest.config.get_service_port">[docs]</a><span class="k">def</span> <span class="nf">get_service_port</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the port number where we should expect to find an rpyc service running,</span>
+<span class="sd">    once it is bootstrapped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">WORKER_CONF_OVERRIDE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;service_port&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">WORKER_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;service_port&#39;</span><span class="p">,</span> <span class="n">DEFAULT_SERVICE_PORT</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">port</span></div>
+
+<div class="viewcode-block" id="get_logger_port"><a class="viewcode-back" href="../../api.html#combtest.config.get_logger_port">[docs]</a><span class="k">def</span> <span class="nf">get_logger_port</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the port we will expose locally for remote loggers to connect to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">WORKER_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;logger_port&#39;</span><span class="p">,</span> <span class="n">DEFAULT_LOGGER_PORT</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_max_thread_count"><a class="viewcode-back" href="../../api.html#combtest.config.get_max_thread_count">[docs]</a><span class="k">def</span> <span class="nf">get_max_thread_count</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the max thread count for :class:`combtest.worker.ThreadPool`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">WORKER_CONF</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_thread_count&#39;</span><span class="p">,</span> <span class="n">DEFAULT_MAX_THREAD_COUNT</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

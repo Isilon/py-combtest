@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Overview &mdash; py-combtest 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="py-combtest 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Example code" href="examples.html" />
+    <link rel="prev" title="py-combtest" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>The term &#8216;combtest&#8217; refers to the systematic generation of test cases based on
+combinations of inputs, conditions, configs, etc. This lib supports the
+generation of cases in this way, and provides a metric ton of supporting tools
+that a writer of such tests is likely to need. Examples:</p>
+<ul class="simple">
+<li>Some basic test generation logic, so that the test writer can concentrate on
+writing the tests and not the infrastructure.</li>
+<li>Test runners that support various parallel execution patterns, which is
+highly desireable given the sheer volume of cases likely to be generated.</li>
+<li><code class="docutils literal"><span class="pre">unittest</span></code>-like test results stats</li>
+<li>Test case logging and deterministic replay mechanisms, allowing the user
+to re-run any generated test case.</li>
+</ul>
+<p>These make it easy for a test writer to get started; and at the same time
+they are written to allow the advanced user to easily build out a custom
+workflow.</p>
+<p>At each step, the lib was designed with a small handful of concerns in mind:</p>
+<ul class="simple">
+<li>Providing &#8216;telescoping&#8217; APIs, such that both beginning and advanced users can
+leverage it in the way they need</li>
+<li>Scalability, particularly with respect to mem use, and providing remote
+test executors; combtesting can produce orders of magnitude more cases than
+traditional testing, which means scalability becomes a natural concern</li>
+<li>Paralellism of test execution, since running orders of magnitude more
+tests in serial would otherwise take orders of magnitude more time</li>
+</ul>
+</div>
+<div class="section" id="why-this-kind-of-testing">
+<h1>Why this kind of testing?<a class="headerlink" href="#why-this-kind-of-testing" title="Permalink to this headline">¶</a></h1>
+<p>Seasoned test writers may have come across a scenario like this: they develop a
+set of N edge cases to test, and they hardcode <code class="docutils literal"><span class="pre">unittest</span></code> cases for those N;
+then they come to realize that they really need to test some of the
+combinations of those cases, and maybe then to combine all of those with
+various configurations of their system. &#8220;But that is combinatorial explosion;
+you can&#8217;t test all that!&#8221; Nevertheless, in complex software systems it is
+sometimes necessary to do such a combining of tests/configs/etc to have
+confidence in the quality of the product. For even simpler software systems,
+this can net a number of important advantages:</p>
+<ul class="simple">
+<li>Like fuzz testing, you can get exponentially more coverage than you can
+with tests specifically enumerated by a tester.</li>
+<li>Unlike fuzz testing, you get guaranteed, verifiable coverage, just like
+specifically enumerated tests.</li>
+<li>You get built-in deterministic replay of the test, unlike fuzz testing
+where that can sometimes be challenging.</li>
+</ul>
+</div>
+<div class="section" id="high-level-example">
+<h1>High level example<a class="headerlink" href="#high-level-example" title="Permalink to this headline">¶</a></h1>
+<p>TODO</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Overview</a></li>
+<li><a class="reference internal" href="#why-this-kind-of-testing">Why this kind of testing?</a></li>
+<li><a class="reference internal" href="#high-level-example">High level example</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">py-combtest</a></li>
+      <li>Next: <a href="examples.html" title="next chapter">Example code</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/introduction.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/introduction.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

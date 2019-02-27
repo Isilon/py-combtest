@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>combtest.encode &mdash; py-combtest 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for combtest.encode</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Easy serialization/deserialization mechanism using JSON. It uses a pair of</span>
+<span class="sd">methods: an instance level ``to_json()`` method and a classmethod</span>
+<span class="sd">``from_json()`` which are used, when available, to convert b/w an instance and</span>
+<span class="sd">JSON.</span>
+
+<span class="sd">We use this mechanism to serialize :class:`combtest.action.Action` and</span>
+<span class="sd">:class:`combtest.walk.Walk` instances for printing to a trace file, or other</span>
+<span class="sd">logs where human readability is handy.  The reason we don&#39;t use a custom</span>
+<span class="sd">encoder/decoder pair for those two classes is that the user can attach a</span>
+<span class="sd">static_ctx which has no default JSON behavior.  We let them write ``to_json()``</span>
+<span class="sd">etc. if they want ``static_ctx`` to be a member of a custom class.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="kn">from</span> <span class="nn">combtest.action</span> <span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">combtest.utils</span> <span class="kn">import</span> <span class="n">get_class_qualname</span><span class="p">,</span> <span class="n">get_class_from_qualname</span>
+
+<span class="c1">#### Encode</span>
+<span class="n">_DEFAULT_MAGIC</span> <span class="o">=</span> <span class="s2">&quot;CombtestEncoded.&quot;</span>
+<span class="k">class</span> <span class="nc">_Encoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    JSONEncoder that leverages an instance-level to_json() func where</span>
+<span class="sd">    available. Records take the form:</span>
+<span class="sd">        {&#39;magic.class.qualname&#39;: obj.to_json()}</span>
+
+<span class="sd">    Simplifying: add a to_json() method that returns something jsonifiable</span>
+<span class="sd">    (which can itself have a to_json() method), then pass it to this Encoder.</span>
+<span class="sd">    The rest will be taken care of.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;to_json&#39;</span><span class="p">):</span>
+            <span class="n">qualname</span> <span class="o">=</span> <span class="n">get_class_qualname</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+            <span class="n">qualname</span> <span class="o">=</span> <span class="n">_DEFAULT_MAGIC</span> <span class="o">+</span> <span class="n">qualname</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">qualname</span><span class="p">:</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_json</span><span class="p">()}</span>
+
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot figure out how to JSONify: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+
+<span class="c1">#### Decode</span>
+<span class="c1"># Simple cache, since we are likely to decode the same Action multiple times,</span>
+<span class="c1"># to the point it could threaten mem usage.</span>
+<span class="c1"># Maps (action_class, jsonified static_ctx) -&gt; instance</span>
+<span class="n">_ACTION_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_ACTION_CACHE_LOCK</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">_get_cached_action</span><span class="p">(</span><span class="n">action_class</span><span class="p">,</span> <span class="n">static_ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For Actions specifically, we are likely to repeatedly decode strings that</span>
+<span class="sd">    result in a functionally equivalent action. This is because the &#39;comb&#39; in</span>
+<span class="sd">    &#39;combtest&#39; refers to running combinations of test options. To prevent mem</span>
+<span class="sd">    explosion, we want all those decode attempts to return refs to the same</span>
+<span class="sd">    underlying set of Actions.</span>
+<span class="sd">    action_class(static_ctx) would return the Action in question. We pass them</span>
+<span class="sd">    in separately so we have something to hash. (classes are hashable it seems)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">action_class</span><span class="p">,</span> <span class="n">encode</span><span class="p">(</span><span class="n">static_ctx</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ACTION_CACHE</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">_ACTION_CACHE_LOCK</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ACTION_CACHE</span><span class="p">:</span>
+                <span class="n">instance</span> <span class="o">=</span> <span class="n">action_class</span><span class="p">(</span><span class="n">static_ctx</span><span class="p">)</span>
+                <span class="n">_ACTION_CACHE</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">instance</span>
+                <span class="k">return</span> <span class="n">instance</span>
+    <span class="k">return</span> <span class="n">_ACTION_CACHE</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_jd_object_pair_hook</span><span class="p">(</span><span class="n">pair_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This func is passed to obj_pair_hook during decode. It is the counterpart</span>
+<span class="sd">    to packaging {&#39;class.qualname&#39;: inner_state} that is done during encode.</span>
+<span class="sd">    For simplicity we leverage the Action cache right here. If somebody wants</span>
+<span class="sd">    to leverage this file for some other lib at some point, they can just</span>
+<span class="sd">    remove all the references to the Action cache below and above. That is -</span>
+<span class="sd">    remove the issubclass(obj_class, Action) branch below.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pair_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">pair_list</span><span class="p">)</span>
+
+    <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pair_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_DEFAULT_MAGIC</span><span class="p">):</span>
+        <span class="n">qualname</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">_DEFAULT_MAGIC</span><span class="p">):]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">obj_class</span> <span class="o">=</span> <span class="n">get_class_from_qualname</span><span class="p">(</span><span class="n">qualname</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj_class</span><span class="p">,</span> <span class="s1">&#39;from_json&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj_class</span><span class="p">,</span> <span class="n">Action</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_get_cached_action</span><span class="p">(</span><span class="n">obj_class</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj_class</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
+
+<span class="c1"># These are the top level functions that are used by client code.</span>
+<div class="viewcode-block" id="encode"><a class="viewcode-back" href="../../api.html#combtest.encode.encode">[docs]</a><span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return JSON equivalent to the provided obj, if possible.</span>
+<span class="sd">    Will raise TypeError if it isn&#39;t possible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">_Encoder</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="decode"><a class="viewcode-back" href="../../api.html#combtest.encode.decode">[docs]</a><span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">json_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decode a JSON string which was provided by :func:`encode`. Will leverage</span>
+<span class="sd">    a cache for single-instancing ``Actions``. An ``Action`` is defined by a</span>
+<span class="sd">    single, immutable ``static_ctx``, so we are safe to use interning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_str</span><span class="p">,</span> <span class="n">object_pairs_hook</span><span class="o">=</span><span class="n">_jd_object_pair_hook</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

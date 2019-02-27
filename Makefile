@@ -23,11 +23,14 @@ endef
 export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
+DOCSRC		= _src_doc
+VENV		= /tmp/combtest_$(CURRENT_REV)
+
+
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
-
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -42,47 +45,49 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
-clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
-
-lint: ## check style with flake8
+lint:
 	pylint combtest
 
-#test: ## run tests quickly with the default Python
-#	python setup.py test
+test: ## run tests quickly with the default Python
+	python setup.py test
 
-#test-all: ## run tests on every Python version with tox
-#	tox
+docs-clean:
+	$(MAKE) -C $(DOCSRC) clean
 
-#coverage: ## check code coverage quickly with the default Python
-#	
-#		coverage run --source accountant setup.py test
-#	
-#		coverage report -m
-#		coverage html
-#		$(BROWSER) htmlcov/index.html
-#
-#docs: ## generate Sphinx HTML documentation, including API docs
-#	rm -f docs/accountant.rst
-#	rm -f docs/modules.rst
-#	sphinx-apidoc -o docs/ accountant
-#	$(MAKE) -C docs clean
-#	$(MAKE) -C docs html
-#	$(BROWSER) docs/_build/html/index.html
+# TODO: autodoc / API docs
+docs: ## generate Sphinx HTML documentation, including API docs
+	$(MAKE) -C $(DOCSRC) html
+	$(BROWSER) docs/index.html
 
-#servedocs: docs ## compile the docs watching for changes
-#	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+$(VENV):
+	virtualenv --system-site-packages $(VENV)
+	$(VENV)/bin/pip install -r requirements.txt
+	$(VENV)/bin/pip install -r $(DOCSRC}/requirements.txt
+
+#gh-pages: $(VENV)
+#        PYTHONPATH=.:$(VENV)/lib/python2.7/site-packages $(VENV)/bin/$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+#        git worktree add $(GH_PAGES_SRC) origin/gh-pages
+#        rm -rf $(GH_PAGES_SRC)/*
+#        mv -fv build/html/* $(GH_PAGES_SRC)
+#        cd $(GH_PAGES_SRC) && \
+#                git branch -D gh-pages && \
+#                git checkout -b gh-pages && \
+#                git add . && git commit -a -m "Generated gh-pages for $(CURRENT_REV)" && \
+#                git push origin gh-pages
+#        rm -rf $(GH_PAGES_SRC) && git worktree prune
+
 
 #release: clean ## package and upload a release
 #	python setup.py sdist upload # TODO
 #	python setup.py bdist_wheel upload #TODO
+#
+#dist: clean ## builds source and wheel package
+#	python setup.py sdist
+#	python setup.py bdist_wheel
+#	ls -l dist
 
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
+build:
+	python setup.py build
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
