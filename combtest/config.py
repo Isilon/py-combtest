@@ -1,12 +1,21 @@
+"""
+Getters, setters, and loaders of config. Config includes e.g. SSH
+authentication stuff, port numbers to use, etc.
+
+There are two layers of config provided: config loaded from file via
+``refresh_cfg``, and runtime-provided overrides to those. The getters given
+below will enforce that ordering. The user provides overrides via the setters.
+"""
+
 import ConfigParser
 import errno
 import json
 import multiprocessing
 
 
-
+#: Location of a config file to load, if the user wants to load config values
+#: that way
 CONFIG_LOC = "combtest.cfg"
-
 
 # Keys:
 # ssh_rsakey_override: single rsa key file path
@@ -31,15 +40,25 @@ WORKER_CONF = {}
 WORKER_CONF_OVERRIDE = {}
 
 
+#: Default port number for interproc communication for the logger
 DEFAULT_LOGGER_PORT = 6186
+
+#: Default port an rpyc service should listen on e.g. if we start up a remote
+#: service
 DEFAULT_SERVICE_PORT = 6187
-# This is an arbitrary target. The idea is that we can't really use our
+
+#: Default number of workers executing a ``combtest.walk.Walk`` at a time
+#: for a given service instance.
+DEFAULT_MAX_THREAD_COUNT = multiprocessing.cpu_count() * 3
+# ^^ This is an arbitrary target. The idea is that we can't really use our
 # resources with just cpu_count threads, since we may spend a ton of time
 # sleeping on I/O. User can tweak.
-DEFAULT_MAX_THREAD_COUNT = multiprocessing.cpu_count() * 3
 
 
 def refresh_cfg():
+    """
+    Call to refresh config loaded from file.
+    """
     try:
         with open(CONFIG_LOC, 'r') as f:
             parser = ConfigParser.SafeConfigParser()
@@ -89,24 +108,41 @@ def refresh_cfg():
             raise
 
 def get_ssh_rsa_keys():
+    """
+    Get paths to RSA keys that we can use for SSH authentication. This can
+    include a single file, or one file per e.g. IP.
+    :return: path, map of ip->path
+    """
     override = SSH_CONF.get('ssh_rsakey_override', None)
     override_map = SSH_CONF.get('ssh_rsakey_map', None)
 
     return (override, override_map)
 
 def get_ssh_usernames():
+    """
+    Get usernames for SSH authentication.
+    :return: username, map of ip->username
+    """
     override = SSH_CONF.get('ssh_username_override', None)
     override_map = SSH_CONF.get('ssh_username_map', None)
 
     return (override, override_map)
 
 def get_ssh_passwords():
+    """
+    Get passwords for SSH authentication.
+    :return: password, map of ip->password
+    """
     override = SSH_CONF.get('ssh_password_override', None)
     override_map = SSH_CONF.get('ssh_password_map', None)
 
     return (override, override_map)
 
 def get_ssh_options():
+    """
+    Get all SSH authentication options in a single call.
+    :returns: a dict of options
+    """
     rsakey_override, rsakey_map = get_ssh_rsa_keys()
     username_override, username_map = get_ssh_usernames()
     password_override, password_map = get_ssh_passwords()
@@ -120,19 +156,36 @@ def get_ssh_options():
            }
 
 def get_machine_ips():
+    """
+    Get a list of IPs where we should try to set services up
+    """
     return NET_CONF.get('machine_ips', [])
 
 def set_service_port(port):
+    """
+    Set the port number where we should expect to find an rpyc service running,
+    once it is bootstrapped.
+    """
     WORKER_CONF_OVERRIDE['service_port'] = port
 
 def get_service_port():
+    """
+    Get the port number where we should expect to find an rpyc service running,
+    once it is bootstrapped.
+    """
     port = WORKER_CONF_OVERRIDE.get('service_port', None)
     if port is None:
         port = WORKER_CONF.get('service_port', DEFAULT_SERVICE_PORT)
     return port
 
 def get_logger_port():
+    """
+    Get the port we will expose locally for remote loggers to connect to.
+    """
     return WORKER_CONF.get('logger_port', DEFAULT_LOGGER_PORT)
 
 def get_max_thread_count():
+    """
+    Get the max thread count for :class:`combtest.worker.ThreadPool`.
+    """
     return WORKER_CONF.get('max_thread_count', DEFAULT_MAX_THREAD_COUNT)

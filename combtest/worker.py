@@ -1,34 +1,39 @@
 """
 This module provides a set of mechanisms for dispatching "work" across a
 set of worker nodes. "Work" can mean "execute sets of arbitrary Python
-code". Roughly, this system is made of 3 pieces:
- * A basic thread pool implementation. There is a multiprocessing.ThreadPool
-   implementation in Python already, but I want the control and flexibility of
-   having my own. This and its decendents are the "workers" that actually e.g.
-   execute test cases or run fuzz+stress load (see ThreadPool below). Thread
-   counts can be chosen by the client, by default, whatever.
- * An rpyc-based coordinator that deserializes work sent to it and sends it
-   to a worker/executor of some sort, which will typically be a ThreadPool
-   (see CoordinatorService below). Typically there will be one of these per
-   node running in its own process, or at least one of a given "type" per
-   node. The only constraint is that it needs to have a 1:1 ip/port
-   mapping. Typically there will be one central coordinator (ServiceGroup)
-   paired with one CoordinatorService/node.
- * A central coordinator running in a single process that is passed work and
-   sends it to all paired remote coordinators for execution (ServiceGroup).
+code". This system is made of a few pieces:
+
+* A basic thread pool implementation. There is a :class:`multiprocessing.ThreadPool`
+  implementation in Python already,
+  but I want the control and flexibility of having my own. This and its
+  decendents are the "workers" that actually e.g. execute test cases or
+  run fuzz+stress load (see :class:`ThreadPool`). Thread
+  counts can be chosen by the client, by default, whatever.
+* An rpyc-based coordinator that deserializes work sent to it and sends it
+  to a worker/executor of some sort, which will typically be a ThreadPool
+  (see :class:`CoordinatorService` below). Typically there will be one of
+  these per node running in its own process, or at least one of a given
+  "type" per node. The only constraint is that it needs to have a 1:1 ip/port
+  mapping. Typically there will be one central coordinator
+  (:class:`ServiceGroup`) paired with one ``CoordinatorService`` per node.
+* A central coordinator running in a single process that is passed work and
+  sends it to all paired remote coordinators for execution
+  (:class:`ServiceGroup`).
 
 Work is sent in some quantum defined by the client code and passed from
-ServiceGroup->CoordinatorService->ThreadPool. Responses can be sent back.
- * The quantum should be large enough for a worker to keep its children busy
- * The child may quit before all work is done if e.g. a failure limit is
-   reached, or a fatal error hit.
- * A parent can specify how many workers a child can have, otherwise a worker
-   is free to decide.
- * A parent can raise signal or other condition to a child to tell it to quit
-   early. It must obey and send back any accumulated responses, or have its
-   results abandoned.
- * Parent must deal with errors where the child dies silently (e.g.
-   interpreter crash hard enough that we don't run atexit handlers)
+``ServiceGroup->CoordinatorService->ThreadPool``. Responses can be sent back.
+
+* The quantum should be large enough for a worker to keep its children busy
+* The child may quit before all work is done if e.g. a failure limit is
+  reached, or a fatal error hit.
+* A parent can specify how many workers a child can have, otherwise a worker
+  is free to decide.
+* A parent can raise signal or other condition to a child to tell it to quit
+  early. It must obey and send back any accumulated responses, or have its
+  results abandoned.
+* Parent must deal with errors where the child dies silently (e.g.
+  interpreter crash hard enough that we don't run atexit handlers)
+
 """
 import copy
 import rpyc
@@ -64,14 +69,15 @@ class ThreadPool(object):
     can add callbacks for e.g. when work starts/finishes, how to handle errors,
     etc.
     """
-    # TODO? Move this to py-forkjoin. Probably should.
     def __init__(self, max_thread_count=None, work=None, **kwargs):
         """
-        Args:
-            max_thread_count - max number of threads to have running at a time.
-            work - pop-able iterable of work items. Work items are callable
-                   objects that take 0 arguments unless a ctx is supplied, in
-                   which case they take 1 argument.
+        :param int max_thread_count: max number of threads to have running at
+                                     a time
+        :param iterable work: a pop-able iterable of work items. Work
+                              items are callable objects that take 0
+                              arguments unless a ``ctx`` is supplied to
+                              :func:`start`, in which case they take 1
+                              argument.
         """
         self._thread_count = max_thread_count or get_max_thread_count()
         self._work_queue = work or []
@@ -84,8 +90,8 @@ class ThreadPool(object):
 
     def add_work(self, work):
         """
-        Add work for this pool. Will not kick threads into action if all
-        prior work has finished. See kick_workers.
+        Add a work item to this pool. Will not kick threads into action if all
+        prior work has finished. See :func:`kick_workers`.
         """
         self._work_queue.extend(list(work))
 
@@ -98,7 +104,8 @@ class ThreadPool(object):
 
     def on_finish(self):
         """
-        Called when threads are finished up, as indicated by a call to join().
+        Called when threads are finished up, as indicated by a call to
+        :func:`join`.
         """
         pass
 
@@ -116,7 +123,7 @@ class ThreadPool(object):
 
     def on_error_item(self, work_item, ctx, exc, tb):
         """
-        Called if a work_item errors out (via Exception).
+        Called if a work item errors out (via Exception).
         """
         raise
 
@@ -171,6 +178,8 @@ class ThreadPool(object):
     def start(self, ctx=None):
         """
         Tell threads to start working on any work already queued.
+
+        :param object ctx: an optional single arg to pass to the work callbacks
         """
         self._run_ctx = ctx
         self.should_stop = False
@@ -189,8 +198,11 @@ class ThreadPool(object):
 
     def start_all_on_next(self, ctx=None):
         """
-        This gets all threads running the next work item. Useful for e.g.
-        parallel ageing of the same file using the same recipe.
+        This gets all threads running the next work item. This means the item
+        will potentially be run more than once, and potentially multiple times
+        in parallel.
+
+        :param object ctx: an optional single arg to pass to the work callbacks
         """
         self._run_ctx = ctx
         self.should_stop = False
@@ -237,6 +249,11 @@ class ThreadPool(object):
     def run(self, ctx=None, all_on_next=False):
         """
         Run all queued work all the way through to completion, then join.
+
+        :param object ctx: an optional single arg to pass to the work callbacks
+        :param bool all_on_next: rather than each thread popping an item that
+                                 it runs (and therefore no other thread runs),
+                                 pop a single item and have all threads run it.
         """
         # Synchronous interface
         if all_on_next:
@@ -250,20 +267,21 @@ class ThreadPool(object):
 class CoordinatorService(rpyc.Service):
     """
     Receives work from a remote process via rpyc, starts the work running via
-    ThreadPool or some decendent class.
-
-    worker_type - a ThreadPool class that workers should be instantiated from
+    :class:`ThreadPool` or some decendent class.
     """
-    # User can override
-    worker_type = ThreadPool
+    #: a ThreadPool class that workers should be instantiated from
+    #: User can override
+    WORKER_TYPE = ThreadPool
 
-    # Convenience override point for a child class
-    default_max_thread_count = get_max_thread_count()
+    #: Override point for max number of threads for each worker to have. The
+    #: other ways to set this are 1. via config.py, and 2. via an option passed
+    #: at runtime (e.g. via :func:`exposed_start_workers_on`).
+    DEFAULT_MAX_THREAD_COUNT = get_max_thread_count()
 
     def on_connect(self):
         """
-        rpyc.Service is designed for this to be the de-facto __init__ function.
-        So we are doing our initialization here.
+        :class:`rpyc.Service` is designed for this to be the de-facto
+        ``__init__`` function.  So we are doing our initialization here.
         """
         # Maps integer id->worker
         self._workers = {}
@@ -307,12 +325,16 @@ class CoordinatorService(rpyc.Service):
 
     def work_repack(self, work, ctx=None, resp=None):
         """
-        Callback for each individual work item that lets the child class do any
-        custom deserialization work. There is no one-size-fits all way of
-        packaging work, so we let the user customize that process. If
-        depickling the work already did the job, this base class implementation
-        is just a no-op.
-        Returns: the actual work that will be passed to the worker/ThreadPool.
+        This is called back to repackage each work item sent to the service.
+        The call is an opportunity to e.g. do some deserialization, wrap the
+        ``Walk`` in a ``WalkRunner``, or anything else the user needs to prep
+        the work for execution.
+
+        :param object work: the work to execute; typically this will be e.g. a
+                            JSONified ``Walk``.
+        :param object ctx: a ``ctx`` copied in for executing the ``Walk``
+        :param dict resp: a dict to which response objects can be attached by
+                          the ``Walk`` for retrieval later.
         """
         return work
 
@@ -321,11 +343,12 @@ class CoordinatorService(rpyc.Service):
         Called by remote side to start some work running asynchronously. The
         work and ctx are pickled and pulled through to this side in whole,
         rather than accessing via netrefs.
-        Returns: a worker_id to refer back to this work later for e.g. stopping
+
+        :return: a worker_id to refer back to this work later for e.g. stopping
                  it or getting responses.
         """
         if max_thread_count is None:
-            max_thread_count = self.default_max_thread_count
+            max_thread_count = self.DEFAULT_MAX_THREAD_COUNT
 
         worker_id = self._get_next_worker_id()
         resp = {}
@@ -342,7 +365,7 @@ class CoordinatorService(rpyc.Service):
             packed_work.append(self.work_repack(materialized, ctx=ctx,
                 resp=resp))
 
-        worker = self.worker_type(max_thread_count=max_thread_count,
+        worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
                 work=packed_work, static_ctx=ctx, resp=resp)
         self._set_worker_by_id(worker_id, worker)
         self._ctxs[worker_id] = ctx
@@ -356,9 +379,13 @@ class CoordinatorService(rpyc.Service):
 
     def exposed_add_work(self, worker_id, work):
         """
-        Add work to an existing worker. The original ctx will be used, since it
-        is a "static" ctx. If the user wants work to be executed with a
-        different ctx, they start a new worker up via start_work.
+        Add work to an existing worker. The original ctx will be used.
+        If the user wants work to be executed with a different ctx,
+        they start a new worker up via :func:`exposed_start_work`.
+
+        :param int worker_id: the ``worker_id`` returned from the func used to
+                              start work
+        :param object work: the work item
         """
         work = rpyc.utils.classic.obtain(work)
         work = [self.work_repack(work_item,
@@ -376,12 +403,12 @@ class CoordinatorService(rpyc.Service):
     def exposed_start_workers_on(self, work, max_thread_count=None, ctx=None):
         """
         Similar to start_work, but a single item is sent, and all threads in
-        the new worker will run that single item. Used for e.g. putting the
-        same load on the filesystem from multiple threads on every node.
-        Returns: worker_id
+        the new worker will run that single item.
+
+        :return: The ``worker_id`` of the worker executing the work
         """
         if max_thread_count is None:
-            max_thread_count = self.default_max_thread_count
+            max_thread_count = self.DEFAULT_MAX_THREAD_COUNT
         worker_id = self._get_next_worker_id()
         resp = {}
         self._resps[worker_id] = resp
@@ -390,7 +417,7 @@ class CoordinatorService(rpyc.Service):
 
         materialized = rpyc.utils.classic.obtain(work)
         packed_work = self.work_repack(materialized, ctx=ctx, resp=resp)
-        worker = self.worker_type(max_thread_count=max_thread_count,
+        worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
                 work=[packed_work], static_ctx=ctx, resp=resp)
         self._set_worker_by_id(worker_id, worker)
         self._ctxs[worker_id] = ctx
@@ -403,11 +430,11 @@ class CoordinatorService(rpyc.Service):
 
     def exposed_run(self, work, max_thread_count=None, ctx=None):
         """
-        Run work synchronously. Return the worker_id so that responses/ctxs can
-        be reclaimed.
+        Run work synchronously. Return a ``worker_id`` so that responses/ctxs
+        can be reclaimed.
         """
         if max_thread_count is None:
-            max_thread_count = self.default_max_thread_count
+            max_thread_count = self.DEFAULT_MAX_THREAD_COUNT
         worker_id = self._get_next_worker_id()
         resp = {}
         self._resps[worker_id] = resp
@@ -420,7 +447,7 @@ class CoordinatorService(rpyc.Service):
             packed_work.append(self.work_repack(materialized, ctx=ctx,
                 resp=resp))
 
-        worker = self.worker_type(max_thread_count=max_thread_count,
+        worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
                 work=packed_work, static_ctx=ctx, resp=resp)
         self._set_worker_by_id(worker_id, worker)
         self._ctxs[worker_id] = ctx
@@ -433,13 +460,22 @@ class CoordinatorService(rpyc.Service):
         return worker_id
 
     def exposed_start_remote_logging(self, ip, port, **kwargs):
+        """
+        Start sending logs to the log server at the given ip+port.
+
+        :param str ip: hostname or ip where the log server is running
+        :param int port: port number where the log server is running
+        """
         central_logger.add_socket_handler(ip, port)
 
     def exposed_signal_stop(self, worker_id):
         """
-        Signal that all workers should stop. May not be immediate since this is
+        Signal that a worker should stop. May not be immediate since this is
         intended to be a "clean" shutdown where workers can finish their
         current work item.
+
+        :param int worker_id: the ``worker_id`` returned from the func used to
+                              start work
         """
         worker = self._get_worker_by_id(worker_id)
         worker.signal_stop()
@@ -457,6 +493,9 @@ class CoordinatorService(rpyc.Service):
         use. The responses and ctxs will stay around until the client "cleans"
         the worker state. That means this is *not* a stateless service. The
         user needs to beware of leaking resources.
+
+        :param int worker_id: the ``worker_id`` returned from the func used to
+                              start work
         """
         self._join_worker(worker_id)
 
@@ -473,12 +512,18 @@ class CoordinatorService(rpyc.Service):
     def exposed_gather_ctx(self, worker_id):
         """
         Return the ctx associated with the given worker.
+
+        :param int worker_id: the ``worker_id`` returned from the func used to
+                              start work
         """
         return self._ctxs[worker_id]
 
     def exposed_gather_resp(self, worker_id):
         """
-        Return the resp associated with the given worker.
+        Return the resp object associated with the given worker.
+
+        :param int worker_id: the ``worker_id`` returned from the func used to
+                              start work
         """
         return self._resps[worker_id]
 
@@ -487,8 +532,8 @@ class CoordinatorService(rpyc.Service):
         Toss all state related to a worker. Implies a join first.
         Gives the user full control over when we reap memory, since they may
         still want to retrieve/pickle results. It isn't enough to wait until
-        after they gather response, since a.) they may not have "obtained" the
-        response value yet, and b.) they may just be gathering intermediate
+        after they gather the response, since a.) they may not have "obtained"
+        the response value yet, and b.) they may just be gathering intermediate
         results.
         """
         self._join_worker(worker_id)
@@ -500,8 +545,13 @@ class CoordinatorService(rpyc.Service):
 # Called from e.g. an ssh session/array using python -c or some such
 def start_service(service_class, port=None):
     """
-    Start an rpyc service given by provided class. Port can be overridden.
-    Returns: a handle to the resulting ThreadedServer.
+    Start an rpyc service given by the provided class. Port can be overridden.
+
+    :param rpyc.Service service_class: a child class of :class:`rpyc.Service`.
+    :param int port: the port the service should listen for requests on. If it
+                     isn't provided by the caller, we we get a value from
+                     :class:`combtest.config`
+    :return: a handle to the resulting :class:`ThreadedServer`.
     """
     if port is None:
         port = get_service_port()
@@ -515,15 +565,15 @@ def start_service(service_class, port=None):
 
 def start_service_by_name(service_name, port=None):
     """
-    Start the service which can be found at the given service_name. The
-    service_name is the class's "__qualname__", though that is a python 3+
-    concept. For this 2.* implementation we implement the same sort of logic as
-    the qualname. Hence if a module a.b.c is imported and has a class D defined
-    in it, then D's __qualname__ is a.b.c.D.
-    XXX: pay attention to the logic here; it is similar to pickle, or at least
-    older versions of pickle: the class must be top level on a module. As
-    mentioned in the ServiceGroup.__init__ docstring: lets revisit this iff
-    it is needed.
+    Start an rpyc service given by the provided class qualname.
+    Port can be overridden.
+
+    :param str service_name: a qualname of achild class of
+                             :class:`rpyc.Service`.
+    :param int port: the port the service should listen for requests on. If it
+                     isn't provided by the caller, we we get a value from
+                     :class:`combtest.config`
+    :return: a handle to the resulting :class:`ThreadedServer`.
     """
     if port is None:
         port = get_service_port()
@@ -532,36 +582,44 @@ def start_service_by_name(service_name, port=None):
 
     service_class = utils.get_class_from_qualname(service_name)
 
-    start_service(service_class, port=port)
+    t = start_service(service_class, port=port)
+    return t
 
 
 class ServiceGroup(object):
-
     """
-    Handles to running service instances across the nodes, via SSH, and rpyc-
-    based clients connected to those.
-    XXX: for now we spawn connections to all nodes. b/w the SSH connections and
-    client connections we may run into scalability issues on giant clusters.
-    There are obvious optimizations we can do here, such as lazy connecting,
-    but it would require some extra hooks. Let's do those changes later when/if
-    we prove there is a problem.
+    Handles to running service instances across the nodes via e.g. SSH, and
+    rpyc-based clients connected to those. This has a number of functions for
+    dispatching work to the execution services, and gathering responses and
+    stats.
+
+    .. warning:: We spawn connections to all nodes. b/w the SSH connections and
+                 client connections we may run into scalability issues on giant
+                 clusters. There are obvious optimizations we can do here,
+                 such as lazy connecting, but it would require some extra
+                 hooks. Please file a bug later when/if we prove there is
+                 such a problem and a need for a fix.
+
     """
     INSTANCES = set()
 
-    # Max time we spend waiting for a service spawn to succeed. We use this
-    # since e.g. starting services does not mean the service is immediately
-    # available, due to e.g. waiting for imports to happen. Hence the clients
-    # need to retry for a bit until the services come up. This timeout is
-    # measured in seconds.
+    #: Max time we spend waiting for a service spawn to succeed. We use this
+    #: since e.g. starting services does not mean the service is immediately
+    #: available, due to waiting for imports to happen. Hence the clients
+    #: need to retry for a bit until the services come up. This timeout is
+    #: measured in seconds.
     SPAWN_TIMEOUT = 30
 
-    # The maximum chunk of work we will send in a single RPC call. This is to
-    # keep the request size sane. If the user gives us an iterable that is
-    # generating a massive amount of work on-the-fly we may not be able to
-    # instantiate it all and hold it in memory. So we send batches that are
-    # this size at maximum.
+    #: The maximum chunk of work we will send in a single RPC call. This is to
+    #: keep the request size sane. If the user gives us an iterable that is
+    #: generating a massive amount of work on-the-fly we may not be able to
+    #: instantiate it all and hold it in memory. So we send batches that are
+    #: this size at maximum.
     WORK_QUANTUM_SIZE = 1000
 
+    #: If the user does not provide a specific enumeration of ip/port where we
+    #: should set services up running, this will be the default number of
+    #: services to start up, which we will start locally.
     DEFAULT_INSTANCE_COUNT = 3
 
     def __init__(self,
@@ -571,25 +629,27 @@ class ServiceGroup(object):
                  spawn_services=True,
                  spawn_clients=True):
         """
-        Args:
-            service_name: path+name of rpyc.Service decendent. Fully qualified
-                          pythonic import path, called __qualname__ in Python3.
-                          This should give us enough info to import it on the
-                          remote side. I'm sure there are edge cases this
-                          doesn't allow; upgrade on request.
-            ips: should be an interfaces of nodes where an SSH server is
-                 running, due to paramiko use. We can rip this out with more
-                 modular connection logic later.
-                 TODO
-                 If None, we will look at the config file to see if machine_ips
-                 is provided.
+        :param str service_name: a qualname of the :class:`CoordinatorService`
+                                 type to start
+        :param iterable service_infos: an iterable of service bootstrapping
+                                       info that we will use to bootstrap the
+                                       services. For SSH for example this will
+                                       be authentication information. See
+                                       :class:`bootstrap.ConnectionInfo`.
+        :param class service_handler_class: a decendent of
+                                            :class:`ServiceHandler`. This is
+                                            the type of ``ServiceHandler`` we
+                                            will use to bootstrap services.
+        :param bool spawn_services: True if we should spawn the remote services
+        :param bool spawn_clients: True if we should spawn our local client
+                                   connections to the remote services
         """
         self._give_up = False
         ServiceGroup.INSTANCES.add(self)
 
         # service_infos describe how we bootstrap the remote service which
         #   will actually run the tests (CoordinatorService instances).
-        #   Example: a bootstrap_info should be an ip + ssh creds/keys if we
+        #   Example: a bootstrap_info should be ssh creds/keys if we
         #   are using an SSH-based ServiceHandler.
         self._service_infos = copy.copy(service_infos)
         self._service_handler_class = service_handler_class
@@ -611,15 +671,18 @@ class ServiceGroup(object):
 
     @classmethod
     def give_up(cls):
+        """
+        Signal that all :class:`ServiceGroup` should give up trying to connect
+        to remote services, send work, etc. and bail immediately. We can use
+        this e.g. if we receive a signal locally and don't want to wait for a
+        long-running scatter or gather.
+        """
         for instance in cls.INSTANCES:
             instance._give_up = True
 
     def spawn_services(self):
         """
-        Spawn remote services via ssh_session. We keep the SSH handles open. If
-        this presents a scalability problem in the future, we will want
-        something like 'screen' that allows us to disconnect/reconnect without
-        the shell going down.
+        Spawn remote services via some bootstrap method.
         """
         assert not self.service_handles, "ERROR: services already running; " \
                 "shut them down before spawning again"
@@ -640,16 +703,6 @@ class ServiceGroup(object):
         self.service_handles = \
                 bootstrap.ServiceHandleArray(self._service_infos)
 
-        # First bring the services up on the remote side
-        #ssh_kwargs = get_ssh_options()
-        #self.service_handles = ssh.SSHArray(self.ips, **ssh_kwargs)
-        #logger.debug("Spawned SSH handles for services")
-        #cmd = ("python -c 'import %s; %s.start_service_by_name(\"%s\", %d)' > "
-        #      "/dev/null" % (ServiceGroup.__module__,
-        #                     ServiceGroup.__module__,
-        #                     self.service_name,
-        #                     self.port))
-        #print cmd
         logger.debug("Attempting to start services of type %s",
                 self.service_name)
         self.service_handles.start_cmd(self.service_name)
@@ -659,7 +712,7 @@ class ServiceGroup(object):
     def spawn_clients(self):
         """
         Spawn rpyc clients to the remote services. Assumes remote services are
-        up, or will be within SPAWN_TIMEOUT.
+        up, or will be within ``SPAWN_TIMEOUT``.
         """
         # Retry until all services are up, up to X seconds or whatever. This is
         # just heuristic, so we can be a little sloppy about accounting here.
@@ -700,15 +753,21 @@ class ServiceGroup(object):
     @property
     def clients(self):
         """
-        Returns a mapping ip->client "root" (see rpyc connect docs)
+        Returns a mapping (ip, port)->client "root" (see rpyc connect docs)
         """
         out = {}
         if self._clients is not None:
-            for ip, client in self._clients.iteritems():
-                out[ip] = client.root
+            for key, client in self._clients.iteritems():
+                out[key] = client.root
         return out
 
     def shutdown_clients(self, hard=False):
+        """
+        Shut down all running clients.
+
+        :param bool hard: if hard, we will ignore any errors trying to shut
+                          down
+        """
         if not hard:
             assert self.clients, "ERROR: must spawn clients before shutting " \
                     "them down"
@@ -719,6 +778,12 @@ class ServiceGroup(object):
         self._clients = None
 
     def shutdown_services(self, hard=False):
+        """
+        Shut down all running services.
+
+        :param bool hard: if hard, we will ignore any errors trying to shut
+                          down
+        """
         if self.service_handles is not None:
             try:
                 self.service_handles.shutdown()
@@ -729,18 +794,28 @@ class ServiceGroup(object):
             self.service_handles = None
 
     def shutdown(self, hard=False):
+        """
+        Shut down both clients and services.
+
+        :param bool hard: if hard, we will ignore any errors trying to shut
+                          down
+        """
         self.shutdown_clients(hard=hard)
         self.shutdown_services(hard=hard)
 
     def scatter_work(self, work, max_thread_count=None, ctx=None):
         """
         Partition the provided iterable of work into roughly even-sized
-        portions and send them to each of the remote services. ctx will be
+        portions and send them to each of the remote services. ``ctx`` will be
         copied to each node independently. The user must handle the logic of
-        retrieving results and stitching them together. See gather_ctx,
-        gather_resp.
-        Args:
-            work needs to be iterable
+        retrieving results and stitching them together. See :func:`gather_ctx`,
+        :func:`gather_resp`.
+
+        :param iterable work: iterable of work items
+        :param int max_thread_count: override of how many threads each remote
+                                     executor should have
+        :param object ctx: make sure it is picklable
+        :return: a dict mapping (hostname/ip, port) -> worker_id
         """
         out_queues = []
         clients = self.clients
@@ -814,7 +889,12 @@ class ServiceGroup(object):
 
     def start_all_on(self, work_item, shared_ctx=None):
         """
-        Proxy to exposed_start_all_on
+        Start a single item of work running on all remote services.
+
+        :param callable work: a single work item
+        :param object shared_ctx: make sure it is picklable. Will be shared
+                                  across all threads on a given service.
+        :return: a dict mapping (hostname/ip, port) -> worker_id
         """
         worker_ids_out = {}
         for ip, client in self.clients.iteritems():
@@ -826,80 +906,108 @@ class ServiceGroup(object):
         return worker_ids_out
 
     def start_remote_logging(self, ip, port):
+        """
+        Start logging on all remote services.
+
+        :param str ip: hostname or ip of local machine, where a log server is
+                       running
+        :param int port: port number of local log server
+        """
         for client in self.clients.values():
             client.start_remote_logging(ip, port)
 
     def run(self, work, ctx=None):
         """
-        Proxy to exposed_run, scattering the work in roughly even-sized chunks
-        to all remote services.  Returns a list of responses, whose ordering is
-        not particularly important.
+        Scatter work to all remote services, wait for it to finish executing,
+        then return gathered responses.
+
+        :param iterable work: iterable of work items
+        :param object ctx: make sure it is picklable
+        :return: a list of responses, whose ordering is not particularly
+                 important.
         """
         worker_ids = self.scatter_work(work, ctx=ctx)
         self.join()
         return self.gather_all_resp(worker_ids)
 
-    def gather_ctx(self, ip, worker_id):
+    def gather_ctx(self, connection, worker_id):
         """
-        Proxy to exposed_gather_ctx for the service at the given ip. Will copy
-        the ctx back via pickle.
+        Gather ``ctx`` from a remote service for a given worker. A running
+        :class:`Walk` is free to mutate its ``ctx``, and sometimes that is what
+        really constitutes the "response" or "output" of a quantum of work.
+
+        :param tuple connection: str hostname/ip of the remote service, int
+                                 port number
+        :param int worker_id: id of remote worker, as returned when starting
+                              the work (see :func:`scatter_work`).
         """
-        ctx = rpyc.utils.classic.obtain(self.clients[ip].gather_ctx(worker_id))
+        ctx = rpyc.utils.classic.obtain(self.clients[connection].gather_ctx(
+                worker_id))
         return ctx
 
     def gather_all_ctxs(self, worker_ids):
         """
         Gather ctxs from all the given workers.
-        Args:
-            worker_ids: a mapping ip->worker_id
-        Returns:
-            A list of ctxs in no particular order.
+
+        :param dict worker_ids: a mapping (hostname/ip, port)->worker_id
+        :return: a list of ctxs in no particular order.
         """
         # Simple list of ctxs; no order implied.
         ctxs = []
-        for ip, worker_id in worker_ids.iteritems():
+        for con, worker_id in worker_ids.iteritems():
             if isinstance(worker_id, int):
                 wids = [worker_id,]
             else:
                 wids = worker_id
             if wids is not None:
                 for wid in wids:
-                    ctx = self.gather_ctx(ip, wid)
+                    ctx = self.gather_ctx(con, wid)
                     ctxs.append(ctx)
 
         return ctxs
 
-    def gather_resp(self, ip, worker_id):
+    def gather_resp(self, connection, worker_id):
         """
-        Proxy to exposed_gather_resp for the service at the given ip. Will copy
-        the resp back via pickle.
+        Gather responses from all the given workers.
+
+        :param tuple connection: str hostname/ip of the remote service, int
+                                 port number
+        :param int worker_id: id of remote worker, as returned when starting
+                              the work (see :func:`scatter_work`).
+        :return: a response object, as passed to the ``Walk`` that ran on the
+                 remote side. See
+                 :func:`CoordinatorService.exposed_start_workers_on`
         """
         resp = rpyc.utils.classic.obtain(
-                self.clients[ip].gather_resp(worker_id))
+                self.clients[connection].gather_resp(worker_id))
         return resp
 
     def gather_all_resp(self, worker_ids):
         """
         Gather resp from all the given workers.
-        Args:
-            worker_ids: a mapping ip->worker_id
-        Returns:
-            A list of responses in no particular order.
+
+        :param dict worker_ids: a mapping (hostname/ip, port)->worker_id
+        :return: a list of respones in no particular order.
         """
         # Simple list of responses; the user can attach e.g. IPs, hostnames,
         # args, whatever they want to contextualize a response.
         responses = []
-        for ip, worker_id in worker_ids.iteritems():
+        for con, worker_id in worker_ids.iteritems():
             if worker_id is not None:
-                resp = self.gather_resp(ip, worker_id)
+                resp = self.gather_resp(con, worker_id)
                 responses.append(resp)
 
         return responses
 
     def join(self, hard=False):
         """
-        Join *all* workers for *all* clients. We can have a finer-grained
-        function later if it is helpful.
+        Wait for all workers on all remote services to complete.
+        We can have a finer-grained function later if it is helpful.
+
+        :param bool hard: ignore errors if True
+        :raises EOFError, ReferenceError, RuntimeError: if we have an issue
+                                                        while joinging (e.g.
+                                                        the remote side died)
         """
         for client in self.clients.values():
             try:
@@ -909,5 +1017,12 @@ class ServiceGroup(object):
                     raise
 
 def start_remote_services(service_class):
+    """
+    Simplest method to start some services remotely.
+
+    :param class service_class: a decendent of :class:`CoordinatorService`
+    :raises RuntimeError: on various issues with service start up
+    :return: A ServiceGroup wrapping the started services
+    """
     service_qualname = utils.get_class_qualname(service_class)
     return ServiceGroup(service_qualname)

@@ -1,12 +1,15 @@
 """
-Easy serialization/deserialization mechanism using JSON. It uses a pair
-of methods: an instance level to_json() method and a classmethod from_json()
-which are used, when available, to convert b/w an instance and JSON.
-We use this mechanism to serialize Actions + Walks for printing to a trace
-file, or other logs where human-readability is handy. The reason we don't use a
-custom encoder/decoder pair for those two classes is that the user can attach a
-static_ctx which has no default JSON behavior.  We let them write to_json()
-etc. if they want static_ctx to be a member of a custom class.
+Easy serialization/deserialization mechanism using JSON. It uses a pair of
+methods: an instance level ``to_json()`` method and a classmethod
+``from_json()`` which are used, when available, to convert b/w an instance and
+JSON.
+
+We use this mechanism to serialize :class:`combtest.action.Action` and
+:class:`combtest.walk.Walk` instances for printing to a trace file, or other
+logs where human readability is handy.  The reason we don't use a custom
+encoder/decoder pair for those two classes is that the user can attach a
+static_ctx which has no default JSON behavior.  We let them write ``to_json()``
+etc. if they want ``static_ctx`` to be a member of a custom class.
 """
 
 import json
@@ -106,7 +109,8 @@ def encode(obj):
 
 def decode(json_str):
     """
-    Decode a JSON string which was provided by encode() above. Will leverage
-    the Action cache.
+    Decode a JSON string which was provided by :func:`encode`. Will leverage
+    a cache for single-instancing ``Actions``. An ``Action`` is defined by a
+    single, immutable ``static_ctx``, so we are safe to use interning.
     """
     return json.loads(json_str, object_pairs_hook=_jd_object_pair_hook)

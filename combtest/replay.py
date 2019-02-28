@@ -1,4 +1,8 @@
-# TODO: PORT/WRAP
+"""
+Methods for replaying a :class:`combtest.walk.Walk`. Used via function call, or
+main. This includes the ability to replay the ``Walk`` from a trace file
+produced during a run.
+"""
 
 from __future__ import print_function
 
@@ -23,6 +27,12 @@ COMMAND_HELP = "\n".join(["%s: %s" % (k, v) for k, v in
 
 
 def load_from_trace(trace_file, walk_id):
+    """
+    Load a ``Walk`` from a trace file.
+
+    :param str trace_file: a path to the trace file
+    :param int walk_id: a ``walk_id`` which appears in the trace file
+    """
     found = False
     walk_out = walk.Walk()
     with open(trace_file, 'r') as f:
@@ -46,6 +56,15 @@ def load_from_trace(trace_file, walk_id):
     raise ValueError("Cannot find walk with id %d" % walk_id)
 
 def load_from_master(log_file, walk_id):
+    """
+    Load a ``Walk`` from a master log file. A master log file provides paths to
+    trace files which were produced by ``Walk`` running services. This presumes
+    the trace files are available locally, so if they were produced on a remote
+    node, you'll need to make them available by whatever method you prefer.
+
+    :param str log_file: a path to the master log file
+    :param int walk_id: a ``walk_id`` which appears in the trace file
+    """
     with open(log_file, 'r') as f:
         # Burn the first line, which identifies the file as a master log
         f.readline()
@@ -62,7 +81,7 @@ def load_from_master(log_file, walk_id):
 
         raise ValueError("Cannot find walk with id %d", walk_id)
 
-def load_walk(log_file, walk_id):
+def _load_walk(log_file, walk_id):
     with open(log_file, 'r') as f:
         first_line = f.readline()
         try:
@@ -76,6 +95,18 @@ def load_walk(log_file, walk_id):
     return load_from_trace(log_file, walk_id)
 
 def replay_walk(walk_to_run, step=False, replay_func_qualname=None, ctx=None):
+    """
+    Run a single :class:`combtest.walk.Walk`.
+
+    :param Walk walk_to_run: self evident
+    :param bool step: if True, step Action-by-Action through the Walk; the user
+                      hits a key to proceed to the next Action.
+    :param str replay_func_qualname: qualname of a replay function to use.
+                                     Typically this will be
+                                     :func:`combtest.runner.replay_multistage_walk`,
+                                     but the user is free to provide their own.
+    :param object ctx: state/``ctx`` passed to the Walk for execution.
+    """
     if replay_func_qualname is None:
         replay_func = runner.replay_multistage_walk
     else:
@@ -87,8 +118,23 @@ def replay_walk(walk_to_run, step=False, replay_func_qualname=None, ctx=None):
 
 def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
         ctx=None):
+    """
+    Run a single :class:`combtest.walk.Walk`. Load it by deserializing it from
+    a trace file.
 
-    walk_to_run = load_walk(log_file, walk_id)
+    :param str log_file: path to either a master log file or trace file
+    :param int walk_id: a walk_id that appears in the trace file, or one of the
+                        trace files referenced by the master log file.
+    :param bool step: if True, step Action-by-Action through the Walk; the user
+                      hits a key to proceed to the next Action.
+    :param str replay_func_qualname: qualname of a replay function to use.
+                                     Typically this will be
+                                     :func:`combtest.runner.replay_multistage_walk`,
+                                     but the user is free to provide their own.
+    :param object ctx: state/``ctx`` passed to the Walk for execution.
+    """
+
+    walk_to_run = _load_walk(log_file, walk_id)
 
     return replay_walk(walk_to_run, step=step,
             replay_func_qualname=replay_func_qualname, ctx=ctx)

@@ -1,7 +1,7 @@
 """
-runner provides a set of tools for running Walks. This includes running Walks
-in stages using e.g. SyncPoints, and ways to run Walks in parallel across a
-cluster.
+This module provides a set of tools for running Walks. This includes running
+Walks in stages using e.g. SyncPoints, and ways to run Walks in parallel across
+a cluster.
 """
 from __future__ import print_function
 
@@ -20,7 +20,6 @@ import combtest.central_logger as central_logger
 from combtest.central_logger import logger
 import combtest.config as config
 import combtest.encode as encode
-import combtest.trace as trace
 import combtest.utils as utils
 import combtest.walk as walk
 from combtest.walk import CancelWalk, WalkFailedError, \
@@ -29,12 +28,18 @@ import combtest.worker as worker
 
 
 
-# NOTE: A runner is associated 1-to-1 with a worker_id
+# NOTE: A WalkRunner is associated 1-to-1 with a worker_id
 class WalkRunner(object):
+    """
+    A WalkRunner simply wraps a ``Walks`` execution method with some tracking
+    for reporting stats. The user is free to inherit and add more stats as they
+    see fit.
+    """
     def __init__(self, resp_object, reporting_interval=10000):
-        self.count = 0
-        self.error_count = 0
-        self.cancel_count = 0
+        self.stats = {'count': 0,
+                      'error_count': 0,
+                      'cancel_count': 0
+                     }
         self.reporting_interval = reporting_interval
         self.rlock = threading.RLock()
 
@@ -43,27 +48,56 @@ class WalkRunner(object):
         self.resp = resp_object
 
     def count_total(self):
+        """
+        Called to count the number of ``Walks``/Walk segments we started
+        running.
+        """
         with self.rlock:
-            self.count += 1
+            self.stats['count'] += 1
             if (self.count % self.reporting_interval) == 0:
                 central_logger.log_status("Started running %d walks" %
-                        self.count)
+                        self.stats['count'])
 
     def count_error(self):
+        """
+        Called on a ``Walk`` execution error.
+        """
         with self.rlock:
-            self.error_count += 1
+            self.stats['error_count'] += 1
 
     def count_cancel(self):
+        """
+        Called when a ``Walk`` is canceled.
+        """
         with self.rlock:
-            self.cancel_count += 1
+            self.stats['cancel_count'] += 1
+
+    @property
+    def count(self):
+        return self.stats['count']
+
+    @property
+    def error_count(self):
+        return self.stats['error_count']
+
+    @property
+    def cancel_count(self):
+        return self.stats['cancel_count']
 
     def run_walk(self, walk_to_run, ctx=None):
+        """
+        Called to run an individual ``Walk``.
+        """
         self.count_total()
         canceled = walk_to_run.execute(ctx)
         if canceled:
             raise CancelWalk()
 
     def prep_work_call(self, walk_to_run, walk_ctx):
+        """
+        Called to wrap a ``Walk`` into a callable that accepts a single
+        argument: the ``ctx``.
+        """
         def run(ctx=None):
             try:
                 self.run_walk(walk_to_run, ctx=walk_ctx)
@@ -75,6 +109,7 @@ class WalkRunner(object):
                 raise
         return run
 
+
 class WalkThreadPool(worker.ThreadPool):
     def on_error_item(self, work_item, ctx, exc, tb):
         logger.exception(exc)
@@ -83,12 +118,19 @@ class WalkThreadPool(worker.ThreadPool):
 class WalkExecutorService(worker.CoordinatorService):
     """
     Simplest rpyc-based services for running walks across the cluster: the user
-    only needs to provide a list of walks to their ServiceGroup. The rest is
-    handled.
+    only needs to provide a list of ``Walks`` to their corresponding ServiceGroup.
+    The rest is handled.
+
+    Note:
+        The user should probably not be calling into this directly. They
+        should be starting it up via rpyc.
     """
-    # PORT/WRAP
+    # TODO: PORT/WRAP
+    #: Override the type of ``WalkRunner`` used, here or in a child class
     WALK_RUNNER_TYPE = WalkRunner
-    worker_type = WalkThreadPool
+    #: Override the type of ``ThreadPool`` used for executing ``Walks``, here
+    #: or in a child class
+    WORKER_TYPE = WalkThreadPool
 
     def on_connect(self):
         super(WalkExecutorService, self).on_connect()
@@ -110,6 +152,18 @@ class WalkExecutorService(worker.CoordinatorService):
         return id_out
 
     def work_repack(self, work, ctx=None, resp=None):
+        """
+        This is called back to repackage each work item sent to the service.
+        The call is an opportunity to e.g. do some deserialization, wrap the
+        ``Walk`` in a ``WalkRunner``, or anything else the user needs to prep
+        the work for execution.
+
+        :param object work: the work to execute; typically this will be e.g. a
+                            JSONified ``Walk``.
+        :param object ctx: a ``ctx`` copied in for executing the ``Walk``
+        :param dict resp: a dict to which response objects can be attached by
+                          the ``Walk`` for retrieval later.
+        """
         if 'runner' not in ctx:
             if resp is None:
                 resp = {}
@@ -206,9 +260,7 @@ class WalkExecutorService(worker.CoordinatorService):
         resp['cancel_count'] = 0
         try:
             runner = self._runners[worker_id]
-            resp['count'] = runner.count
-            resp['error_count'] = runner.error_count
-            resp['cancel_count'] = runner.cancel_count
+            resp.update(runner.stats)
         except KeyError:
             # These cases can happen when:
             # * if the user tried to start some work and it threw an exception
@@ -270,6 +322,45 @@ def run_walks(walk_options,
               gather_ctxs=False,
               max_thread_count=None,
               **runner_kwargs):
+    """
+    Run a collection of :class:`combtest.walk.Walk`. This is one of the main
+    functions that the user should probably be using to run their tests.
+
+    :param iterable walk_options: An iterable of iterables which produce
+                                  :class:`combtest.action.Action`. Example: a
+                                  list of iterables produced by
+                                  ``MyActionClass.get_option_set()``.
+    :param object ctx: a state/``ctx`` to pass to copy and pass to the
+                       ``Walks`` when we execute them.
+    :param bool verbose: produce a verbose level log, and set the log level to
+                         DEBUG.
+    :param int logger_port: the port number where our local logger should
+                            accept data.
+    :param combtest.worker.CoordinatorService runner_class: the type of Walk
+                                                            execution service
+                                                            to use.
+    :param combtest.worker.ServiceGroup service_group_class: the type of
+                                                             ``ServiceGroup``
+                                                             we will use to
+                                                             coordinate remote
+                                                             executors
+    :param iterable service_infos: An iterable of any extra infos we need to
+                                   bootstrap the remote services. See
+                                   :class:`combtest.bootstrap.ServiceHandleArray`.
+    :param combtest.bootstrap.ServiceHandler service_handler_class: Type of
+                        ``ServiceHandler`` to use to bootstrap the services.
+    :param bool gather_ctxs: if True, gather and return all ``ctxs`` from the
+                             remote services at the end of the run. Will be
+                             returned as a mapping ip->[ctx, ...]
+    :param int max_thread_count: Max number of ``Walk`` executing threads that
+                                 each service will use.
+    :param runner_kwargs: kwargs to pass to the remote ``WalkRunner``.
+
+    :raises RuntimeError: when remote services can't be established and
+                          connected to.
+    :return: count of walks run, count of walk execution errors, total elapsed
+             time, remote ctxs if ``gather_ctxs == True``, else None
+    """
 
     if logger_port is None:
         logger_port = config.get_logger_port()
@@ -361,15 +452,21 @@ def run_walks(walk_options,
 #### Multistage walk running
 class MultistageWalkRunner(WalkRunner):
     """
-    Similar to WalkRunner, but walks are sent with an id that
-    allows them to reclaim context from a prior walk. Typically this is used
-    for walks to be executed in multiple stages: the second stage is sent with
-    an id matching the first.
-    When we say "reclaim context" we are referring to the dynamic_ctx.
-    NOTE: we are O(N) in memory, where N is the number of walks this runner is
-    responsible for. That could present a scalability problem if too many walk
-    are run in one shot.
+    Similar to ``WalkRunner``, but walks are sent with an id that allows them
+    to reclaim context from a prior ``Walk``. Typically this is used for Walks
+    to be executed in multiple stages: the second stage is sent with an id
+    matching the first.
+
+    Note:
+        When we say "reclaim context" we are referring to the ``dynamic_ctx`` /
+        ``ctx``.
     """
+    # This is O(N) in memory, where N is the number of ``Walks`` this runner
+    # is responsible for. That could present a scalability problem if too many
+    # ``Walks`` are run in one shot. Not much we can do unless we start
+    # serializing ctxs and stashing them on disk? That is a big change, though.
+    # Let's run with this for now.
+
     # PORT/WRAP - add self.PANIC
     def run_walk(self, walk_id, branch_id, walk_to_run,
             sync_point=None, ctx=None):
@@ -470,6 +567,11 @@ class MultistageWalkRunner(WalkRunner):
         return run
 
 class MultistageWalkRunningService(WalkExecutorService):
+    """
+    A ``WalkExecutorService`` for executing ``Walks`` in multiple stages. That
+    is: we can execute ``Walks`` in parts/slices. A ``walk_id`` is used to
+    refer to the ``Walks`` uniquely.
+    """
     # The 'runner' reclaims state associated with the walk and wraps up all the
     # args/kwargs for the runner func, then calls the runner func.
     RUNNER_TYPE = MultistageWalkRunner
@@ -544,6 +646,11 @@ class MultistageWalkRunningService(WalkExecutorService):
         return resp
 
 class ContinuingWalkServiceGroup(worker.ServiceGroup):
+    """
+    A ``ServiceGroup`` designed for running ``Walks`` in stages. We need to be
+    able to run ``Walks`` in stages in order to satisfy the semantic of
+    :class:`combtest.action.SyncPoint` during a run.
+    """
     WORK_QUANTUM_SIZE = 10000
 
     def __init__(self, *args, **kwargs):
@@ -576,12 +683,12 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
     def scatter_work(self, epoch, id_map=None, max_thread_count=None,
             ctx=None):
         """
-        Args:
-            epoch - iterable of (walk_id, branch_id, Walk)
-            id_map - optional map walk_id->(ip, port) of service currently
-                     holding that walk's ctx.
-        Returns:
-            id_map - updated id_map
+        Scatter some ``Walk`` segments out to the remote workers.
+
+        :param iterable epoch: iterable of (walk_id, branch_id, Walk)
+        :param dict id_map: optional map walk_id->(ip, port) of service
+                            currently holding that Walk's ctx.
+        :return: an updated ``id_map``
         """
         # Holds queued work for each IP
         # Maps client_key->work queue
@@ -640,12 +747,33 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
         return id_map, total_count, worker_ids
 
     def update_remote_contexts(self, ip, worker_ids, walk_ids, **kwargs):
+        """
+        Push an update to the ``ctxs`` on the remote executors. This is
+        sometimes useful when a :class:`combtest.action.SyncPoint` executes and
+        affects some set of ``Walks``.
+
+        :param str ip: hostname or IP where the remote executor can be found
+        :param iterable worker_ids: iterable of ints, corresponding to
+                                    ``worker_ids`` that can be found on the
+                                    remote executor.
+        :param kwargs: the keys/values to set on the remote ``ctx``.
+        """
         # NOTE: this makes heavy reliance on the singleton being used on the
         # other side: all workers are sharing a 'runner'
         worker_id = worker_ids[ip][0]
         self.clients[ip].update_remote_contexts(worker_id, walk_ids, **kwargs)
 
     def gather_all_resp(self, worker_ids):
+        """
+        Gather stats from remote workers. User may want to extend this to
+        include any new stats they think of.
+
+        :param dict worker_ids: a mapping hostname/ip->iterable of
+                                ``worker_ids`` from which we should
+                                gather responses.
+        :return: count of Walk segments run, count of Walk execution errors,
+                 count of Walks run
+        """
         total_segment_count = 0
         total_error_count = 0
         total_walk_count = 0
@@ -663,6 +791,19 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
 
     def start_remote_logging(self, ip, port, log_dir=None, log_namespace=None,
             verbose=False):
+        """
+        Start logging on all remote services.
+
+        :param str ip: hostname or ip of local machine, where a log server is
+                       running
+        :param int port: port number of local log server
+        :param str log_dir: path to remote log directory the service should
+                            use
+        :param str log_namespace: prefix for log files
+        :param bool verbose: True to signal debug logging
+        :return: a dict mapping remote service hostname/ip->remote log file
+                 locations
+        """
         logs = {}
         for cur_ip, client in self.clients.iteritems():
             client_logs = client.start_remote_logging(
@@ -696,6 +837,51 @@ def run_multistage_walks(walk_order,
                          # PORT/WRAP test_path=utils.DEFAULT_TEST_PATH,
                          #**file_config_kwargs,
                          ):
+    """
+    Run a collection of :class:`combtest.walk.Walk`. This should be the main
+    way to execute ``Walks`` for most users. This is the only interface that
+    supports correct execution of a :class:`combtest.action.SyncPoint`.
+
+    :param iterable walk_order: An iterable of iterables which produce
+                                :class:`combtest.action.Action`. Example: a
+                                list of iterables produced by
+                                ``MyActionClass.get_option_set()``.
+    :param object ctx: a state/``ctx`` to pass to copy and pass to the
+                       ``Walks`` when we execute them.
+    :param bool verbose: produce a verbose level log, and set the log level to
+                         DEBUG.
+    :param int logger_port: the port number where our local logger should
+                            accept data.
+    :param combtest.worker.CoordinatorService runner_class: the type of Walk
+                                                            execution service
+                                                            to use.
+    :param combtest.worker.ServiceGroup service_group_class: the type of
+                                                             ``ServiceGroup``
+                                                             we will use to
+                                                             coordinate remote
+                                                             executors
+    :param iterable service_infos: An iterable of any extra infos we need to
+                                   bootstrap the remote services. See
+                                   :class:`combtest.bootstrap.ServiceHandleArray`.
+    :param combtest.bootstrap.ServiceHandler service_handler_class: Type of
+                        ``ServiceHandler`` to use to bootstrap the services.
+    :param bool gather_ctxs: if True, gather and return all ``ctxs`` from the
+                             remote services at the end of the run. Will be
+                             returned as a mapping ip->[ctx, ...]
+    :param int max_thread_count: Max number of ``Walk`` executing threads that
+                                 each service will use.
+    :param str log_dir: Directory where we will store traces, debug logs, etc.
+                        Remote services will also attempt to store logs to
+                        the same path.
+
+    :raises RuntimeError: when remote services can't be established and
+                          connected to.
+    :return: count of walks run, count of walk execution errors, count of walk
+             segments run, total elapsed time, remote ctxs if
+             ``gather_ctxs == True`` else None, the location of the master
+             log file, where applicable.
+    """
+
 
     if logger_port is None:
         logger_port = config.get_logger_port()
@@ -860,14 +1046,17 @@ def run_multistage_walks(walk_order,
             master_log)
 
 
-# PORT/WRAP
+# TODO: PORT/WRAP
 def replay_multistage_walk(walk_to_run, step=False, log_errors=True, ctx=None):
-#def replay_multistage_walk(walk_to_run, test_file, step=False, verify=True,
-#        log_errors=True, ctx=None):
-    # PORT/WRAP ctx = utils.CtxTypeFile(test_file)
-    #print_trace = trace.JsonTracer(log_func=print)
-    #test_file.set_log_ops(True, trace_file=print_trace)
+    """
+    Run a single :class:`combtest.walk.Walk`
 
+    :param Walk walk_to_run: self evident
+    :param bool step: if True, step Action-by-Action through the Walk; the user
+                      hits a key to proceed to the next Action.
+    :param bool log_errors: log exceptions to the logger if True
+    :param object ctx: state/``ctx`` passed to the Walk for execution.
+    """
     try:
         for op in walk_to_run:
             if isinstance(op, SyncPoint):

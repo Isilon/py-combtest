@@ -1,13 +1,6 @@
 """
-This module provides ways of systematically generating operations and
-combinations thereof. This should be abstract enough to be applicable to many
-different domains. An overview of the moving parts:
-
-    Walk: a list of Actions, and the context in which an Action is executed.
-          Example: set protection of the file, select some range within it,
-          write over that range, take a snapshot.
-    StateCombinator: Generates Walks based on the cartesian product of 2 or
-                     more OptionSets.
+This module provides ways of systematically combining operations, sets of
+operations, etc., and executing such sequences of operations.
 """
 import copy
 from collections import Iterable
@@ -29,18 +22,29 @@ from combtest.utils import RangeTree, get_class_qualname, \
 
 
 class CancelWalk(RuntimeError):
+    """
+    Raised to immediately stop the execution of a :class:`combtest.walk.Walk`.
+    """
     pass
 
 class WalkFailedError(RuntimeError):
+    """
+    Raised when a :class:`combtest.walk.Walk` failed to execute to completion
+    for any reason (e.g. one of its operations raised an ``Exception``).
+    """
     pass
 
 
 
 class Walk(object):
     """
-    A Walk, named after the graph theory concept, is a list of Actions to
-    execute. The notion here is that each action takes us through a transition
+    A Walk, named after the graph theory concept, is a list of
+    :class:`combtest.action.Action` to execute, together with a piece of
+    state that the Actions can manipulate. The notion here is that each
+    ``Action`` performs an operation that takes us through a transition
     in state/action space.
+
+    :param iterable elems: An iterable of :class:`combtest.action.Action`
     """
     def __init__(self, *elems):
         _elems = []
@@ -58,6 +62,9 @@ class Walk(object):
         self._elems = _elems
 
     def append(self, elem):
+        """
+        Logically equivalent to list.append
+        """
         self._elems.append(elem)
 
     def __len__(self):
@@ -69,6 +76,9 @@ class Walk(object):
         return other._elems == self._elems
 
     def __add__(self, other):
+        """
+        :return: concatenation of this ``Walk`` and another
+        """
         if not isinstance(other, Walk):
             raise TypeError("Cannot add a Walk with object of type %s" %
                     str(type(other)))
@@ -80,10 +90,9 @@ class Walk(object):
 
     def execute(self, dynamic_ctx, log_errors=True):
         """
-        Execute the ops in order.
-        Returns True if the Walk was run successfully, False otherwise.
-        If an Action raises CancelWalk, we will stop executing immediately and
-        return True.
+        Execute the ``Actions`` in order. If an Action raises
+        :class:`CancelWalk`, we will stop executing immediately.
+        :return: True if the Walk was run successfully or `CancelWalk` was raised, False otherwise.
         """
         try:
             for op in self:
@@ -136,6 +145,26 @@ class Walk(object):
 
 
 class Segment(object):
+    """
+    This represents a collection of ``Walk`` portions to run. Example: if you
+    have 300 Walks made of: [Action1, Action2, SyncPoint1, Action3], the first
+    Segment will be the [Action1, Action2] portion of every one of those 300
+    walks. After running that Segment, we would then run the SyncPoint.
+
+    A Segment is: (sync_point_instance, [list, of, Action option sets, ...])
+
+    It's iterator produces the Walk portions + consistent indexing of those
+    portions so that a later portion can reclaim the earlier portion's state.
+
+    :param int walk_count: the total number of Walks this Segment will produce
+                           portions for.
+    :param iterable options: An iterable of Action sets, as you'd get from
+                             MyActionType.get_option_set()
+    :param SyncPoint sync_point_instance: SyncPoint instance to run before the
+                                          Walk portions.
+    :param int parent_period: how many options our parent segment is tracking
+    :param int level: Effectively: how many segments came before this segment
+    """
     # Presume not threadsafe
 
     def __init__(self, walk_count, options=(),
@@ -237,6 +266,10 @@ class Segment(object):
         return walk
 
 class Epoch(object):
+    """
+    An Epoch wraps a bunch of Walk portions that can run in parallel, and
+    provides them consistent walk_id and branch_id.
+    """
     # Not threadsafe
 
     def __init__(self, walk_idx_start, walk_idx_end, range_tree,
@@ -288,8 +321,16 @@ class Epoch(object):
 
 
 class WalkOptions(object):
-    # Not threadsafe
+    """
+    A WalkOptions accepts a set of :class:`Action` and :class:`SyncPoint`
+    options and produces an iterable of :class:`Epoch`. Each `Epoch` represents
+    a set of ``Walk`` segments which can run in parallel, and an optional
+    ``SyncPoint`` which should be run *before* the ``Walk`` portions.
 
+    Not threadsafe.
+
+    :param iterable walk_order: An iterable :class:`Action` types
+    """
     def __init__(self, walk_order):
         self._sync_point_idxs = []
         self._sizes = []
@@ -344,6 +385,10 @@ class WalkOptions(object):
 
     @property
     def sizes(self):
+        """
+        :return: A tuple of the size of the option sets for each
+                 :class:`Action` type in this ``WalkOptions``.
+        """
         return tuple(self._sizes)
 
     def _get_next_options(self, segment_options, start_idx=0):
@@ -594,25 +639,9 @@ class WalkOptions(object):
 class StateCombinator(object):
     """
     A StateCombinator gives us all combinations of elements from the provided
-    iterables. The idea is that we can systematically exhaust all walks of a
-    given subset from the state/action space. For example: we could have one
-    iterable providing mirroring vs fec protection for a file, another iterable
-    setting different block types in the first cluster of the file, and a 3rd
-    that always returns an "overwrite the cluster" command. As such, the order
-    that iterables are listed in the initializer matter: their respective
-    Actions are executed in order.
-    Conceptually, this is very similar to:
-        for x in X:
-            for y in Y:
-                for z in Z:
-                    if (x, y, z) is a valid combination:
-                        x()
-                        y()
-                        z()
-    "is a valid combination" is defined as all Actions returning False to
-    should_cancel, which is conditioned on the given walk. This let's an Action
-    e.g. disqualify the walk if we have included a mirror protection Action,
-    but the given Action does not make sense in the mirroring context.
+    iterables. Simple cartesian product of the sets for the most part. The only
+    exception is that it will toss out any Walks for which one of the
+    :class:`Action` returns ``action_instance.should_cancel() == True``.
     """
     def __init__(self, *iterables):
         self._iterables = iterables
@@ -625,7 +654,7 @@ class StateCombinator(object):
 
     def next(self):
         with self.rlock:
-            # Look for the next valid/not-canceled walk.
+            # Look for the next valid/not-cancelled walk.
             # StopIteration will be raised naturally by self._iterator, so we
             # don't need to.
             walk_actions = None
@@ -652,8 +681,13 @@ class StateCombinator(object):
 
         return json_iter()
 
-# PORT/WRAP: add back path, lin, file_config
+# TODO PORT/WRAP: add back path, lin, file_config
 class WalkOpTracer(central_logger.OpTracer):
+    """
+    Traces a :class:`Walk` portion + its adjacent :class:`SyncPoint` and
+    ``walk_id``. The id is consistent across portions so that you can relate
+    them back together later.
+    """
     def trace(self, **op_info):
         sync_point = op_info.get('sync_point', None)
         walk = op_info['walk']

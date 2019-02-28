@@ -1,8 +1,9 @@
+"""
+Misc utils
+"""
+
 import importlib
 import socket
-
-
-DEFAULT_TEST_PATH = "."
 
 
 # Use this to override the IP we will use
@@ -48,17 +49,36 @@ class _ExIP(object):
 _EX_IP = _ExIP()
 
 def get_my_IP():
+    """
+    Get our best guess at one of our local IPs that others could use to contact
+    us (e.g. to connect to a local log server).
+    """
     return _EX_IP.ip
 
 def set_my_IP(ip):
     """
-    Args:
-        ip as a string.
+    Set the IP that the rest of the system should assume is our local IP
+    address. This may work for a hostname as well, but that isn't well tested.
+
+    :param str ip: ip as a string
     """
     _EX_IP.ip = ip
 
 
 class RangeTree(object):
+    """
+    A representation of a range, with the levels of the tree representing
+    hierarchical splits of the range.
+    O(N) mem in the number of sub-ranges.
+    Example::
+     -->972
+       -->486
+         -->243
+         -->243
+       -->486
+         -->243
+         -->243
+    """
     class Node(object):
         def __init__(self, max_idx, value):
             self.max_idx = max_idx
@@ -103,9 +123,23 @@ class RangeTree(object):
 
 
 def get_class_qualname(cls):
+    """
+    Give a fully qualified name for a class (and therefore a function ref as
+    well). Example: 'combtest.action.Action'.
+
+    Note:
+        Python3 has this, or something like it, called ``__qualname__``. We
+        implement our own here to retain control of it, and give us Python2
+        compat.
+    """
     return cls.__module__ + "." + cls.__name__
 
 def get_class_from_qualname(name):
+    """
+    Resolve a fully qualified class name to a class, attempting any imports
+    that need to be done along the way.
+    :raises: ImportError or AttributeError if we can't figure out how to import it
+    """
     tokens = name.split(".")
     module_name = ".".join(tokens[:-1])
     class_name = tokens[-1]
