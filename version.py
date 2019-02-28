@@ -3,5 +3,5 @@ __version__ = "{0}.{1}.{2}".format(*__version_info__)
 
 COMBTEST_VERSION = __version__
 
-__author__ = """EMC"""
+__author__ = """Matthew J. Bryan (Dell/EMC Isilon)"""
 __email__ = 'matthew.bryan@isilon.com'
