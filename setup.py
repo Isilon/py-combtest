@@ -40,7 +40,7 @@ else:
 
 os.system('cp -f version.py combtest/')
 
-# XXX file in with nose or whatever if needed
+# Holding place for later, if needed.
 test_requirements = [
 ]
 
@@ -68,4 +68,5 @@ setup(
     cmdclass={
         'clean': CleanCommand,
     },
+    test_suite='combtest.test',
 )
