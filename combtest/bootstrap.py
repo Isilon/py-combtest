@@ -1,10 +1,18 @@
 """
-We need *some* way to bootstrap the rpyc-based service
-("combtest.worker.CoordinatorService") on the remote node. We don't need to
-make too many assumptions to do so. Let's provide a general interface for
-accomplishing this (ConnectionArray), and a base SSH implementation,
-and then let the client code swap it out. combtest.worker uses this interface
-to bootstrap the service instances.
+We need some way to bootstrap the rpyc-based
+:class:`combtest.worker.CoordinatorService`. That can include bootstrapping it
+on a remote node if we want to take advantage of a whole cluster. We don't need
+to make too many assumptions to do so. Let's provide a general interface for
+accomplishing this (:class:`ServiceHandleArray`), and a base implementation for
+bootstrapping locally using ``multiprocessing``
+(:class:`ServiceHandler_Local`). The client can swap out ``ServiceHandlers`` to
+provide alternative bootstrapping logic. ``ServiceHandleArray`` and
+``ServiceHandler`` simply provide the interface that a
+:class:`combtest.worker.ServiceGroup` uses to bootstrap the service instances.
+
+Note:
+    A paramiko-based ``ServiceHandler`` class for SSH connections can be
+    found in :class:`combtest.ssh_handle.ServiceHandler_SSH`.
 """
 
 import atexit
@@ -24,13 +32,26 @@ import combtest.forkjoin as forkjoin
 
 # We want to provide a default function for bootstrapping services. Our default
 # is in 'combtest.worker', and the user can provide their own. But we don't
-# want bootstrap to depend on worker. This will rarely change. So how about we
-# hardcode and let the user override as they see fit?  Unfortunately IDEs wont
-# see a reference here (I don't think?). What are alternatives?
+# want bootstrap to depend on combtest.worker. This will rarely change. So how
+# about we hardcode and let the user override as they see fit?  Unfortunately
+# IDEs wont see a reference here (I don't think?). What are alternatives?
 DEFAULT_SERVICE_RUN_FUNC = 'combtest.worker.start_service_by_name'
 
 
 class ConnectionInfo(object):
+    """
+    This is a simple struct-like object meant to wrap all the stuff needed to
+    bootstrap a service.
+
+    :param str ip: A string that can be passed as the first argument to
+                   ``rpyc.connect``. Typically this will be an IP address for
+                   our purposes, but could also be a hostname.
+    :param int port: The port number where the service can be found
+    :param object service_info: Additional information your class may need for
+                                bootstrapping the service. For the SSH
+                                implementation for example, these will be some
+                                authentication bits.
+    """
     def __init__(self, ip, port, service_info):
         self.ip = ip
         self.port = port
@@ -43,10 +64,17 @@ class ConnectionInfo(object):
         return repr(self)
 
 
-# Global tracking of oustanding (not yet shutdown) instances, for cleanup
-# purposes.
-
 class ServiceHandler(object):
+    """
+    A ``ServiceHandler`` implements a way of bootstrapping an rpyc-based
+    service. This base class defines the interface and should be overridden.
+
+    :param ConnectionInfo connection_info: Specifies where the service should
+                                           be contactable once it is
+                                           bootstrapped, and any additional
+                                           information needed to bootstrap it.
+    """
+
     INSTANCES = []
 
     def __init__(self, connection_info):
@@ -72,9 +100,26 @@ class ServiceHandler(object):
 
     def start_cmd(self, service_class,
             service_run_func=DEFAULT_SERVICE_RUN_FUNC):
+        """
+        This method will be called to actually do the bootstrapping work. It
+        should be overridden.
+
+        :param <str|rpyc.Service> service_class: A full __qualname__ of the
+                                                 service we are bootstrapping,
+                                                 or the class itself.
+        :param str service_run_func: optional override of the function that
+                                     will be used on the remote side to start
+                                     the service up. Needs to be a __qualname__.
+                                     Typically this can be left default.
+        """
         raise NotImplementedError()
 
     def shutdown(self):
+        """
+        Called to shut the service down. Should be idempotent unless the class
+        writer is *very* careful about how they shut their services down
+        manually. The overridden method should call the super-method.
+        """
         # (client code to implement actual connection shutdown in subclass)
         self.INSTANCES.remove(self)
 
@@ -86,7 +131,12 @@ class ServiceHandler(object):
 
 
 class ServiceHandler_Local(ServiceHandler):
-    # In seconds
+    """
+    A ServiceHandler implementation foor bootstrapping locally via simple
+    multiprocessing.Process call out.
+    """
+    # In seconds. If this much time or greater goes by during shutdown() we
+    # will just point a mean signal at the child proc.
     SHUTDOWN_TIMEOUT = 120
 
     def __init__(self, connection_info):
@@ -158,6 +208,24 @@ class ServiceHandler_Local(ServiceHandler):
 
 
 class ServiceHandleArray(object):
+    """
+    A ServiceHandlerArray is a collection of ServiceHandlers, together with
+    dynamic foreach-style dispatch on attribute access. Example:
+
+    >>> sa.ServiceHandleArray(blah blah blah)
+    >>> sa.q(1)
+
+    this will dispatch an access to the ``q`` attribute of each contained
+    ``ServiceHandler`` in parallel.
+
+    :param iterable connection_infos: An iterable of :class:`ConnectionInfo`
+                                      which describe how we will start the
+                                      services up.
+    :param bool spawn: True if we should spawn the services during
+                       initialization, False otherwise. The user can later
+                       spawn them manually using :func:`spawn`.
+    """
+
     # To be a subclass of ServiceHandler
     REMOTE_CONNECTION_CLASS = ServiceHandler
 
@@ -179,15 +247,22 @@ class ServiceHandleArray(object):
             self.spawn_many(self._connection_infos)
 
     def attach(self, connection_info, instance):
+        """
+        Attach a single instance to this array.
+        """
         key = repr(connection_info)
         assert key not in self.instances, "ERROR: we already have an " \
                 "instance for %s" % key
         self.instances[key] = instance
 
-    def dettach(self, key):
+    def _dettach(self, key):
         """
         Dettach an instance from this array and return it. This does not close
-        the instance; simply removes it from the array.
+        the instance; simply removes it from the array. This is a protected
+        member to avoid confusion around the meaning of the key, and to enforce
+        invariant: that repr(connection_info) is the key we use for an
+        instance, since we can't be 100% sure that a ConnectionInfo is
+        hashable.
         """
         assert key in self.instances, "ERROR: no such instance %s" % key
         instance = self.instances[key]
@@ -196,14 +271,26 @@ class ServiceHandleArray(object):
 
     @property
     def is_alive(self):
+        """
+        :return: True if we have any connections, False otherwise. This is
+                 not directly related to whether the services are up; e.g.
+                 they may have died for some reason.
+        """
         # For now: don't try to check connection states. Let's just check if we
         # have any connections.
         return bool(self.instances)
 
     def spawn(self, connection_info):
+        """
+        Spawn a single instance and attach it to this array.
+
+        :param ConnectionInfo connection_info: The ConnectionInfo that
+                                               describes how to start this
+                                               instance.
+        """
         # We assert here in addition to self.attach to prevent even attempting
         # a connection if we already have one, while still having an assert in
-        # self.attach for users that are hitting it directly.
+        # self.attach for users that are using it directly.
         key = repr(connection_info)
         assert key not in self.instances, "ERROR: we already have an " \
                 "instance for %s" % key
@@ -211,134 +298,64 @@ class ServiceHandleArray(object):
         self.attach(connection_info, instance)
 
     def spawn_many(self, connection_infos=None):
+        """
+        Spawn and attach a bunch of instances.
+
+        :param iterable connection_infos: if None, we will spawn using the
+                                          :class:`ConnectionInfo` s passed to
+                                          the initializer. Otherwise,
+                                          ``connection_infos`` should be an
+                                          iterable of ``ConnectionInfos``.
+        """
         work = []
 
         if connection_infos is not None:
             self._connection_infos = copy.copy(connection_infos)
 
         for connection_info in self._connection_infos:
-            work_item = forkjoin.WorkItem(self.spawn,
-                                          (connection_info, ),
-                                          {}
-                                         )
+            work_item = forkjoin.WorkItem(self.spawn, connection_info)
             work.append(work_item)
 
         results = forkjoin.fork_join(work)
-        for idx, result in results.items():
+        for idx, result in enumerate(results):
             if isinstance(result, BaseException):
                 connection_info = self._connection_infos[idx]
                 sys.stderr.write("ERROR spawning (%s): " %
                         repr(connection_info))
                 raise result
 
-    def shutdown_single(self, key):
+    def _shutdown_single(self, key):
         """
         Shutdown a single instance and stop tracking it.
 
         :raises KeyError: if 'ip' does not correspond to an instance we are
                           tracking.
         """
-        instance = self.dettach(key)
+        instance = self._dettach(key)
         instance.shutdown()
 
     def shutdown(self, hard=False):
         """
         Shutdown all instances this array is tracking.
+
+        :param bool hard: if False, we will assert that instances shut down
+                          cleanly, otherwise we won't.
         """
         work = []
         keys = copy.copy(self.instances.keys())
         for key in keys:
-            work_item = forkjoin.WorkItem(self.shutdown_single, (key,), {})
+            work_item = forkjoin.WorkItem(self._shutdown_single, key)
             work.append(work_item)
 
         results = forkjoin.fork_join(work)
         if not hard:
-            for idx, result in results.items():
+            for idx, result in enumerate(results):
                 if isinstance(result, BaseException):
                     key = keys[idx]
                     sys.stderr.write("ERROR shutting down (%s): " % key)
                     raise result
 
         self.INSTANCES.remove(self)
-
-    def foreach_serial(self, cmd, include=None, exclude=None, expected_exit=0):
-        if not self.is_alive:
-            raise RuntimeError("ERROR: no live connections")
-
-        # Map connection_info->output
-        outputs = {}
-
-        for connection_info, instance in self.instances.iteritems():
-            if include and connection_info not in include:
-                continue
-
-            if exclude and connection_info in exclude:
-                continue
-
-            output, exitcode = instance.send_cmd(cmd)
-            if exitcode != expected_exit:
-                raise RuntimeError("Got bad exit running on %s: %s: %s" %
-                        (connection_info, str(exitcode), str(output)))
-
-            outputs[connection_info] = output
-
-        return outputs
-
-    def foreach(self, cmd, include=None, exclude=None, expected_exit=0,
-            timeout=0.5):
-        """
-        Run a command on all boxes in parallel
-
-        :param cmd: command to run in the shell as a string
-        :param include: ips of boxes where we will run the command. Default is
-                        to run on all.
-        :param exclude: ips of boxes where we will not run the command. Default
-                        is not to exclude any.
-        :param expected_exit: (optional) assert the exit code is equal to this,
-                               or if this is ERRNO_IGNORE, don't assert. Assert
-                               for all boxes on which we run the cmd.
-        :returns: A dict mapping ip -> output, where output is:
-                  (output, exitcode)
-        """
-        if not self.is_alive:
-            raise RuntimeError("ERROR: no live connections")
-
-        def run_async_op(connection_info, cmd):
-            result = self.instances[connection_info].cmd(cmd, timeout=timeout)
-            return result
-
-        work_items = []
-        for connection_info in self.instances:
-            if include and connection_info not in include:
-                continue
-
-            if exclude and connection_info in exclude:
-                continue
-
-            work_item = forkjoin.WorkItem(run_async_op, (connection_info,
-                    cmd), {})
-            work_items.append(work_item)
-
-        results = forkjoin.fork_join(work_items, suppress_errors=True)
-        # Map connection_info->output
-        outputs = {}
-        for work_item_idx, result in results.iteritems():
-            if result and not isinstance(result, BaseException):
-                output, exitcode = result
-            else:
-                output = None
-                exitcode = None
-
-            work_item = work_items[work_item_idx]
-            connection_info = work_item.args[0]
-
-            if exitcode is None or exitcode != expected_exit:
-                raise RuntimeError("Got bad exit running on %s: %s" %
-                        (connection_info, str(results)))
-            else:
-                outputs[connection_info] = output
-
-        return outputs
 
     def __getattr__(self, attr):
         """
@@ -361,7 +378,7 @@ class ServiceHandleArray(object):
                 back_map = []
                 for service_info, instance in self.instances.iteritems():
                     current_work = forkjoin.WorkItem(getattr(instance, attr),
-                            args, kwargs)
+                            *args, **kwargs)
                     work.append(current_work)
                     back_map.append(service_info)
 
@@ -371,7 +388,7 @@ class ServiceHandleArray(object):
                 # maps connection_info->result
                 output = {}
                 exceptions = {}
-                for idx, result in results.iteritems():
+                for idx, result in enumerate(results):
                     connection_info = back_map[idx]
                     output[connection_info] = result
                     if isinstance(result, BaseException):
@@ -388,6 +405,9 @@ class ServiceHandleArray(object):
 
     @classmethod
     def shutdown_all(cls):
+        """
+        Shutdown all arrays which have not yet been shut down.
+        """
         instances = copy.copy(cls.INSTANCES)
         for instance in instances:
             instance.shutdown()
