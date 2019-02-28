@@ -59,8 +59,8 @@ if __name__ == "__main__":
 
     master = {}
     start_time = time.time()
-    for ip, worker_id in worker_ids.iteritems():
-        ctx = sg.gather_ctx(ip, worker_id)
+    for con, worker_id in worker_ids.iteritems():
+        ctx = sg.gather_ctx(con, worker_id)
         d_ctx = rpyc.utils.classic.obtain(ctx)
         master.update(d_ctx)
     print "resp retrieval took", time.time() - start_time
@@ -78,8 +78,8 @@ if __name__ == "__main__":
 
     start_time = time.time()
     master = {}
-    for ip, worker_id in worker_ids.iteritems():
-        resp = sg.gather_ctx(ip, worker_id)
+    for con, worker_id in worker_ids.iteritems():
+        resp = sg.gather_ctx(con, worker_id)
         master.update(resp)
     print "resp retrieval took", time.time() - start_time
     print "resp is", master

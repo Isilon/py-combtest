@@ -23,31 +23,31 @@ def random_option(option_set):
     options = [option for option in option_set]
     return random.choice(options)
 
-#class TestReplayByLib(unittest.TestCase):
-#    """
-#    This is pretty much just a local 'run walk' function. Let's get code
-#    coverage of it anyway.
-#    """
-#
-#    def _get_random_walk(self):
-#        s1 = random_option(actions.SyncPointAppend1.get_option_set())
-#        a1 = random_option(actions.ActionAppend1.get_option_set())
-#        a2 = random_option(actions.ActionAppend1.get_option_set())
-#
-#        test_walk = walk.Walk([s1, a1, a2])
-#        return test_walk
-#
-#    def test_walk_replay(self):
-#        test_walk = self._get_random_walk()
-#
-#        ctx = {}
-#        canceled = runner.replay_multistage_walk(test_walk, ctx=ctx)
-#        self.assertFalse(canceled)
-#
-#
-#        result = ctx['inner']
-#        expected = [a.static_ctx for a in test_walk]
-#        self.assertEquals(result, expected)
+class TestReplayByLib(unittest.TestCase):
+    """
+    This is pretty much just a local 'run walk' function. Let's get code
+    coverage of it anyway.
+    """
+
+    def _get_random_walk(self):
+        s1 = random_option(actions.SyncPointAppend1.get_option_set())
+        a1 = random_option(actions.ActionAppend1.get_option_set())
+        a2 = random_option(actions.ActionAppend1.get_option_set())
+
+        test_walk = walk.Walk([s1, a1, a2])
+        return test_walk
+
+    def test_walk_replay(self):
+        test_walk = self._get_random_walk()
+
+        ctx = {}
+        canceled = runner.replay_multistage_walk(test_walk, ctx=ctx)
+        self.assertFalse(canceled)
+
+
+        result = ctx['inner']
+        expected = [a.static_ctx for a in test_walk]
+        self.assertEquals(result, expected)
 
 class TestReplayFromTrace(unittest.TestCase):
     def test_walk_replay(self):
@@ -115,7 +115,7 @@ class TestReplayFromTrace(unittest.TestCase):
         self.assertTrue('inner' in ctx)
         self.assertEquals(ctx['inner'], expected)
 
-        #shutil.rmtree(log_dir)
+        shutil.rmtree(log_dir)
 
 if __name__ == "__main__":
     unittest.main()
