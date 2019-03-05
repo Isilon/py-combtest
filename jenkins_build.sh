@@ -38,7 +38,7 @@ if [[ $rc != 0 ]]; then
     exit $rc;
 fi
 
-docker run --rm --network none -it docker.west.isilon.com/pycombtest
+docker run --rm --network none docker.west.isilon.com/pycombtest
 rc=$?;
 if [[ $rc != 0 ]]; then
     echo "Test failure; exiting"
