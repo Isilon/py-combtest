@@ -342,6 +342,7 @@ def stop_recv_remote_logs():
 
 @atexit.register
 def _clean_log_recvr():
+    import copy
     instances = copy.copy(LogRecvr.INSTANCES)
     for instance in instances:
         instance.stop()

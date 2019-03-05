@@ -61,6 +61,12 @@ import combtest.utils as utils
 rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 
+def _ensure_stderr_handler():
+    # Root logger will log issues to stderr
+    root_logger = central_logger.logging.getLogger()
+    sh_stderr = central_logger.logging.StreamHandler(sys.stderr)
+    root_logger.addHandler(sh_stderr)
+
 
 class ThreadPool(object):
     """
@@ -553,6 +559,9 @@ def start_service(service_class, port=None):
                      :class:`combtest.config`
     :return: a handle to the resulting :class:`ThreadedServer`.
     """
+    # rpyc uses logging, and we want to dump its logging somehow on errors
+    _ensure_stderr_handler()
+
     if port is None:
         port = get_service_port()
     else:
@@ -575,6 +584,9 @@ def start_service_by_name(service_name, port=None):
                      :class:`combtest.config`
     :return: a handle to the resulting :class:`ThreadedServer`.
     """
+    # rpyc uses logging, and we want to dump its logging somehow on errors
+    _ensure_stderr_handler()
+
     if port is None:
         port = get_service_port()
     else:
