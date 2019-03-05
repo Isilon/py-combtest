@@ -1,4 +1,4 @@
-FROM combtest_base:latest
+FROM docker.west.isilon.com/combtest_base:latest
 MAINTAINER Matthew J. Bryan "matthew.bryan@isilon.com"
 COPY . /combtest
 WORKDIR /combtest

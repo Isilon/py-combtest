@@ -54,6 +54,10 @@ lint:
 test: ## run tests quickly with the default Python
 	python -m unittest discover combtest.test
 
+docker-base:
+	docker build --file Dockerfile.base -t docker.west.isilon.com/combtest_base . &&
+	docker push -t docker.west.isilon.com/combtest_base
+
 docs-clean:
 	$(MAKE) -C $(DOCSRC) clean
 
