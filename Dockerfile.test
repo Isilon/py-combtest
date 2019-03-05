@@ -1,0 +1,14 @@
+FROM ubuntu:latest
+MAINTAINER Matthew J. Bryan "matthew.bryan@isilon.com"
+COPY . /combtest
+WORKDIR /combtest
+RUN apt-get update -y
+RUN apt-get install -y python-pip
+RUN pip install --upgrade pip
+RUN python setup.py build
+RUN pip install .
+#ENTRYPOINT ["/bin/bash"]
+#CMD ["make", "test"]
+ENTRYPOINT ["python"]
+CMD ["-m", "unittest", "discover", "combtest.test"]
+
