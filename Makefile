@@ -27,6 +27,9 @@ DOCSRC		= _src_doc
 VENV		= /tmp/combtest_$(CURRENT_REV)
 
 
+build: ## build this
+	python setup.py build
+
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
@@ -49,7 +52,7 @@ lint:
 	pylint combtest
 
 test: ## run tests quickly with the default Python
-	python setup.py test
+	python -m unittest discover combtest.test
 
 docs-clean:
 	$(MAKE) -C $(DOCSRC) clean
@@ -59,23 +62,9 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C $(DOCSRC) html
 	$(BROWSER) docs/index.html
 
-$(VENV):
+venv:
 	virtualenv --system-site-packages $(VENV)
-	$(VENV)/bin/pip install -r requirements.txt
-	$(VENV)/bin/pip install -r $(DOCSRC}/requirements.txt
-
-#gh-pages: $(VENV)
-#        PYTHONPATH=.:$(VENV)/lib/python2.7/site-packages $(VENV)/bin/$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-#        git worktree add $(GH_PAGES_SRC) origin/gh-pages
-#        rm -rf $(GH_PAGES_SRC)/*
-#        mv -fv build/html/* $(GH_PAGES_SRC)
-#        cd $(GH_PAGES_SRC) && \
-#                git branch -D gh-pages && \
-#                git checkout -b gh-pages && \
-#                git add . && git commit -a -m "Generated gh-pages for $(CURRENT_REV)" && \
-#                git push origin gh-pages
-#        rm -rf $(GH_PAGES_SRC) && git worktree prune
-
+	$(VENV)/bin/pip install -r .
 
 #release: clean ## package and upload a release
 #	python setup.py sdist upload # TODO
@@ -86,8 +75,7 @@ $(VENV):
 #	python setup.py bdist_wheel
 #	ls -l dist
 
-build:
-	python setup.py build
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	pip install .
+
