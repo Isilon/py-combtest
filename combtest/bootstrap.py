@@ -18,7 +18,6 @@ Note:
 import atexit
 import copy
 import multiprocessing
-import os
 import sys
 import time
 
@@ -99,7 +98,7 @@ class ServiceHandler(object):
         return self._service_ip
 
     def start_cmd(self, service_class,
-            service_run_func=DEFAULT_SERVICE_RUN_FUNC):
+                  service_run_func=DEFAULT_SERVICE_RUN_FUNC):
         """
         This method will be called to actually do the bootstrapping work. It
         should be overridden.

@@ -96,7 +96,7 @@ def fork_join(work,
                             len(running_work_item.result) > 1 and \
                             isinstance(returned_item, BaseException):
                         sys.stderr.write(str(running_work_item.work_item) +
-                                "\n")
+                                         "\n")
                         sys.stderr.write(running_work_item.result[1] + "\n")
                 else:
                     returned_item = None
@@ -110,7 +110,9 @@ def fork_join(work,
             work_item = remaining_work.pop()
             result_container = []
             t = threading.Thread(target=work_runner, args=(work_item.func,
-                    work_item.args, work_item.kwargs, result_container))
+                                                           work_item.args,
+                                                           work_item.kwargs,
+                                                           result_container))
             t.start()
             running_work.append((idx, _RunningWorkItem(t, work_item,
                     result_container)))

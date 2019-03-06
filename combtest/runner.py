@@ -6,10 +6,8 @@ a cluster.
 from __future__ import print_function
 
 import copy
-import json
 import os
 import shutil
-import sys
 import threading
 import time
 import traceback
@@ -56,7 +54,7 @@ class WalkRunner(object):
             self.stats['count'] += 1
             if (self.count % self.reporting_interval) == 0:
                 central_logger.log_status("Started running %d walks" %
-                        self.stats['count'])
+                                          self.stats['count'])
 
     def count_error(self):
         """
@@ -186,7 +184,9 @@ class WalkExecutorService(worker.CoordinatorService):
 
     def exposed_start_work(self, work, max_thread_count=None, ctx=None):
         worker_id = super(WalkExecutorService, self).exposed_start_work(work,
-                max_thread_count=max_thread_count, ctx=ctx)
+                                                                        max_thread_count=max_thread_count,
+                                                                        ctx=ctx
+                                                                       )
 
         self._runners[worker_id] = self._ctxs[worker_id].get('runner', None)
 
@@ -205,16 +205,17 @@ class WalkExecutorService(worker.CoordinatorService):
 
     def exposed_run(self, work, max_thread_count=None, ctx=None):
         worker_id = super(WalkExecutorService, self).exposed_run(work,
-                max_thread_count=max_thread_count,
-                ctx=ctx,
-                )
+                                                                 max_thread_count=max_thread_count,
+                                                                 ctx=ctx,
+                                                                )
 
         self._runners[worker_id] = self._ctxs[worker_id].get('runner', None)
 
         return worker_id
 
     def exposed_start_remote_logging(self, ip, port, log_dir=None,
-            log_namespace=None, verbose=False, **kwargs):
+                                     log_namespace=None, verbose=False,
+                                     **kwargs):
         """
         Args:
             ip, port - where we connect our logging socket handler
@@ -228,7 +229,7 @@ class WalkExecutorService(worker.CoordinatorService):
 
                 if log_dir is not None:
                     log_fname = "%s.%d.%d.log" % (str(my_ip), self._service_port,
-                            int(time.time()))
+                                                  int(time.time()))
                     if log_namespace is not None:
                         log_fname = log_namespace + "." + log_fname
                     verbose_file_path = os.path.join(log_dir, log_fname)
@@ -239,7 +240,7 @@ class WalkExecutorService(worker.CoordinatorService):
             if log_namespace is None:
                 log_namespace = log_dir
             log_namespace += "%s.%d.%d.log" % (str(my_ip), self._service_port,
-                            int(time.time()))
+                                               int(time.time()))
 
             central_logger.add_op_trace(log_dir,
                                         WalkOpTracer,
@@ -421,9 +422,9 @@ def run_walks(walk_options,
             total_count = 0
             error_count = 0
             for resp in resps:
-                if not resp or not 'count' in resp:
+                if not resp or 'count' not in resp:
                     raise RuntimeError("ERROR: did not receive all responses: %s" %
-                            str(resps))
+                                       str(resps))
                 total_count += resp['count']
                 error_count += resp['error_count']
 
@@ -442,7 +443,7 @@ def run_walks(walk_options,
                 pass
 
         central_logger.log_status("Ran %d walks; %d errors; in %0.2fs",
-                total_count, error_count, elapsed)
+                                  total_count, error_count, elapsed)
 
         return total_count, error_count, elapsed, ctxs_out
     finally:
@@ -469,7 +470,7 @@ class MultistageWalkRunner(WalkRunner):
 
     # PORT/WRAP - add self.PANIC
     def run_walk(self, walk_id, branch_id, walk_to_run,
-            sync_point=None, ctx=None):
+                 sync_point=None, ctx=None):
         ctx = self.get_walks_ctx(walk_id, branch_id, ctx=ctx)
 
         if 'cancel' in ctx and ctx['cancel']:
@@ -488,7 +489,7 @@ class MultistageWalkRunner(WalkRunner):
                         walk_id=walk_id,
                         sync_point=sync_point,
                         branch_id=branch_id)
-        start_time = time.time()
+        #start_time = time.time()
 
         self.count_total()
 
@@ -556,7 +557,7 @@ class MultistageWalkRunner(WalkRunner):
         def run(ctx=None):
             try:
                 self.run_walk(walk_id, branch_id, walk_to_run, ctx=ctx,
-                        sync_point=sync_point)
+                              sync_point=sync_point)
             except CancelWalk:
                 self.count_cancel()
             except Exception as e:
@@ -591,7 +592,7 @@ class MultistageWalkRunningService(WalkExecutorService):
         wr = ctx['runner']
         walk_id, branch_id, current_walk = encode.decode(work)
         call = wr.prep_work_call((walk_id, branch_id, current_walk,
-                ctx.get('sync_point', None)))
+                                  ctx.get('sync_point', None)))
         return call
 
     def exposed_update_remote_contexts(self, worker_id, walk_ids, **kwargs):
@@ -603,7 +604,7 @@ class MultistageWalkRunningService(WalkExecutorService):
                 runner.update_walks_ctx(walk_id, kwargs)
         except KeyError:
             raise RuntimeError("Could not update walk's context; did an "
-                    "earlier stage fail?")
+                               "earlier stage fail?")
 
     def exposed_gather_ctx(self, worker_id):
         try:
@@ -626,7 +627,7 @@ class MultistageWalkRunningService(WalkExecutorService):
 
     def exposed_gather_resp(self, worker_id):
         resp = super(MultistageWalkRunningService,
-                self).exposed_gather_resp(worker_id)
+                     self).exposed_gather_resp(worker_id)
 
         resp['segment_count'] = resp['count']
         del resp['count']
@@ -676,12 +677,12 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
         ctx['sync_point'] = sync_point
 
         worker_id = client.start_work(queue, max_thread_count=max_thread_count,
-                ctx=ctx)
+                                      ctx=ctx)
         del queue[:]
         return worker_id
 
     def scatter_work(self, epoch, id_map=None, max_thread_count=None,
-            ctx=None):
+                     ctx=None):
         """
         Scatter some ``Walk`` segments out to the remote workers.
 
@@ -739,8 +740,8 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
             client = clients[target_key]
             total_count += len(queue)
             worker_id = self._flush_queue(target_key, client, queue,
-                    max_thread_count=max_thread_count,
-                    ctx=ctx, sync_point=epoch.sync_point)
+                                          max_thread_count=max_thread_count,
+                                          ctx=ctx, sync_point=epoch.sync_point)
             worker_ids[target_key].append(worker_id)
 
         self.id_map = id_map
@@ -780,17 +781,17 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
         for ip, ids in worker_ids.iteritems():
             for worker_id in ids:
                 resp = self.gather_resp(ip, worker_id)
-                if not resp or not 'segment_count' in resp:
+                if not resp or 'segment_count' not in resp:
                     raise RuntimeError("ERROR: did not receive whole "
-                            "response for %s, id %d: %s" %
-                            (ip, worker_id, str(resp)))
+                                       "response for %s, id %d: %s" %
+                                       (ip, worker_id, str(resp)))
                 total_segment_count += resp['segment_count']
                 total_error_count += resp['error_count']
                 total_walk_count += resp['walk_count']
         return total_segment_count, total_error_count, total_walk_count
 
     def start_remote_logging(self, ip, port, log_dir=None, log_namespace=None,
-            verbose=False):
+                             verbose=False):
         """
         Start logging on all remote services.
 
@@ -836,7 +837,7 @@ def run_multistage_walks(walk_order,
                          log_dir=None,
                          # PORT/WRAP test_path=utils.DEFAULT_TEST_PATH,
                          #**file_config_kwargs,
-                         ):
+                        ):
     """
     Run a collection of :class:`combtest.walk.Walk`. This should be the main
     way to execute ``Walks`` for most users. This is the only interface that
@@ -969,7 +970,7 @@ def run_multistage_walks(walk_order,
         master_worker_ids = {}
         for epoch_list in wo:
             central_logger.log_status("Epoch list has %d epochs",
-                    len(epoch_list))
+                                      len(epoch_list))
             for epoch in epoch_list:
                 ctx_copy = copy.copy(ctx)
                 if epoch.sync_point is not None:
@@ -985,16 +986,16 @@ def run_multistage_walks(walk_order,
                         #          "epoch": epoch
                         #         }
                         ctx_copy = epoch.sync_point(ctx=ctx_copy,
-                                branch_id=branch_id,
-                                epoch=epoch,
-                                service=sg,
-                                worker_ids=master_worker_ids
-                                )
+                                                    branch_id=branch_id,
+                                                    epoch=epoch,
+                                                    service=sg,
+                                                    worker_ids=master_worker_ids
+                                                   )
 
                 _, count, worker_ids = sg.scatter_work(epoch, ctx=ctx_copy,
-                        max_thread_count=max_thread_count)
+                                                       max_thread_count=max_thread_count)
                 central_logger.log_status("Epoch of work sent; "
-                        "%d work items", count)
+                                          "%d work items", count)
 
                 for ip, ids in worker_ids.iteritems():
                     if ip not in master_worker_ids:
@@ -1002,7 +1003,7 @@ def run_multistage_walks(walk_order,
                     master_worker_ids[ip].extend(ids)
 
             central_logger.log_status("Epochs started; waiting for "
-                    "them to finish")
+                                      "them to finish")
             sg.join()
 
         central_logger.log_status("Work finished; gathering responses")
@@ -1026,7 +1027,7 @@ def run_multistage_walks(walk_order,
 
         elapsed = time.time() - start_time
         central_logger.log_status("Ran %d walks (%d errors) in %0.2fs" %
-                (walk_count, error_count, elapsed))
+                                  (walk_count, error_count, elapsed))
 
         if gather_ctxs:
             ctxs_out = sg.gather_all_ctxs(worker_ids)

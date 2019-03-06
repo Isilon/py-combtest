@@ -5,7 +5,6 @@ without some buffering I think.
 """
 import atexit
 import cPickle
-import copy
 import logging
 from logging import ERROR, WARNING, INFO, DEBUG
 import logging.handlers
@@ -173,7 +172,7 @@ class LoggerProxy(object):
         self.net_logger = None
 
     def __getattr__(self, key):
-        if key in ("error", "logger","net_logger", "log_net", "op_trace"):
+        if key in ("error", "logger", "net_logger", "log_net", "op_trace"):
             return self.__dict__[key]
         return getattr(self.__dict__['logger'], key)
 

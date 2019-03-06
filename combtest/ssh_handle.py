@@ -59,7 +59,7 @@ class ServiceHandler_SSH(bootstrap.ServiceHandler):
                 # called.
                 return
             raise RuntimeError("ERROR: session already shutdown, "
-                    "or never started")
+                               "or never started")
 
         # XXX note that this does *not* signal for a clean shutdown.
         # This ServiceHandler is totally agnostic to the stuff running on
@@ -70,7 +70,7 @@ class ServiceHandler_SSH(bootstrap.ServiceHandler):
 
     # One can inherit and build out extra kwargs if desired
     def _ssh_spawn(self, ip, username=None, password=None, rsakey=None,
-            **connection_info):
+                   **connection_info):
         if self.session is not None:
             raise RuntimeError("ERROR: session already spawned")
 
@@ -82,10 +82,10 @@ class ServiceHandler_SSH(bootstrap.ServiceHandler):
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         if rsakey is not None:
             ssh_client.connect(ip, username=username, pkey=rsakey_handle,
-                    allow_agent=False)
+                               allow_agent=False)
         else:
             ssh_client.connect(ip, username=username, password=password,
-                    allow_agent=False)
+                               allow_agent=False)
         transport = ssh_client.get_transport()
         session = transport.open_session()
         session.setblocking(0)
@@ -147,7 +147,7 @@ class ServiceHandler_SSH(bootstrap.ServiceHandler):
             service_info['password'] is not None):
             password = service_info['password']
         if ('rsakey' in service_info and
-            service_info ['rsakey'] is not None):
+            service_info['rsakey'] is not None):
             rsakey = service_info['rsakey']
 
         self._ssh_spawn(self.service_ip,

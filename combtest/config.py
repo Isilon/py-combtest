@@ -88,7 +88,7 @@ def refresh_cfg():
                 for key, value in parser.items('NET'):
                     if key == 'machine_ips':
                         NET_CONF['machine_ips'] = [ip.strip() for ip in
-                                value.split(',')]
+                                                   value.split(',')]
                     elif key == 'service_port':
                         NET_CONF['service_port'] = int(value)
                     elif key == 'logger_port':

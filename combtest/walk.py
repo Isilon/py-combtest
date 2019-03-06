@@ -4,10 +4,7 @@ operations, etc., and executing such sequences of operations.
 """
 import copy
 from collections import Iterable
-import importlib
 import itertools
-import json
-import logging
 import operator
 import threading
 import traceback
@@ -17,8 +14,7 @@ from combtest.action import SyncPoint, Action
 import combtest.central_logger as central_logger
 from combtest.central_logger import logger
 import combtest.encode as encode
-from combtest.utils import RangeTree, get_class_qualname, \
-                           get_class_from_qualname
+from combtest.utils import RangeTree
 
 
 class CancelWalk(RuntimeError):
@@ -56,7 +52,7 @@ class Walk(object):
             for elem in elems:
                 if not isinstance(elem, Action):
                     raise ValueError("Walks must contain only Actions; "
-                            "got: %s" % str(type(elem)))
+                                     "got: %s" % str(type(elem)))
                 _elems.append(elem)
 
         self._elems = _elems
@@ -81,7 +77,7 @@ class Walk(object):
         """
         if not isinstance(other, Walk):
             raise TypeError("Cannot add a Walk with object of type %s" %
-                    str(type(other)))
+                            str(type(other)))
         elems = self._elems + other._elems
         return self.__class__(*elems)
 
@@ -132,14 +128,10 @@ class Walk(object):
 
     @classmethod
     def from_json(cls, obj):
-        try:
-            assert not isinstance(obj, basestring), str(obj)
-            out = cls()
-            for act in obj:
-                out.append(act)
-        except TypeError:
-            raise ValueError("Not recognized as an encoded walk: %s" %
-                    str(json_str))
+        assert not isinstance(obj, basestring), str(obj)
+        out = cls()
+        for act in obj:
+            out.append(act)
 
         return out
 
@@ -168,13 +160,13 @@ class Segment(object):
     # Presume not threadsafe
 
     def __init__(self, walk_count, options=(),
-            sync_point_instance=None,
-            parent_period=1,
-            level=0):
+                 sync_point_instance=None,
+                 parent_period=1,
+                 level=0):
 
         assert options or sync_point_instance
         assert sync_point_instance is None or isinstance(sync_point_instance,
-                SyncPoint)
+                                                         SyncPoint)
 
         self._walk_count = walk_count
         self._count_walks_produced = 0
@@ -249,10 +241,7 @@ class Segment(object):
         if self._current_repeat_count == self._parent_period:
             self._current_repeat_count = 0
 
-            if self._count_walks_produced == self._walk_count:
-                check = True
-            else:
-                check = False
+            check = self._count_walks_produced == self._walk_count
 
             try:
                 self._held_walk = self._state_combinator.next()
@@ -273,7 +262,7 @@ class Epoch(object):
     # Not threadsafe
 
     def __init__(self, walk_idx_start, walk_idx_end, range_tree,
-            sync_point=None, walks=None, child=None, level=0):
+                 sync_point=None, walks=None, child=None, level=0):
         """
         Represents a set of stuff (e.g. walk segments) that can run
         in parallel to other such sets of stuff. The sync point will be
@@ -294,7 +283,7 @@ class Epoch(object):
         # walk_idx->branch_id since that would be O(N) in mem, which is worse
         # in my opinion. This is all cheap in-memory operation.
         self.branch_ids = set([self.range_tree.provide(idx) for idx in
-                range(walk_idx_start, walk_idx_end)])
+                               range(walk_idx_start, walk_idx_end)])
 
         self._current_walk_idx = self.walk_idx_start
 
@@ -360,7 +349,7 @@ class WalkOptions(object):
                 actions = walk_order[seg_start_idx:idx]
                 if actions:
                     actions = tuple([tuple(ac.get_option_set()) for ac in
-                            actions])
+                                     actions])
                     self._segment_options.append(actions)
                 # else e.g. idx = 0: the first action_class is a SyncPoint
                 self._segment_options.append(action_class)
@@ -375,7 +364,7 @@ class WalkOptions(object):
             actions = walk_order[seg_start_idx:]
             if actions:
                 actions = tuple([tuple(ac.get_option_set()) for ac in
-                        actions])
+                                 actions])
                 self._segment_options.append(actions)
 
         self.walk_count = reduce(operator.mul, self._sizes)
@@ -405,7 +394,7 @@ class WalkOptions(object):
         return walk_options, idx, count
 
     def _ensure_tree_impl(self, walk_count, segment_options, start_idx=0,
-            period=1, level=0):
+                          period=1, level=0):
         # Called recursively with SyncPoint at start, or this is the first
         # time it is called.
 
@@ -421,17 +410,17 @@ class WalkOptions(object):
         if isinstance(segment_options[start_idx], tuple):
             walk_options, end_idx, walk_option_count = \
                     self._get_next_options(segment_options,
-                    start_idx=start_idx)
+                                           start_idx=start_idx)
 
             assert (walk_count % walk_option_count) == 0
             children = self._ensure_tree_impl(walk_count,
-                    segment_options, start_idx=end_idx,
-                    period=(period * walk_option_count),
-                    level=(level + 1))
+                                              segment_options,
+                                              start_idx=end_idx,
+                                              period=(period * walk_option_count),
+                                              level=(level + 1))
 
             new_segment = Segment(walk_count, options=walk_options,
-                    parent_period=period,
-                    level=level)
+                                  parent_period=period, level=level)
             for child in children:
                 new_segment.add_child(child)
 
@@ -439,7 +428,7 @@ class WalkOptions(object):
         else:
             current_sync_point = segment_options[start_idx]
             sync_points = [instance for instance in
-                    current_sync_point.get_option_set()]
+                           current_sync_point.get_option_set()]
             sync_point_count = len(sync_points)
 
             assert (walk_count % sync_point_count) == 0
@@ -447,19 +436,21 @@ class WalkOptions(object):
 
             walk_options, end_idx, walk_option_count = \
                     self._get_next_options(segment_options,
-                    start_idx=(start_idx + 1))
+                                           start_idx=(start_idx + 1))
             assert walk_option_count == 0 or \
                     (segment_walk_count % walk_option_count) == 0
 
             children = self._ensure_tree_impl(segment_walk_count,
-                    segment_options, start_idx=end_idx,
-                    period=(period * walk_option_count),
-                    level=(level + 1))
+                                              segment_options,
+                                              start_idx=end_idx,
+                                              period=(period * walk_option_count),
+                                              level=(level + 1))
 
             for sync_point in sync_points:
                 new_segment = Segment(segment_walk_count, options=walk_options,
-                        sync_point_instance=sync_point, parent_period=period,
-                        level=level)
+                                      sync_point_instance=sync_point,
+                                      parent_period=period,
+                                      level=level)
                 for child in children:
                     new_segment.add_child(child)
                 root_segments.append(new_segment)
@@ -488,7 +479,7 @@ class WalkOptions(object):
         for idx, child in enumerate(children):
             segment = segments[idx]
             self._split_branch_ids(child, segment.children, current_start_idx,
-                    child.max_idx)
+                                   child.max_idx)
             current_start_idx = child.max_idx
 
     def _refresh_branch_ids(self):
@@ -500,7 +491,7 @@ class WalkOptions(object):
         if self._tree is None:
             # An iterable of segments that root a tree.
             self._tree = self._ensure_tree_impl(self.walk_count,
-                    self._segment_options)
+                                                self._segment_options)
             self._refresh_branch_ids()
 
     @property
@@ -534,7 +525,7 @@ class WalkOptions(object):
         segment.reset()
         walks = [walk for walk in segment]
         assert len(walks) == expected_walk_count, "%d %d" % (len(walks),
-                expected_walk_count)
+                                                             expected_walk_count)
 
         epochs = []
         children = segment.children
@@ -547,24 +538,24 @@ class WalkOptions(object):
             for child in children:
                 current_walks = walks[slice_idx:(slice_idx + walks_per_child)]
                 current_epoch = Epoch(current_walk_idx_start,
-                        current_walk_idx_start + walks_per_child,
-                        self._branch_ids,
-                        sync_point=segment.sync_point,
-                        walks=current_walks,
-                        child=child,
-                        level=segment.level)
+                                      current_walk_idx_start + walks_per_child,
+                                      self._branch_ids,
+                                      sync_point=segment.sync_point,
+                                      walks=current_walks,
+                                      child=child,
+                                      level=segment.level)
                 epochs.append(current_epoch)
 
                 slice_idx += walks_per_child
                 current_walk_idx_start += walks_per_child
         else:
             current_epoch = Epoch(walk_idx_start,
-                    walk_idx_end,
-                    self._branch_ids,
-                    sync_point=segment.sync_point,
-                    walks=walks,
-                    child=None,
-                    level=segment.level)
+                                  walk_idx_end,
+                                  self._branch_ids,
+                                  sync_point=segment.sync_point,
+                                  walks=walks,
+                                  child=None,
+                                  level=segment.level)
             epochs.append(current_epoch)
 
         return epochs
@@ -578,7 +569,7 @@ class WalkOptions(object):
             frontier = []
             for segment in self.tree:
                 current = (segment, walk_start_idx, walk_start_idx +
-                        walks_per_segment)
+                           walks_per_segment)
                 frontier.append(current)
                 walk_start_idx += walks_per_segment
             self._frontier = frontier
@@ -607,7 +598,7 @@ class WalkOptions(object):
             frontier_additions = []
             segment, walk_start_idx, walk_end_idx = self._frontier.pop(0)
             new_epochs = self._make_segment_epochs(walk_start_idx,
-                    walk_end_idx, segment)
+                                                   walk_end_idx, segment)
 
             for epoch in new_epochs:
                 if epoch.child:

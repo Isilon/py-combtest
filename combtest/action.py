@@ -5,6 +5,8 @@ systematically generating combinations of them.
 import copy
 import random
 
+import combtest.utils as utils
+
 class Action(object):
     """
     An Action class bundles a function that performs an operation, and all
@@ -117,7 +119,7 @@ class Action(object):
 
     @classmethod
     def from_json(cls, obj):
-        return cls(ctx=obj)
+        return cls(static_ctx=obj)
 
 class SyncPoint(Action):
     """
@@ -291,7 +293,7 @@ class OptionSet(object):
     def from_json(cls, obj):
         try:
             options, action_class_qualname = obj
-            action_class = get_class_from_qualname(action_class_qualname)
+            action_class = utils.get_class_from_qualname(action_class_qualname)
         except IndexError:
             raise ValueError("Cannot interpret this as an OptionSet: %s" %
                     str(obj))

@@ -20,10 +20,10 @@ DEFAULT_REPLAY_FUNC = runner.replay_multistage_walk
 DEFAULT_REPLAY_FUNC_NAME = utils.get_class_qualname(
         runner.replay_multistage_walk)
 
-COMMAND_HELP = {'step': 'Replay, one step at a time',
-                'replay': 'Replay the walk'}
+_COMMAND_HELP = {'step': 'Replay, one step at a time',
+                 'replay': 'Replay the walk'}
 COMMAND_HELP = "\n".join(["%s: %s" % (k, v) for k, v in
-        COMMAND_HELP.iteritems()])
+                          _COMMAND_HELP.iteritems()])
 
 
 def load_from_trace(trace_file, walk_id):
@@ -88,7 +88,7 @@ def _load_walk(log_file, walk_id):
             first_line = encode.decode(first_line)
         except ValueError:
             raise ValueError("I couldn't interpret this as a log file: %s" %
-                    log_file)
+                             log_file)
 
     if 'id' in first_line:
         return load_from_master(log_file, walk_id)
@@ -117,7 +117,7 @@ def replay_walk(walk_to_run, step=False, replay_func_qualname=None, ctx=None):
     return ctx
 
 def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
-        ctx=None):
+                      ctx=None):
     """
     Run a single :class:`combtest.walk.Walk`. Load it by deserializing it from
     a trace file.
@@ -137,7 +137,7 @@ def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
     walk_to_run = _load_walk(log_file, walk_id)
 
     return replay_walk(walk_to_run, step=step,
-            replay_func_qualname=replay_func_qualname, ctx=ctx)
+                       replay_func_qualname=replay_func_qualname, ctx=ctx)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Replay combtests")

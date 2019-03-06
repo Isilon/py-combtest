@@ -36,16 +36,16 @@ Work is sent in some quantum defined by the client code and passed from
 
 """
 import copy
-import rpyc
-import signal
 import sys
 import threading
 import time
 import traceback
 
+import rpyc
+
 import combtest.bootstrap as bootstrap
-from combtest.config import refresh_cfg, get_ssh_options, get_machine_ips, \
-        get_service_port, set_service_port, get_max_thread_count
+from combtest.config import get_service_port, set_service_port, \
+        get_max_thread_count
 import combtest.central_logger as central_logger
 from combtest.central_logger import logger
 import combtest.config as config
@@ -153,7 +153,7 @@ class ThreadPool(object):
         Entry point for worker threads.
         """
         with self._rlock:
-            self._working +=1
+            self._working += 1
 
         try:
             if single is not None:
@@ -165,13 +165,13 @@ class ThreadPool(object):
                 except IndexError:
                     return
 
-                start_time = time.time()
-                self._run_single(work_item, ctx)
                 ## Left intentionally for future debugging
+                #start_time = time.time()
+                self._run_single(work_item, ctx)
                 #logger.debug("Work item took %0.2fs", time.time() - start_time)
         finally:
             with self._rlock:
-                self._working +=1
+                self._working += 1
 
     def signal_stop(self):
         """
@@ -198,7 +198,7 @@ class ThreadPool(object):
         # providing it fast enough to busy the threads. Keeps things simple.
         while len(self._running_threads) < self._thread_count:
             t = threading.Thread(target=self._thread_main,
-                    args=(self._run_ctx,))
+                                 args=(self._run_ctx,))
             t.start()
             self._running_threads.append(t)
 
@@ -217,7 +217,7 @@ class ThreadPool(object):
         work_item = self._work_queue.pop(0)
         while len(self._running_threads) < self._thread_count:
             t = threading.Thread(target=self._run_single, args=(work_item,
-                self._run_ctx))
+                                                                self._run_ctx))
             t.start()
             self._running_threads.append(t)
 
@@ -235,7 +235,7 @@ class ThreadPool(object):
                 new_running_threads.append(thread)
             else:
                 new_thread = threading.Thread(target=self._thread_main,
-                        args=(self._run_ctx,))
+                                              args=(self._run_ctx,))
                 new_thread.start()
                 new_running_threads.append(new_thread)
 
@@ -369,16 +369,16 @@ class CoordinatorService(rpyc.Service):
         for work_item in work:
             materialized = rpyc.utils.classic.obtain(work_item)
             packed_work.append(self.work_repack(materialized, ctx=ctx,
-                resp=resp))
+                                                resp=resp))
 
         worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
-                work=packed_work, static_ctx=ctx, resp=resp)
+                                  work=packed_work, static_ctx=ctx, resp=resp)
         self._set_worker_by_id(worker_id, worker)
         self._ctxs[worker_id] = ctx
         worker.start(ctx=ctx)
 
         central_logger.log_status("Started worker with id %d and type %s",
-                worker_id, str(type(worker)))
+                                  worker_id, str(type(worker)))
 
 
         return worker_id
@@ -401,7 +401,7 @@ class CoordinatorService(rpyc.Service):
         worker = self._get_worker_by_id(worker_id)
 
         central_logger.log_status("Added %d items to worker with id %d",
-                len(work), worker_id)
+                                  len(work), worker_id)
 
         worker.add_work(work)
         worker.kick_workers()
@@ -424,13 +424,14 @@ class CoordinatorService(rpyc.Service):
         materialized = rpyc.utils.classic.obtain(work)
         packed_work = self.work_repack(materialized, ctx=ctx, resp=resp)
         worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
-                work=[packed_work], static_ctx=ctx, resp=resp)
+                                  work=[packed_work], static_ctx=ctx,
+                                  resp=resp)
         self._set_worker_by_id(worker_id, worker)
         self._ctxs[worker_id] = ctx
         worker.start_all_on_next(ctx=ctx)
 
         logger.debug("Started worker with id %d and type %s", worker_id,
-                str(type(worker)))
+                     str(type(worker)))
 
         return worker_id
 
@@ -451,15 +452,15 @@ class CoordinatorService(rpyc.Service):
         for work_item in work:
             materialized = rpyc.utils.classic.obtain(work_item)
             packed_work.append(self.work_repack(materialized, ctx=ctx,
-                resp=resp))
+                                                resp=resp))
 
         worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
-                work=packed_work, static_ctx=ctx, resp=resp)
+                                  work=packed_work, static_ctx=ctx, resp=resp)
         self._set_worker_by_id(worker_id, worker)
         self._ctxs[worker_id] = ctx
 
         logger.debug("Running worker with id %d and type %s", worker_id,
-                str(type(worker)))
+                     str(type(worker)))
 
         worker.run(ctx=ctx)
         self._del_worker_by_id(worker_id)
@@ -706,7 +707,7 @@ class ServiceGroup(object):
             start_port = config.get_service_port()
 
             for port in range(start_port, start_port +
-                    self.DEFAULT_INSTANCE_COUNT):
+                              self.DEFAULT_INSTANCE_COUNT):
                 ci = bootstrap.ConnectionInfo(my_ip, port, None)
                 self._service_infos.append(ci)
 
@@ -716,7 +717,7 @@ class ServiceGroup(object):
                 bootstrap.ServiceHandleArray(self._service_infos)
 
         logger.debug("Attempting to start services of type %s",
-                self.service_name)
+                     self.service_name)
         self.service_handles.start_cmd(self.service_name)
 
         logger.debug("Signaled services should start")
@@ -744,8 +745,8 @@ class ServiceGroup(object):
                     time.sleep(0.5)
 
         assert all([(si.ip, si.port) in self.clients for si in
-                self._service_infos]), "ERROR: not " \
-                "all clients could connect. %s" % str(self._clients)
+                    self._service_infos]), "ERROR: not " \
+                    "all clients could connect. %s" % str(self._clients)
 
     def spawn(self):
         """
@@ -853,13 +854,14 @@ class ServiceGroup(object):
 
                 if worker_ids[client_idx] is None:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            str(current_key))
+                                 str(current_key))
                     worker_id = clients[current_key].start_work(current_q,
-                            max_thread_count=max_thread_count, ctx=ctx)
+                                                                max_thread_count=max_thread_count,
+                                                                ctx=ctx)
                     worker_ids[client_idx] = worker_id
                 else:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            current_key)
+                                 current_key)
                     worker_id = worker_ids[client_idx]
                     clients[current_key].add_work(worker_id, current_q)
 
@@ -881,13 +883,14 @@ class ServiceGroup(object):
                 current_key = keys[client_idx]
                 if worker_ids[client_idx] is None:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            str(current_key))
+                                 str(current_key))
                     worker_id = clients[current_key].start_work(current_q,
-                            max_thread_count=max_thread_count, ctx=ctx)
+                                                                max_thread_count=max_thread_count,
+                                                                ctx=ctx)
                     worker_ids[client_idx] = worker_id
                 else:
                     logger.debug("Sending %d items to %s", len(current_q),
-                            str(current_key))
+                                 str(current_key))
                     worker_id = worker_ids[client_idx]
                     clients[current_key].add_work(worker_id, current_q)
 
@@ -896,7 +899,7 @@ class ServiceGroup(object):
             worker_ids_out[current_key] = worker_ids[client_idx]
 
         central_logger.log_status("Started %s work items",
-                str(work_item_counts))
+                                  str(work_item_counts))
         return worker_ids_out
 
     def start_all_on(self, work_item, shared_ctx=None):
@@ -954,7 +957,7 @@ class ServiceGroup(object):
                               the work (see :func:`scatter_work`).
         """
         ctx = rpyc.utils.classic.obtain(self.clients[connection].gather_ctx(
-                worker_id))
+                                        worker_id))
         return ctx
 
     def gather_all_ctxs(self, worker_ids):
@@ -990,8 +993,8 @@ class ServiceGroup(object):
                  remote side. See
                  :func:`CoordinatorService.exposed_start_workers_on`
         """
-        resp = rpyc.utils.classic.obtain(
-                self.clients[connection].gather_resp(worker_id))
+        resp = rpyc.utils.classic.obtain(self.clients[connection].gather_resp(
+                                         worker_id))
         return resp
 
     def gather_all_resp(self, worker_ids):
