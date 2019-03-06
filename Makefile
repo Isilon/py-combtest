@@ -58,6 +58,11 @@ docker-base:
 	docker build --file Dockerfile.base -t docker.west.isilon.com/mbryan/combtest_base .
 	docker push docker.west.isilon.com/mbryan/combtest_base
 
+docker-test:
+	docker build --file Dockerfile.test -t docker.west.isilon.com/pycombtest .
+	docker run --rm --network none docker.west.isilon.com/pycombtest
+
+
 docs-clean:
 	$(MAKE) -C $(DOCSRC) clean
 
