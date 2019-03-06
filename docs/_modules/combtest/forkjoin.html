@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>combtest.forkjoin &mdash; py-combtest 1.0.0 documentation</title>
+    <title>combtest.forkjoin &mdash; py-combtest 1.0.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="py-combtest 1.0.0.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
    
   
@@ -137,7 +137,7 @@
                             <span class="nb">len</span><span class="p">(</span><span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> \
                             <span class="nb">isinstance</span><span class="p">(</span><span class="n">returned_item</span><span class="p">,</span> <span class="ne">BaseException</span><span class="p">):</span>
                         <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">running_work_item</span><span class="o">.</span><span class="n">work_item</span><span class="p">)</span> <span class="o">+</span>
-                                <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                                         <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                         <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">running_work_item</span><span class="o">.</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">returned_item</span> <span class="o">=</span> <span class="bp">None</span>
@@ -151,7 +151,9 @@
             <span class="n">work_item</span> <span class="o">=</span> <span class="n">remaining_work</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="n">result_container</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">work_runner</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">work_item</span><span class="o">.</span><span class="n">func</span><span class="p">,</span>
-                    <span class="n">work_item</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="n">work_item</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">result_container</span><span class="p">))</span>
+                                                           <span class="n">work_item</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+                                                           <span class="n">work_item</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+                                                           <span class="n">result_container</span><span class="p">))</span>
             <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
             <span class="n">running_work</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">idx</span><span class="p">,</span> <span class="n">_RunningWorkItem</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">work_item</span><span class="p">,</span>
                     <span class="n">result_container</span><span class="p">)))</span>
@@ -197,7 +199,7 @@
       &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>

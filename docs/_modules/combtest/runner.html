@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>combtest.runner &mdash; py-combtest 1.0.0 documentation</title>
+    <title>combtest.runner &mdash; py-combtest 1.0.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="py-combtest 1.0.0.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
    
   
@@ -47,10 +47,8 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
 
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
@@ -97,7 +95,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">reporting_interval</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Started running </span><span class="si">%d</span><span class="s2"> walks&quot;</span> <span class="o">%</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">])</span></div>
+                                          <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="WalkRunner.count_error"><a class="viewcode-back" href="../../api.html#combtest.runner.WalkRunner.count_error">[docs]</a>    <span class="k">def</span> <span class="nf">count_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -227,7 +225,9 @@
 
     <span class="k">def</span> <span class="nf">exposed_start_work</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">work</span><span class="p">,</span> <span class="n">max_thread_count</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">worker_id</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">WalkExecutorService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exposed_start_work</span><span class="p">(</span><span class="n">work</span><span class="p">,</span>
-                <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+                                                                        <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
+                                                                        <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span>
+                                                                       <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_runners</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctxs</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;runner&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
@@ -246,16 +246,17 @@
 
     <span class="k">def</span> <span class="nf">exposed_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">work</span><span class="p">,</span> <span class="n">max_thread_count</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">worker_id</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">WalkExecutorService</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exposed_run</span><span class="p">(</span><span class="n">work</span><span class="p">,</span>
-                <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
-                <span class="p">)</span>
+                                                                 <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
+                                                                 <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+                                                                <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_runners</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctxs</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;runner&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">worker_id</span>
 
     <span class="k">def</span> <span class="nf">exposed_start_remote_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">log_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-            <span class="n">log_namespace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                                     <span class="n">log_namespace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                     <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            ip, port - where we connect our logging socket handler</span>
@@ -269,7 +270,7 @@
 
                 <span class="k">if</span> <span class="n">log_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">log_fname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%d</span><span class="s2">.</span><span class="si">%d</span><span class="s2">.log&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">my_ip</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_service_port</span><span class="p">,</span>
-                            <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+                                                  <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
                     <span class="k">if</span> <span class="n">log_namespace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                         <span class="n">log_fname</span> <span class="o">=</span> <span class="n">log_namespace</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">log_fname</span>
                     <span class="n">verbose_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_dir</span><span class="p">,</span> <span class="n">log_fname</span><span class="p">)</span>
@@ -280,7 +281,7 @@
             <span class="k">if</span> <span class="n">log_namespace</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">log_namespace</span> <span class="o">=</span> <span class="n">log_dir</span>
             <span class="n">log_namespace</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%d</span><span class="s2">.</span><span class="si">%d</span><span class="s2">.log&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">my_ip</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_service_port</span><span class="p">,</span>
-                            <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+                                               <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
 
             <span class="n">central_logger</span><span class="o">.</span><span class="n">add_op_trace</span><span class="p">(</span><span class="n">log_dir</span><span class="p">,</span>
                                         <span class="n">WalkOpTracer</span><span class="p">,</span>
@@ -462,9 +463,9 @@
             <span class="n">total_count</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">error_count</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">resp</span> <span class="ow">in</span> <span class="n">resps</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">resp</span> <span class="ow">or</span> <span class="ow">not</span> <span class="s1">&#39;count&#39;</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">resp</span> <span class="ow">or</span> <span class="s1">&#39;count&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;ERROR: did not receive all responses: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
-                            <span class="nb">str</span><span class="p">(</span><span class="n">resps</span><span class="p">))</span>
+                                       <span class="nb">str</span><span class="p">(</span><span class="n">resps</span><span class="p">))</span>
                 <span class="n">total_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span>
                 <span class="n">error_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;error_count&#39;</span><span class="p">]</span>
 
@@ -483,7 +484,7 @@
                 <span class="k">pass</span>
 
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Ran </span><span class="si">%d</span><span class="s2"> walks; </span><span class="si">%d</span><span class="s2"> errors; in </span><span class="si">%0.2f</span><span class="s2">s&quot;</span><span class="p">,</span>
-                <span class="n">total_count</span><span class="p">,</span> <span class="n">error_count</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">)</span>
+                                  <span class="n">total_count</span><span class="p">,</span> <span class="n">error_count</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">total_count</span><span class="p">,</span> <span class="n">error_count</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">,</span> <span class="n">ctxs_out</span>
     <span class="k">finally</span><span class="p">:</span>
@@ -510,7 +511,7 @@
 
     <span class="c1"># PORT/WRAP - add self.PANIC</span>
     <span class="k">def</span> <span class="nf">run_walk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk_to_run</span><span class="p">,</span>
-            <span class="n">sync_point</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">sync_point</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_walks_ctx</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="s1">&#39;cancel&#39;</span> <span class="ow">in</span> <span class="n">ctx</span> <span class="ow">and</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;cancel&#39;</span><span class="p">]:</span>
@@ -529,7 +530,7 @@
                         <span class="n">walk_id</span><span class="o">=</span><span class="n">walk_id</span><span class="p">,</span>
                         <span class="n">sync_point</span><span class="o">=</span><span class="n">sync_point</span><span class="p">,</span>
                         <span class="n">branch_id</span><span class="o">=</span><span class="n">branch_id</span><span class="p">)</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1">#start_time = time.time()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">count_total</span><span class="p">()</span>
 
@@ -597,7 +598,7 @@
         <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">run_walk</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk_to_run</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
-                        <span class="n">sync_point</span><span class="o">=</span><span class="n">sync_point</span><span class="p">)</span>
+                              <span class="n">sync_point</span><span class="o">=</span><span class="n">sync_point</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">CancelWalk</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">count_cancel</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -632,7 +633,7 @@
         <span class="n">wr</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;runner&#39;</span><span class="p">]</span>
         <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">current_walk</span> <span class="o">=</span> <span class="n">encode</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
         <span class="n">call</span> <span class="o">=</span> <span class="n">wr</span><span class="o">.</span><span class="n">prep_work_call</span><span class="p">((</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">current_walk</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync_point&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)))</span>
+                                  <span class="n">ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync_point&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)))</span>
         <span class="k">return</span> <span class="n">call</span>
 
     <span class="k">def</span> <span class="nf">exposed_update_remote_contexts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span> <span class="n">walk_ids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -644,7 +645,7 @@
                 <span class="n">runner</span><span class="o">.</span><span class="n">update_walks_ctx</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Could not update walk&#39;s context; did an &quot;</span>
-                    <span class="s2">&quot;earlier stage fail?&quot;</span><span class="p">)</span>
+                               <span class="s2">&quot;earlier stage fail?&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">exposed_gather_ctx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -667,7 +668,7 @@
 
     <span class="k">def</span> <span class="nf">exposed_gather_resp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">):</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MultistageWalkRunningService</span><span class="p">,</span>
-                <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exposed_gather_resp</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
+                     <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exposed_gather_resp</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 
         <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;segment_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span>
         <span class="k">del</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span>
@@ -717,12 +718,12 @@
         <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;sync_point&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sync_point</span>
 
         <span class="n">worker_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">start_work</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+                                      <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">del</span> <span class="n">queue</span><span class="p">[:]</span>
         <span class="k">return</span> <span class="n">worker_id</span>
 
 <div class="viewcode-block" id="ContinuingWalkServiceGroup.scatter_work"><a class="viewcode-back" href="../../api.html#combtest.runner.ContinuingWalkServiceGroup.scatter_work">[docs]</a>    <span class="k">def</span> <span class="nf">scatter_work</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">id_map</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_thread_count</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-            <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                     <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Scatter some ``Walk`` segments out to the remote workers.</span>
 
@@ -780,8 +781,8 @@
             <span class="n">client</span> <span class="o">=</span> <span class="n">clients</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span>
             <span class="n">total_count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">queue</span><span class="p">)</span>
             <span class="n">worker_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flush_queue</span><span class="p">(</span><span class="n">target_key</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span>
-                    <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                    <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">sync_point</span><span class="o">=</span><span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span><span class="p">)</span>
+                                          <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
+                                          <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">sync_point</span><span class="o">=</span><span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span><span class="p">)</span>
             <span class="n">worker_ids</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">id_map</span> <span class="o">=</span> <span class="n">id_map</span>
@@ -821,17 +822,17 @@
         <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">worker_ids</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">worker_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
                 <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_resp</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">resp</span> <span class="ow">or</span> <span class="ow">not</span> <span class="s1">&#39;segment_count&#39;</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">resp</span> <span class="ow">or</span> <span class="s1">&#39;segment_count&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;ERROR: did not receive whole &quot;</span>
-                            <span class="s2">&quot;response for </span><span class="si">%s</span><span class="s2">, id </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
-                            <span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="p">)))</span>
+                                       <span class="s2">&quot;response for </span><span class="si">%s</span><span class="s2">, id </span><span class="si">%d</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                                       <span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="p">)))</span>
                 <span class="n">total_segment_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;segment_count&#39;</span><span class="p">]</span>
                 <span class="n">total_error_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;error_count&#39;</span><span class="p">]</span>
                 <span class="n">total_walk_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;walk_count&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">total_segment_count</span><span class="p">,</span> <span class="n">total_error_count</span><span class="p">,</span> <span class="n">total_walk_count</span></div>
 
 <div class="viewcode-block" id="ContinuingWalkServiceGroup.start_remote_logging"><a class="viewcode-back" href="../../api.html#combtest.runner.ContinuingWalkServiceGroup.start_remote_logging">[docs]</a>    <span class="k">def</span> <span class="nf">start_remote_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">log_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">log_namespace</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-            <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+                             <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Start logging on all remote services.</span>
 
@@ -877,7 +878,7 @@
                          <span class="n">log_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                          <span class="c1"># PORT/WRAP test_path=utils.DEFAULT_TEST_PATH,</span>
                          <span class="c1">#**file_config_kwargs,</span>
-                         <span class="p">):</span>
+                        <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run a collection of :class:`combtest.walk.Walk`. This should be the main</span>
 <span class="sd">    way to execute ``Walks`` for most users. This is the only interface that</span>
@@ -1010,7 +1011,7 @@
         <span class="n">master_worker_ids</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">epoch_list</span> <span class="ow">in</span> <span class="n">wo</span><span class="p">:</span>
             <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Epoch list has </span><span class="si">%d</span><span class="s2"> epochs&quot;</span><span class="p">,</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">epoch_list</span><span class="p">))</span>
+                                      <span class="nb">len</span><span class="p">(</span><span class="n">epoch_list</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">epoch_list</span><span class="p">:</span>
                 <span class="n">ctx_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -1026,16 +1027,16 @@
                         <span class="c1">#          &quot;epoch&quot;: epoch</span>
                         <span class="c1">#         }</span>
                         <span class="n">ctx_copy</span> <span class="o">=</span> <span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx_copy</span><span class="p">,</span>
-                                <span class="n">branch_id</span><span class="o">=</span><span class="n">branch_id</span><span class="p">,</span>
-                                <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
-                                <span class="n">service</span><span class="o">=</span><span class="n">sg</span><span class="p">,</span>
-                                <span class="n">worker_ids</span><span class="o">=</span><span class="n">master_worker_ids</span>
-                                <span class="p">)</span>
+                                                    <span class="n">branch_id</span><span class="o">=</span><span class="n">branch_id</span><span class="p">,</span>
+                                                    <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                                                    <span class="n">service</span><span class="o">=</span><span class="n">sg</span><span class="p">,</span>
+                                                    <span class="n">worker_ids</span><span class="o">=</span><span class="n">master_worker_ids</span>
+                                                   <span class="p">)</span>
 
                 <span class="n">_</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">worker_ids</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">scatter_work</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx_copy</span><span class="p">,</span>
-                        <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">)</span>
+                                                       <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">)</span>
                 <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Epoch of work sent; &quot;</span>
-                        <span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> work items&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+                                          <span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> work items&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
 
                 <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">worker_ids</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
                     <span class="k">if</span> <span class="n">ip</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">master_worker_ids</span><span class="p">:</span>
@@ -1043,7 +1044,7 @@
                     <span class="n">master_worker_ids</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
 
             <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Epochs started; waiting for &quot;</span>
-                    <span class="s2">&quot;them to finish&quot;</span><span class="p">)</span>
+                                      <span class="s2">&quot;them to finish&quot;</span><span class="p">)</span>
             <span class="n">sg</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
 
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Work finished; gathering responses&quot;</span><span class="p">)</span>
@@ -1067,7 +1068,7 @@
 
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Ran </span><span class="si">%d</span><span class="s2"> walks (</span><span class="si">%d</span><span class="s2"> errors) in </span><span class="si">%0.2f</span><span class="s2">s&quot;</span> <span class="o">%</span>
-                <span class="p">(</span><span class="n">walk_count</span><span class="p">,</span> <span class="n">error_count</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">))</span>
+                                  <span class="p">(</span><span class="n">walk_count</span><span class="p">,</span> <span class="n">error_count</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">gather_ctxs</span><span class="p">:</span>
             <span class="n">ctxs_out</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">gather_all_ctxs</span><span class="p">(</span><span class="n">worker_ids</span><span class="p">)</span>
@@ -1162,7 +1163,7 @@
       &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>

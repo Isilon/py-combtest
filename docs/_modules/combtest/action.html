@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>combtest.action &mdash; py-combtest 1.0.0 documentation</title>
+    <title>combtest.action &mdash; py-combtest 1.0.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="py-combtest 1.0.0.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
    
   
@@ -45,6 +45,8 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">combtest.utils</span> <span class="kn">as</span> <span class="nn">utils</span>
 
 <div class="viewcode-block" id="Action"><a class="viewcode-back" href="../../api.html#combtest.action.Action">[docs]</a><span class="k">class</span> <span class="nc">Action</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -158,7 +160,7 @@
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Action.from_json"><a class="viewcode-back" href="../../api.html#combtest.action.Action.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">static_ctx</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span></div></div>
 
 <div class="viewcode-block" id="SyncPoint"><a class="viewcode-back" href="../../api.html#combtest.action.SyncPoint">[docs]</a><span class="k">class</span> <span class="nc">SyncPoint</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -332,7 +334,7 @@
 <div class="viewcode-block" id="OptionSet.from_json"><a class="viewcode-back" href="../../api.html#combtest.action.OptionSet.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">options</span><span class="p">,</span> <span class="n">action_class_qualname</span> <span class="o">=</span> <span class="n">obj</span>
-            <span class="n">action_class</span> <span class="o">=</span> <span class="n">get_class_from_qualname</span><span class="p">(</span><span class="n">action_class_qualname</span><span class="p">)</span>
+            <span class="n">action_class</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_from_qualname</span><span class="p">(</span><span class="n">action_class_qualname</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot interpret this as an OptionSet: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
                     <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
@@ -381,7 +383,7 @@
       &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>

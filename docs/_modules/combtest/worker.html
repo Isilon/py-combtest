@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>combtest.worker &mdash; py-combtest 1.0.0 documentation</title>
+    <title>combtest.worker &mdash; py-combtest 1.0.0.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="py-combtest 1.0.0 documentation" href="../../index.html" />
+    <link rel="top" title="py-combtest 1.0.0.0 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
    
   
@@ -77,16 +77,16 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">rpyc</span>
-<span class="kn">import</span> <span class="nn">signal</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
 
+<span class="kn">import</span> <span class="nn">rpyc</span>
+
 <span class="kn">import</span> <span class="nn">combtest.bootstrap</span> <span class="kn">as</span> <span class="nn">bootstrap</span>
-<span class="kn">from</span> <span class="nn">combtest.config</span> <span class="kn">import</span> <span class="n">refresh_cfg</span><span class="p">,</span> <span class="n">get_ssh_options</span><span class="p">,</span> <span class="n">get_machine_ips</span><span class="p">,</span> \
-        <span class="n">get_service_port</span><span class="p">,</span> <span class="n">set_service_port</span><span class="p">,</span> <span class="n">get_max_thread_count</span>
+<span class="kn">from</span> <span class="nn">combtest.config</span> <span class="kn">import</span> <span class="n">get_service_port</span><span class="p">,</span> <span class="n">set_service_port</span><span class="p">,</span> \
+        <span class="n">get_max_thread_count</span>
 <span class="kn">import</span> <span class="nn">combtest.central_logger</span> <span class="kn">as</span> <span class="nn">central_logger</span>
 <span class="kn">from</span> <span class="nn">combtest.central_logger</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">import</span> <span class="nn">combtest.config</span> <span class="kn">as</span> <span class="nn">config</span>
@@ -101,6 +101,12 @@
 <span class="c1"># form, which will cut the netrefs and do an actual copy.</span>
 <span class="n">rpyc</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">protocol</span><span class="o">.</span><span class="n">DEFAULT_CONFIG</span><span class="p">[</span><span class="s1">&#39;allow_pickle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
 
+
+<span class="k">def</span> <span class="nf">_ensure_stderr_handler</span><span class="p">():</span>
+    <span class="c1"># Root logger will log issues to stderr</span>
+    <span class="n">root_logger</span> <span class="o">=</span> <span class="n">central_logger</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+    <span class="n">sh_stderr</span> <span class="o">=</span> <span class="n">central_logger</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">sh_stderr</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ThreadPool"><a class="viewcode-back" href="../../api.html#combtest.worker.ThreadPool">[docs]</a><span class="k">class</span> <span class="nc">ThreadPool</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -188,7 +194,7 @@
 <span class="sd">        Entry point for worker threads.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rlock</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_working</span> <span class="o">+=</span><span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_working</span> <span class="o">+=</span> <span class="mi">1</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">single</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -200,13 +206,13 @@
                 <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
                     <span class="k">return</span>
 
-                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_run_single</span><span class="p">(</span><span class="n">work_item</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
                 <span class="c1">## Left intentionally for future debugging</span>
+                <span class="c1">#start_time = time.time()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_run_single</span><span class="p">(</span><span class="n">work_item</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
                 <span class="c1">#logger.debug(&quot;Work item took %0.2fs&quot;, time.time() - start_time)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rlock</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_working</span> <span class="o">+=</span><span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_working</span> <span class="o">+=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="ThreadPool.signal_stop"><a class="viewcode-back" href="../../api.html#combtest.worker.ThreadPool.signal_stop">[docs]</a>    <span class="k">def</span> <span class="nf">signal_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -233,7 +239,7 @@
         <span class="c1"># providing it fast enough to busy the threads. Keeps things simple.</span>
         <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_running_threads</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_count</span><span class="p">:</span>
             <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_thread_main</span><span class="p">,</span>
-                    <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_ctx</span><span class="p">,))</span>
+                                 <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_ctx</span><span class="p">,))</span>
             <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_running_threads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></div>
 
@@ -252,7 +258,7 @@
         <span class="n">work_item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_work_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_running_threads</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_count</span><span class="p">:</span>
             <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_single</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">work_item</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_run_ctx</span><span class="p">))</span>
+                                                                <span class="bp">self</span><span class="o">.</span><span class="n">_run_ctx</span><span class="p">))</span>
             <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_running_threads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></div>
 
@@ -270,7 +276,7 @@
                 <span class="n">new_running_threads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thread</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_thread_main</span><span class="p">,</span>
-                        <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_ctx</span><span class="p">,))</span>
+                                              <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_ctx</span><span class="p">,))</span>
                 <span class="n">new_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
                 <span class="n">new_running_threads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_thread</span><span class="p">)</span>
 
@@ -404,16 +410,16 @@
         <span class="k">for</span> <span class="n">work_item</span> <span class="ow">in</span> <span class="n">work</span><span class="p">:</span>
             <span class="n">materialized</span> <span class="o">=</span> <span class="n">rpyc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">obtain</span><span class="p">(</span><span class="n">work_item</span><span class="p">)</span>
             <span class="n">packed_work</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">work_repack</span><span class="p">(</span><span class="n">materialized</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
-                <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">))</span>
+                                                <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">))</span>
 
         <span class="n">worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">WORKER_TYPE</span><span class="p">(</span><span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                <span class="n">work</span><span class="o">=</span><span class="n">packed_work</span><span class="p">,</span> <span class="n">static_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                                  <span class="n">work</span><span class="o">=</span><span class="n">packed_work</span><span class="p">,</span> <span class="n">static_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_worker_by_id</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctxs</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Started worker with id </span><span class="si">%d</span><span class="s2"> and type </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">worker_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">worker</span><span class="p">)))</span>
+                                  <span class="n">worker_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">worker</span><span class="p">)))</span>
 
 
         <span class="k">return</span> <span class="n">worker_id</span></div>
@@ -436,7 +442,7 @@
         <span class="n">worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_worker_by_id</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Added </span><span class="si">%d</span><span class="s2"> items to worker with id </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">work</span><span class="p">),</span> <span class="n">worker_id</span><span class="p">)</span>
+                                  <span class="nb">len</span><span class="p">(</span><span class="n">work</span><span class="p">),</span> <span class="n">worker_id</span><span class="p">)</span>
 
         <span class="n">worker</span><span class="o">.</span><span class="n">add_work</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">kick_workers</span><span class="p">()</span></div>
@@ -459,13 +465,14 @@
         <span class="n">materialized</span> <span class="o">=</span> <span class="n">rpyc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">obtain</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
         <span class="n">packed_work</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_repack</span><span class="p">(</span><span class="n">materialized</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
         <span class="n">worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">WORKER_TYPE</span><span class="p">(</span><span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                <span class="n">work</span><span class="o">=</span><span class="p">[</span><span class="n">packed_work</span><span class="p">],</span> <span class="n">static_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                                  <span class="n">work</span><span class="o">=</span><span class="p">[</span><span class="n">packed_work</span><span class="p">],</span> <span class="n">static_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+                                  <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_worker_by_id</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctxs</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">start_all_on_next</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Started worker with id </span><span class="si">%d</span><span class="s2"> and type </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span>
-                <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">worker</span><span class="p">)))</span>
+                     <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">worker</span><span class="p">)))</span>
 
         <span class="k">return</span> <span class="n">worker_id</span></div>
 
@@ -486,15 +493,15 @@
         <span class="k">for</span> <span class="n">work_item</span> <span class="ow">in</span> <span class="n">work</span><span class="p">:</span>
             <span class="n">materialized</span> <span class="o">=</span> <span class="n">rpyc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">obtain</span><span class="p">(</span><span class="n">work_item</span><span class="p">)</span>
             <span class="n">packed_work</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">work_repack</span><span class="p">(</span><span class="n">materialized</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
-                <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">))</span>
+                                                <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">))</span>
 
         <span class="n">worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">WORKER_TYPE</span><span class="p">(</span><span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                <span class="n">work</span><span class="o">=</span><span class="n">packed_work</span><span class="p">,</span> <span class="n">static_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                                  <span class="n">work</span><span class="o">=</span><span class="n">packed_work</span><span class="p">,</span> <span class="n">static_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_worker_by_id</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctxs</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Running worker with id </span><span class="si">%d</span><span class="s2"> and type </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span>
-                <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">worker</span><span class="p">)))</span>
+                     <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">worker</span><span class="p">)))</span>
 
         <span class="n">worker</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_del_worker_by_id</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
@@ -594,6 +601,9 @@
 <span class="sd">                     :class:`combtest.config`</span>
 <span class="sd">    :return: a handle to the resulting :class:`ThreadedServer`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># rpyc uses logging, and we want to dump its logging somehow on errors</span>
+    <span class="n">_ensure_stderr_handler</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">port</span> <span class="o">=</span> <span class="n">get_service_port</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -616,6 +626,9 @@
 <span class="sd">                     :class:`combtest.config`</span>
 <span class="sd">    :return: a handle to the resulting :class:`ThreadedServer`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># rpyc uses logging, and we want to dump its logging somehow on errors</span>
+    <span class="n">_ensure_stderr_handler</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">port</span> <span class="o">=</span> <span class="n">get_service_port</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -735,7 +748,7 @@
             <span class="n">start_port</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_service_port</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_port</span><span class="p">,</span> <span class="n">start_port</span> <span class="o">+</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_INSTANCE_COUNT</span><span class="p">):</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_INSTANCE_COUNT</span><span class="p">):</span>
                 <span class="n">ci</span> <span class="o">=</span> <span class="n">bootstrap</span><span class="o">.</span><span class="n">ConnectionInfo</span><span class="p">(</span><span class="n">my_ip</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_service_infos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span>
 
@@ -745,7 +758,7 @@
                 <span class="n">bootstrap</span><span class="o">.</span><span class="n">ServiceHandleArray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_service_infos</span><span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Attempting to start services of type </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">service_name</span><span class="p">)</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">service_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">service_handles</span><span class="o">.</span><span class="n">start_cmd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">service_name</span><span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Signaled services should start&quot;</span><span class="p">)</span></div>
@@ -773,8 +786,8 @@
                     <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="nb">all</span><span class="p">([(</span><span class="n">si</span><span class="o">.</span><span class="n">ip</span><span class="p">,</span> <span class="n">si</span><span class="o">.</span><span class="n">port</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clients</span> <span class="k">for</span> <span class="n">si</span> <span class="ow">in</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_service_infos</span><span class="p">]),</span> <span class="s2">&quot;ERROR: not &quot;</span> \
-                <span class="s2">&quot;all clients could connect. </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clients</span><span class="p">)</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_service_infos</span><span class="p">]),</span> <span class="s2">&quot;ERROR: not &quot;</span> \
+                    <span class="s2">&quot;all clients could connect. </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clients</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ServiceGroup.spawn"><a class="viewcode-back" href="../../api.html#combtest.worker.ServiceGroup.spawn">[docs]</a>    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -882,13 +895,14 @@
 
                 <span class="k">if</span> <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending </span><span class="si">%d</span><span class="s2"> items to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_q</span><span class="p">),</span>
-                            <span class="nb">str</span><span class="p">(</span><span class="n">current_key</span><span class="p">))</span>
+                                 <span class="nb">str</span><span class="p">(</span><span class="n">current_key</span><span class="p">))</span>
                     <span class="n">worker_id</span> <span class="o">=</span> <span class="n">clients</span><span class="p">[</span><span class="n">current_key</span><span class="p">]</span><span class="o">.</span><span class="n">start_work</span><span class="p">(</span><span class="n">current_q</span><span class="p">,</span>
-                            <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+                                                                <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
+                                                                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
                     <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker_id</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending </span><span class="si">%d</span><span class="s2"> items to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_q</span><span class="p">),</span>
-                            <span class="n">current_key</span><span class="p">)</span>
+                                 <span class="n">current_key</span><span class="p">)</span>
                     <span class="n">worker_id</span> <span class="o">=</span> <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span>
                     <span class="n">clients</span><span class="p">[</span><span class="n">current_key</span><span class="p">]</span><span class="o">.</span><span class="n">add_work</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">current_q</span><span class="p">)</span>
 
@@ -910,13 +924,14 @@
                 <span class="n">current_key</span> <span class="o">=</span> <span class="n">keys</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending </span><span class="si">%d</span><span class="s2"> items to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_q</span><span class="p">),</span>
-                            <span class="nb">str</span><span class="p">(</span><span class="n">current_key</span><span class="p">))</span>
+                                 <span class="nb">str</span><span class="p">(</span><span class="n">current_key</span><span class="p">))</span>
                     <span class="n">worker_id</span> <span class="o">=</span> <span class="n">clients</span><span class="p">[</span><span class="n">current_key</span><span class="p">]</span><span class="o">.</span><span class="n">start_work</span><span class="p">(</span><span class="n">current_q</span><span class="p">,</span>
-                            <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+                                                                <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
+                                                                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
                     <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker_id</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending </span><span class="si">%d</span><span class="s2"> items to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_q</span><span class="p">),</span>
-                            <span class="nb">str</span><span class="p">(</span><span class="n">current_key</span><span class="p">))</span>
+                                 <span class="nb">str</span><span class="p">(</span><span class="n">current_key</span><span class="p">))</span>
                     <span class="n">worker_id</span> <span class="o">=</span> <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span>
                     <span class="n">clients</span><span class="p">[</span><span class="n">current_key</span><span class="p">]</span><span class="o">.</span><span class="n">add_work</span><span class="p">(</span><span class="n">worker_id</span><span class="p">,</span> <span class="n">current_q</span><span class="p">)</span>
 
@@ -925,7 +940,7 @@
             <span class="n">worker_ids_out</span><span class="p">[</span><span class="n">current_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">worker_ids</span><span class="p">[</span><span class="n">client_idx</span><span class="p">]</span>
 
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Started </span><span class="si">%s</span><span class="s2"> work items&quot;</span><span class="p">,</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">work_item_counts</span><span class="p">))</span>
+                                  <span class="nb">str</span><span class="p">(</span><span class="n">work_item_counts</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">worker_ids_out</span></div>
 
 <div class="viewcode-block" id="ServiceGroup.start_all_on"><a class="viewcode-back" href="../../api.html#combtest.worker.ServiceGroup.start_all_on">[docs]</a>    <span class="k">def</span> <span class="nf">start_all_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">work_item</span><span class="p">,</span> <span class="n">shared_ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -983,7 +998,7 @@
 <span class="sd">                              the work (see :func:`scatter_work`).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ctx</span> <span class="o">=</span> <span class="n">rpyc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">obtain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">connection</span><span class="p">]</span><span class="o">.</span><span class="n">gather_ctx</span><span class="p">(</span>
-                <span class="n">worker_id</span><span class="p">))</span>
+                                        <span class="n">worker_id</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">ctx</span></div>
 
 <div class="viewcode-block" id="ServiceGroup.gather_all_ctxs"><a class="viewcode-back" href="../../api.html#combtest.worker.ServiceGroup.gather_all_ctxs">[docs]</a>    <span class="k">def</span> <span class="nf">gather_all_ctxs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_ids</span><span class="p">):</span>
@@ -1019,8 +1034,8 @@
 <span class="sd">                 remote side. See</span>
 <span class="sd">                 :func:`CoordinatorService.exposed_start_workers_on`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">rpyc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">obtain</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">connection</span><span class="p">]</span><span class="o">.</span><span class="n">gather_resp</span><span class="p">(</span><span class="n">worker_id</span><span class="p">))</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">rpyc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">classic</span><span class="o">.</span><span class="n">obtain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">connection</span><span class="p">]</span><span class="o">.</span><span class="n">gather_resp</span><span class="p">(</span>
+                                         <span class="n">worker_id</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">resp</span></div>
 
 <div class="viewcode-block" id="ServiceGroup.gather_all_resp"><a class="viewcode-back" href="../../api.html#combtest.worker.ServiceGroup.gather_all_resp">[docs]</a>    <span class="k">def</span> <span class="nf">gather_all_resp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_ids</span><span class="p">):</span>
@@ -1100,7 +1115,7 @@
       &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
     </div>
