@@ -28,9 +28,6 @@ class CleanCommand(Command):
 requirements = ['paramiko>0',
                 'rpyc==3.3',
                 'sphinx==1.4']
-with open("combtest/data/easy_install_requirements", "w") as static_reqs:
-    for req in requirements:
-        static_reqs.write(req + "\n")
 
 os.system('cp -f version.py combtest/')
 
