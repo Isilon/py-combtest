@@ -56,6 +56,8 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">string_types</span>
+
 <span class="kn">from</span> <span class="nn">combtest.action</span> <span class="kn">import</span> <span class="n">Action</span>
 <span class="kn">from</span> <span class="nn">combtest.utils</span> <span class="kn">import</span> <span class="n">get_class_qualname</span><span class="p">,</span> <span class="n">get_class_from_qualname</span>
 
@@ -120,7 +122,7 @@
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">pair_list</span><span class="p">)</span>
 
     <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pair_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
 
     <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_DEFAULT_MAGIC</span><span class="p">):</span>

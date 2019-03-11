@@ -62,8 +62,8 @@ class TestRunner(unittest.TestCase):
                                  gather_ctxs=True,
                                  verbose=True)
 
-        self.assertEquals(total_count, expected_cnt)
-        self.assertEquals(error_count, 0)
+        self.assertEqual(total_count, expected_cnt)
+        self.assertEqual(error_count, 0)
 
         all_ctxs = []
         for worker_ctxs in ctxs:
@@ -75,7 +75,7 @@ class TestRunner(unittest.TestCase):
             for j in range(cnt2):
                 for k in range(cnt3):
                     expected = [i, j, k]
-                    self.assertEquals(expected, all_ctxs[current_idx])
+                    self.assertEqual(expected, all_ctxs[current_idx])
                     current_idx += 1
 
     def test_multistage(self):
@@ -106,16 +106,16 @@ class TestRunner(unittest.TestCase):
                                             log_dir=log_dir,
                                            )
 
-        self.assertEquals(walk_count, expected_cnt)
+        self.assertEqual(walk_count, expected_cnt)
         # 3 below from: segment before sp1, segment between sp1 and sp2, and
         # after sp2.
-        self.assertEquals(segment_count, expected_cnt * 3)
-        self.assertEquals(error_count, 0)
+        self.assertEqual(segment_count, expected_cnt * 3)
+        self.assertEqual(error_count, 0)
 
         all_ctxs = []
 
         for worker_ctxs in ctxs:
-            for walk_id, walk_ctx in worker_ctxs.iteritems():
+            for walk_id, walk_ctx in worker_ctxs.items():
                 inner = walk_ctx['inner']
                 inner.append(walk_ctx['sp_value'])
                 all_ctxs.append(inner)
@@ -128,7 +128,7 @@ class TestRunner(unittest.TestCase):
                     for l in range(cnt3):
                         for m in range(sp_cnt2):
                             expected = [i, j, k, l, m]
-                            self.assertEquals(expected, all_ctxs[current_idx])
+                            self.assertEqual(expected, all_ctxs[current_idx])
                             current_idx += 1
 
 
@@ -154,16 +154,16 @@ class TestRunner(unittest.TestCase):
                                  log_dir=log_dir,
                                  verbose=True)
 
-        self.assertEquals(walk_count, expected_cnt)
+        self.assertEqual(walk_count, expected_cnt)
         # 2 below from: segment between sp1 and sp2, and
         # after sp2.
-        self.assertEquals(segment_count, expected_cnt * 2)
-        self.assertEquals(error_count, 0)
+        self.assertEqual(segment_count, expected_cnt * 2)
+        self.assertEqual(error_count, 0)
 
         all_ctxs = []
 
         for worker_ctxs in ctxs:
-            for walk_id, walk_ctx in worker_ctxs.iteritems():
+            for walk_id, walk_ctx in worker_ctxs.items():
                 inner = walk_ctx['inner']
                 inner.append(walk_ctx['sp_value'])
                 all_ctxs.append(inner)
@@ -175,7 +175,7 @@ class TestRunner(unittest.TestCase):
                 for k in range(cnt2):
                     for l in range(sp_cnt2):
                         expected = [i, j, k, l]
-                        self.assertEquals(expected, all_ctxs[current_idx])
+                        self.assertEqual(expected, all_ctxs[current_idx])
                         current_idx += 1
 
 

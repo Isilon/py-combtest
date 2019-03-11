@@ -21,6 +21,7 @@ import multiprocessing
 import sys
 import time
 
+from six import string_types
 
 import combtest.central_logger as central_logger
 import combtest.config as config
@@ -150,10 +151,10 @@ class ServiceHandler_Local(ServiceHandler):
                   service_class,
                   service_run_func=DEFAULT_SERVICE_RUN_FUNC):
 
-        if isinstance(service_run_func, basestring):
+        if isinstance(service_run_func, string_types):
             service_run_func = utils.get_class_from_qualname(service_run_func)
 
-        if not isinstance(service_class, basestring):
+        if not isinstance(service_class, string_types):
             service_qualname = utils.get_class_qualname(service_class)
         else:
             service_qualname = service_class
@@ -341,7 +342,7 @@ class ServiceHandleArray(object):
                           cleanly, otherwise we won't.
         """
         work = []
-        keys = copy.copy(self.instances.keys())
+        keys = copy.copy(list(self.instances.keys()))
         for key in keys:
             work_item = forkjoin.WorkItem(self._shutdown_single, key)
             work.append(work_item)
@@ -368,14 +369,14 @@ class ServiceHandleArray(object):
         except KeyError:
             pass
 
-        if self.is_alive and hasattr(self.instances.values()[0], attr):
+        if self.is_alive and hasattr(list(self.instances.values())[0], attr):
             # Assume homogeneity among instances: if one has it, all do.
             # That is true right now while we have a single REMOTE_CONNECTION_CLASS,
             # provided the user doesn't start hacking around with single instances.
             def _attr_forker(*args, **kwargs):
                 work = []
                 back_map = []
-                for service_info, instance in self.instances.iteritems():
+                for service_info, instance in self.instances.items():
                     current_work = forkjoin.WorkItem(getattr(instance, attr),
                             *args, **kwargs)
                     work.append(current_work)

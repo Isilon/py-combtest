@@ -62,6 +62,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">string_types</span>
 
 <span class="kn">import</span> <span class="nn">combtest.central_logger</span> <span class="kn">as</span> <span class="nn">central_logger</span>
 <span class="kn">import</span> <span class="nn">combtest.config</span> <span class="kn">as</span> <span class="nn">config</span>
@@ -191,10 +192,10 @@
                   <span class="n">service_class</span><span class="p">,</span>
                   <span class="n">service_run_func</span><span class="o">=</span><span class="n">DEFAULT_SERVICE_RUN_FUNC</span><span class="p">):</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
             <span class="n">service_run_func</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_from_qualname</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_class</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_class</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
             <span class="n">service_qualname</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_qualname</span><span class="p">(</span><span class="n">service_class</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">service_qualname</span> <span class="o">=</span> <span class="n">service_class</span>
@@ -382,7 +383,7 @@
 <span class="sd">                          cleanly, otherwise we won&#39;t.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">work</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
             <span class="n">work_item</span> <span class="o">=</span> <span class="n">forkjoin</span><span class="o">.</span><span class="n">WorkItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_shutdown_single</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
             <span class="n">work</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">work_item</span><span class="p">)</span>
@@ -409,14 +410,14 @@
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">pass</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_alive</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_alive</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">],</span> <span class="n">attr</span><span class="p">):</span>
             <span class="c1"># Assume homogeneity among instances: if one has it, all do.</span>
             <span class="c1"># That is true right now while we have a single REMOTE_CONNECTION_CLASS,</span>
             <span class="c1"># provided the user doesn&#39;t start hacking around with single instances.</span>
             <span class="k">def</span> <span class="nf">_attr_forker</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
                 <span class="n">work</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="n">back_map</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">for</span> <span class="n">service_info</span><span class="p">,</span> <span class="n">instance</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">service_info</span><span class="p">,</span> <span class="n">instance</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="n">current_work</span> <span class="o">=</span> <span class="n">forkjoin</span><span class="o">.</span><span class="n">WorkItem</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span>
                             <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                     <span class="n">work</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_work</span><span class="p">)</span>

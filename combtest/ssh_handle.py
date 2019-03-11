@@ -7,6 +7,8 @@ import copy
 
 import paramiko
 
+from six import string_types
+
 import combtest.bootstrap as bootstrap
 from combtest.central_logger import logger
 import combtest.config as config
@@ -100,12 +102,12 @@ class ServiceHandler_SSH(bootstrap.ServiceHandler):
                   service_class,
                   service_run_func=bootstrap.DEFAULT_SERVICE_RUN_FUNC):
 
-        if isinstance(service_run_func, basestring):
+        if isinstance(service_run_func, string_types):
             service_run_func = utils.get_class_from_qualname(service_run_func)
         srf_module = service_run_func.__module__
         service_run_func = utils.get_class_qualname(service_run_func)
 
-        if not isinstance(service_class, basestring):
+        if not isinstance(service_class, string_types):
             service_qualname = utils.get_class_qualname(service_class)
         else:
             service_qualname = service_class
@@ -118,7 +120,7 @@ class ServiceHandler_SSH(bootstrap.ServiceHandler):
         rsakey = None
 
         service_info = self._service_info
-        for key, value in service_info.iteritems():
+        for key, value in service_info.items():
             if key == 'username_map':
                 if value and self.service_ip in value:
                     username = value[self.service_ip]

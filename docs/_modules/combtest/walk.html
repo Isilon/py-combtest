@@ -45,11 +45,13 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">operator</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
 
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">string_types</span>
 
 <span class="kn">from</span> <span class="nn">combtest.action</span> <span class="kn">import</span> <span class="n">SyncPoint</span><span class="p">,</span> <span class="n">Action</span>
 <span class="kn">import</span> <span class="nn">combtest.central_logger</span> <span class="kn">as</span> <span class="nn">central_logger</span>
@@ -169,7 +171,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">string_types</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">act</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
@@ -295,6 +297,10 @@
 
         <span class="k">return</span> <span class="n">walk</span>
 
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+
+
 <span class="k">class</span> <span class="nc">Epoch</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An Epoch wraps a bunch of Walk portions that can run in parallel, and</span>
@@ -348,6 +354,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_current_walk_idx</span> <span class="o">+=</span> <span class="mi">1</span>
 
         <span class="k">return</span> <span class="n">walk_idx</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk</span>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="WalkOptions"><a class="viewcode-back" href="../../api.html#combtest.walk.WalkOptions">[docs]</a><span class="k">class</span> <span class="nc">WalkOptions</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -408,7 +417,7 @@
                                  <span class="n">actions</span><span class="p">])</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_segment_options</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">walk_count</span> <span class="o">=</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_count</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)</span>
         <span class="c1"># During iteration, set to a list of:</span>
         <span class="c1">#  [(segment, start_idx, end_idx)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_frontier</span> <span class="o">=</span> <span class="bp">None</span>
@@ -430,7 +439,7 @@
             <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">current_options</span> <span class="o">=</span> <span class="n">segment_options</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span>
             <span class="n">walk_options</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">current_options</span><span class="p">)</span>
-            <span class="n">count</span> <span class="o">=</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">wo</span><span class="p">)</span> <span class="k">for</span> <span class="n">wo</span> <span class="ow">in</span> <span class="n">current_options</span><span class="p">])</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">wo</span><span class="p">)</span> <span class="k">for</span> <span class="n">wo</span> <span class="ow">in</span> <span class="n">current_options</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">walk_options</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">count</span>
 
@@ -473,7 +482,7 @@
             <span class="n">sync_point_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sync_points</span><span class="p">)</span>
 
             <span class="k">assert</span> <span class="p">(</span><span class="n">walk_count</span> <span class="o">%</span> <span class="n">sync_point_count</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="n">segment_walk_count</span> <span class="o">=</span> <span class="n">walk_count</span> <span class="o">/</span> <span class="n">sync_point_count</span>
+            <span class="n">segment_walk_count</span> <span class="o">=</span> <span class="n">walk_count</span> <span class="o">//</span> <span class="n">sync_point_count</span>
 
             <span class="n">walk_options</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">,</span> <span class="n">walk_option_count</span> <span class="o">=</span> \
                     <span class="bp">self</span><span class="o">.</span><span class="n">_get_next_options</span><span class="p">(</span><span class="n">segment_options</span><span class="p">,</span>
@@ -572,7 +581,7 @@
         <span class="n">children</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">children</span>
         <span class="k">if</span> <span class="n">children</span><span class="p">:</span>
             <span class="k">assert</span> <span class="p">(</span><span class="n">expected_walk_count</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="n">walks_per_child</span> <span class="o">=</span> <span class="n">expected_walk_count</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span>
+            <span class="n">walks_per_child</span> <span class="o">=</span> <span class="n">expected_walk_count</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span>
 
             <span class="n">current_walk_idx_start</span> <span class="o">=</span> <span class="n">walk_idx_start</span>
             <span class="n">slice_idx</span> <span class="o">=</span> <span class="mi">0</span>
@@ -605,7 +614,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frontier</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">segment_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">)</span>
             <span class="k">assert</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_count</span> <span class="o">%</span> <span class="n">segment_count</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="n">walks_per_segment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_count</span> <span class="o">/</span> <span class="n">segment_count</span>
+            <span class="n">walks_per_segment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_count</span> <span class="o">//</span> <span class="n">segment_count</span>
             <span class="n">walk_start_idx</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">frontier</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">:</span>
@@ -613,6 +622,7 @@
                            <span class="n">walks_per_segment</span><span class="p">)</span>
                 <span class="n">frontier</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
                 <span class="n">walk_start_idx</span> <span class="o">+=</span> <span class="n">walks_per_segment</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">_frontier</span> <span class="o">=</span> <span class="n">frontier</span>
 
     <span class="k">def</span> <span class="nf">_expand_temp_frontier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">frontier</span><span class="p">):</span>
@@ -665,7 +675,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_frontier</span> <span class="o">=</span> <span class="n">new_frontier</span>
 
-        <span class="k">return</span> <span class="n">epochs</span></div>
+        <span class="k">return</span> <span class="n">epochs</span>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">()</span></div>
 
 
 <span class="k">class</span> <span class="nc">StateCombinator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -691,13 +704,16 @@
             <span class="c1"># don&#39;t need to.</span>
             <span class="n">walk_actions</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">while</span> <span class="n">walk_actions</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">new_walk_actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iterator</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                <span class="n">new_walk_actions</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iterator</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_walk_actions</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">action</span><span class="o">.</span><span class="n">should_cancel</span><span class="p">(</span><span class="n">new_walk_actions</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
                         <span class="k">continue</span>
                 <span class="n">walk_actions</span> <span class="o">=</span> <span class="n">new_walk_actions</span>
 
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_class</span><span class="p">(</span><span class="n">walk_actions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">as_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">class</span> <span class="nc">json_iter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>

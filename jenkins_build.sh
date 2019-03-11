@@ -23,27 +23,11 @@ if [ ! -z "$BUILD_NUMBER" ]; then
     fi
 fi
 
-python setup.py build
-
-rc=$?;
-if [[ $rc != 0 ]]; then
-    echo "Failure to build"
-    exit $rc;
-fi
-
-docker build --file Dockerfile.test -t docker.west.isilon.com/pycombtest .
-rc=$?;
-if [[ $rc != 0 ]]; then
-    echo "Failure to build docker for test"
-    exit $rc;
-fi
-
-docker run --rm --network none docker.west.isilon.com/pycombtest
+make docker-test
 rc=$?;
 if [[ $rc != 0 ]]; then
     echo "Test failure; exiting"
     exit $rc;
 fi
 
-python setup.py clean
-python setup.py sdist
+make dist

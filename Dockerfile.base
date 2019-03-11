@@ -1,6 +1,0 @@
-FROM ubuntu:latest
-MAINTAINER Matthew J. Bryan "matthew.bryan@isilon.com"
-RUN apt-get update -y
-RUN apt-get install -y python-pip
-RUN pip install --upgrade pip
-

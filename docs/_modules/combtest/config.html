@@ -48,11 +48,15 @@
 <span class="sd">below will enforce that ordering. The user provides overrides via the setters.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">ConfigParser</span>
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
 
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">ConfigParser</span> <span class="kn">import</span> <span class="n">SafeConfigParser</span>
+<span class="k">elif</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">SafeConfigParser</span>
 
 <span class="c1">#: Location of a config file to load, if the user wants to load config values</span>
 <span class="c1">#: that way</span>
@@ -102,7 +106,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CONFIG_LOC</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">()</span>
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">SafeConfigParser</span><span class="p">()</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">readfp</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
             <span class="n">sections</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">sections</span><span class="p">()</span>

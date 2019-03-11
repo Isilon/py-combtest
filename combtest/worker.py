@@ -43,6 +43,8 @@ import traceback
 
 import rpyc
 
+from six import string_types
+
 import combtest.bootstrap as bootstrap
 from combtest.config import get_service_port, set_service_port, \
         get_max_thread_count
@@ -284,7 +286,7 @@ class CoordinatorService(rpyc.Service):
     #: at runtime (e.g. via :func:`exposed_start_workers_on`).
     DEFAULT_MAX_THREAD_COUNT = get_max_thread_count()
 
-    def on_connect(self):
+    def on_connect(self, conn):
         """
         :class:`rpyc.Service` is designed for this to be the de-facto
         ``__init__`` function.  So we are doing our initialization here.
@@ -759,7 +761,7 @@ class ServiceGroup(object):
         """
         Return the rpyc client given by an IP.
         """
-        if not isinstance(key, basestring):
+        if not isinstance(key, string_types):
             raise IndexError("We only support indexing a single element by IP")
         return self._clients[key].root
 
@@ -770,7 +772,7 @@ class ServiceGroup(object):
         """
         out = {}
         if self._clients is not None:
-            for key, client in self._clients.iteritems():
+            for key, client in self._clients.items():
                 out[key] = client.root
         return out
 
@@ -834,7 +836,7 @@ class ServiceGroup(object):
         clients = self.clients
         service_count = len(clients)
         worker_ids = [None] * service_count
-        keys = self.clients.keys()
+        keys = list(self.clients.keys())
         for _ in range(service_count):
             out_queues.append([])
 
@@ -912,7 +914,7 @@ class ServiceGroup(object):
         :return: a dict mapping (hostname/ip, port) -> worker_id
         """
         worker_ids_out = {}
-        for ip, client in self.clients.iteritems():
+        for ip, client in self.clients.items():
             worker_id = client.start_workers_on(work_item, ctx=shared_ctx)
             worker_ids_out[ip] = worker_id
 
@@ -969,7 +971,7 @@ class ServiceGroup(object):
         """
         # Simple list of ctxs; no order implied.
         ctxs = []
-        for con, worker_id in worker_ids.iteritems():
+        for con, worker_id in worker_ids.items():
             if isinstance(worker_id, int):
                 wids = [worker_id,]
             else:
@@ -1007,7 +1009,7 @@ class ServiceGroup(object):
         # Simple list of responses; the user can attach e.g. IPs, hostnames,
         # args, whatever they want to contextualize a response.
         responses = []
-        for con, worker_id in worker_ids.iteritems():
+        for con, worker_id in worker_ids.items():
             if worker_id is not None:
                 resp = self.gather_resp(con, worker_id)
                 responses.append(resp)

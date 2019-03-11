@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 import os
 
-try:
-    from version import __version__
-except ImportError:
-    os.system('cp -f ./combtest/version.py .')
-    from version import __version__
+# Provides __version__
+exec(open('version.py').read())
 
 from setuptools import setup, Command
 
@@ -26,7 +23,8 @@ class CleanCommand(Command):
         os.system('rm -vrf combtest/version.py')
 
 requirements = ['paramiko~=2.4',
-                'rpyc~=3.3',
+                'rpyc~=4.0',
+                'six~=1.12',
                 'sphinx~=1.4']
 
 os.system('cp -f version.py combtest/')
@@ -40,7 +38,7 @@ setup(
     version=__version__,
     description="Combinatorial test case generation and running",
     author="Dell/EMC",
-    package_data={"combtest": ["data/easy_install_requirements"]},
+    include_package_data=True,
     author_email='matthew.bryan@isilon.com',
     url='https://github.west.com/mbryan/py-combtest',
     packages=[

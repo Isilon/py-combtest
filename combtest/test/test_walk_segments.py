@@ -73,9 +73,9 @@ walk_order = (
 wo = WalkOptions(walk_order)
 t = wo.tree
 
-print "Sync points in the middle"
-print "Tree is:"
-print wo
+print("Sync points in the middle")
+print("Tree is:")
+print(wo)
 
 assert len(t) == 1
 s1 = t[0]
@@ -90,9 +90,9 @@ assert s2._walk_count == (972 / 2)
 s3 = s2._children[0]
 assert isinstance(s3._options[0][0], Action5)
 options = [option.static_ctx for option in s3._options[0]]
-assert options == range(3)
+assert options == list(range(3))
 
-print "Try running the walks"
+print("Try running the walks")
 ctx = []
 for _ in range(972):
     ctx.append({'l': []})
@@ -130,20 +130,18 @@ for epoch_list in wo:
             else:
                 execution_count[idx] += 1
 
-for walk_idx, branch_id in branch_ids.iteritems():
+for walk_idx, branch_id in branch_ids.items():
     current_ctx = ctx[walk_idx]['l']
     assert len(branch_id) == 2
     assert current_ctx[2] == branch_id[0]
     assert current_ctx[5] == branch_id[1]
 
-ctx.sort()
+ctx_result = [list(r.values())[0] for r in ctx]
+ctx_result.sort()
 
-print "Compare to expected"
-ctx2 = []
-for _ in range(972):
-    ctx2.append({'l': []})
 
-idx = 0
+print("Compare to expected")
+ctx_expected = []
 for a1 in range(3):
     for a2 in range(3):
         for s1 in range(2):
@@ -151,7 +149,8 @@ for a1 in range(3):
                 for a4 in range(3):
                     for s2 in range(2):
                         for a5 in range(3):
-                            ctx_inner = ctx2[idx]['l']
+                            ctx_inner = []
+                            ctx_expected.append(ctx_inner)
                             ctx_inner.append(a1)
                             ctx_inner.append(a2)
                             ctx_inner.append(s1)
@@ -159,12 +158,12 @@ for a1 in range(3):
                             ctx_inner.append(a4)
                             ctx_inner.append(s2)
                             ctx_inner.append(a5)
-                            idx += 1
-ctx2.sort()
-assert ctx == ctx2, "\n%s\n%s" % (str(ctx), str(ctx2))
 
-print "----"
-print "Sync points at the start and end:"
+assert ctx_result == ctx_expected, \
+        "\n%s\n%s" % (str(ctx_result), str(ctx_expected))
+
+print("----")
+print("Sync points at the start and end:")
 # 2 ** 2 * 3 ** 3 = 108
 walk_order2 = (SyncPoint1,
                Action1,
@@ -173,7 +172,7 @@ walk_order2 = (SyncPoint1,
                SyncPoint2)
 wo2 = WalkOptions(walk_order2)
 t = wo2.tree
-print wo2
+print(wo2)
 assert len(t) == 2
 s1 = t[0]
 assert s1._walk_count == (108 / 2)
@@ -187,7 +186,7 @@ assert not s2._options
 assert not s2._children
 assert s2._sync_point is not None
 
-print "Try running the walks"
+print("Try running the walks")
 ctx = []
 for _ in range(108):
     ctx.append({'l': []})
@@ -223,36 +222,34 @@ for epoch_list in wo2:
             else:
                 execution_count[idx] += 1
 
-for walk_idx, branch_id in branch_ids.iteritems():
+for walk_idx, branch_id in branch_ids.items():
     current_ctx = ctx[walk_idx]['l']
     assert len(branch_id) == 2
     assert current_ctx[0] == branch_id[0]
     assert current_ctx[4] == branch_id[1]
 
-ctx.sort()
+ctx_result = [list(r.values())[0] for r in ctx]
+ctx_result.sort()
 
-print "Compare to expected"
-ctx2 = []
-for _ in range(108):
-    ctx2.append({'l': []})
-idx = 0
+print("Compare to expected")
+ctx_expected = []
 for s1 in range(2):
     for a1 in range(3):
         for a2 in range(3):
             for a3 in range(3):
                 for s2 in range(2):
-                    ctx_inner = ctx2[idx]['l']
+                    ctx_inner = []
+                    ctx_expected.append(ctx_inner)
                     ctx_inner.append(s1)
                     ctx_inner.append(a1)
                     ctx_inner.append(a2)
                     ctx_inner.append(a3)
                     ctx_inner.append(s2)
                     idx += 1
-ctx2.sort()
-assert ctx == ctx2
+assert ctx_result == ctx_expected
 
-print "----"
-print "No sync point case"
+print("----")
+print("No sync point case")
 # 3 ** 4 = 81
 walk_order3 = (Action1,
                Action2,
@@ -261,14 +258,14 @@ walk_order3 = (Action1,
               )
 wo3 = WalkOptions(walk_order3)
 t = wo3.tree
-print wo3
+print(wo3)
 assert len(t) == 1
 s1 = t[0]
 assert s1._walk_count == 81
 assert len(s1._children) == 0
 assert s1._sync_point is None
 
-print "Try running the walks"
+print("Try running the walks")
 ctx = []
 for _ in range(81):
     ctx.append({'l': []})
@@ -279,22 +276,20 @@ for epoch_list in wo3:
         for idx, branch_id, walk in epoch:
             assert not branch_id
             walk.execute(ctx[idx])
-ctx.sort()
 
-print "Compare to expected"
-ctx2 = []
-for _ in range(81):
-    ctx2.append({'l': []})
-idx = 0
+ctx_result = [list(r.values())[0] for r in ctx]
+
+print("Compare to expected")
+ctx_expected = []
 for a1 in range(3):
     for a2 in range(3):
         for a3 in range(3):
             for a4 in range(3):
-                ctx_inner = ctx2[idx]['l']
+                ctx_inner = []
+                ctx_expected.append(ctx_inner)
                 ctx_inner.append(a1)
                 ctx_inner.append(a2)
                 ctx_inner.append(a3)
                 ctx_inner.append(a4)
                 idx += 1
-ctx2.sort()
-assert ctx == ctx2
+assert ctx_result == ctx_expected

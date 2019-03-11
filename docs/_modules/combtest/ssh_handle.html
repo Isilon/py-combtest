@@ -48,6 +48,8 @@
 
 <span class="kn">import</span> <span class="nn">paramiko</span>
 
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">string_types</span>
+
 <span class="kn">import</span> <span class="nn">combtest.bootstrap</span> <span class="kn">as</span> <span class="nn">bootstrap</span>
 <span class="kn">from</span> <span class="nn">combtest.central_logger</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">import</span> <span class="nn">combtest.config</span> <span class="kn">as</span> <span class="nn">config</span>
@@ -141,12 +143,12 @@
                   <span class="n">service_class</span><span class="p">,</span>
                   <span class="n">service_run_func</span><span class="o">=</span><span class="n">bootstrap</span><span class="o">.</span><span class="n">DEFAULT_SERVICE_RUN_FUNC</span><span class="p">):</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
             <span class="n">service_run_func</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_from_qualname</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">)</span>
         <span class="n">srf_module</span> <span class="o">=</span> <span class="n">service_run_func</span><span class="o">.</span><span class="vm">__module__</span>
         <span class="n">service_run_func</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_qualname</span><span class="p">(</span><span class="n">service_run_func</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_class</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">service_class</span><span class="p">,</span> <span class="n">string_types</span><span class="p">):</span>
             <span class="n">service_qualname</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_qualname</span><span class="p">(</span><span class="n">service_class</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">service_qualname</span> <span class="o">=</span> <span class="n">service_class</span>
@@ -159,7 +161,7 @@
         <span class="n">rsakey</span> <span class="o">=</span> <span class="bp">None</span>
 
         <span class="n">service_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_service_info</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">service_info</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">service_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;username_map&#39;</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">service_ip</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
                     <span class="n">username</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">service_ip</span><span class="p">]</span>

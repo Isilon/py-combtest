@@ -64,7 +64,7 @@
 <span class="n">_COMMAND_HELP</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="s1">&#39;Replay, one step at a time&#39;</span><span class="p">,</span>
                  <span class="s1">&#39;replay&#39;</span><span class="p">:</span> <span class="s1">&#39;Replay the walk&#39;</span><span class="p">}</span>
 <span class="n">COMMAND_HELP</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
-                          <span class="n">_COMMAND_HELP</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()])</span>
+                          <span class="n">_COMMAND_HELP</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
 
 
 <div class="viewcode-block" id="load_from_trace"><a class="viewcode-back" href="../../api.html#combtest.replay.load_from_trace">[docs]</a><span class="k">def</span> <span class="nf">load_from_trace</span><span class="p">(</span><span class="n">trace_file</span><span class="p">,</span> <span class="n">walk_id</span><span class="p">):</span>

@@ -18,7 +18,7 @@ class TestForkjoin(unittest.TestCase):
             work.append(wi)
 
         results = forkjoin.fork_join(work)
-        self.assertEquals(results, range(100))
+        self.assertEqual(results, list(range(100)))
 
     def test_some_fail(self):
         count = 100
@@ -37,7 +37,7 @@ class TestForkjoin(unittest.TestCase):
             if idx in (1, 50, 99):
                 self.assertTrue(isinstance(results[idx], RuntimeError))
             else:
-                self.assertEquals(results[idx], idx)
+                self.assertEqual(results[idx], idx)
 
 if __name__ == '__main__':
     unittest.main()

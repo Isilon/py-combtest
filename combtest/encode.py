@@ -15,6 +15,8 @@ etc. if they want ``static_ctx`` to be a member of a custom class.
 import json
 import threading
 
+from six import string_types
+
 from combtest.action import Action
 from combtest.utils import get_class_qualname, get_class_from_qualname
 
@@ -79,7 +81,7 @@ def _jd_object_pair_hook(pair_list):
         return dict(pair_list)
 
     k, v = pair_list[0]
-    if not isinstance(k, basestring):
+    if not isinstance(k, string_types):
         return {k: v}
 
     if k.startswith(_DEFAULT_MAGIC):

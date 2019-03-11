@@ -5,6 +5,8 @@ Misc utils
 import importlib
 import socket
 
+from six import string_types
+
 
 # Use this to override the IP we will use
 class _ExIP(object):
@@ -41,7 +43,7 @@ class _ExIP(object):
 
     @ip.setter
     def ip(self, ip):
-        if not isinstance(ip, basestring):
+        if not isinstance(ip, string_types):
             raise ValueError("IP must be formatted as a string")
 
         self.ex_ip = ip

@@ -4,11 +4,13 @@ operations, etc., and executing such sequences of operations.
 """
 import copy
 from collections import Iterable
+import functools
 import itertools
 import operator
 import threading
 import traceback
 
+from six import string_types
 
 from combtest.action import SyncPoint, Action
 import combtest.central_logger as central_logger
@@ -128,7 +130,7 @@ class Walk(object):
 
     @classmethod
     def from_json(cls, obj):
-        assert not isinstance(obj, basestring), str(obj)
+        assert not isinstance(obj, string_types), str(obj)
         out = cls()
         for act in obj:
             out.append(act)
@@ -254,6 +256,10 @@ class Segment(object):
 
         return walk
 
+    def __next__(self):
+        return self.next()
+
+
 class Epoch(object):
     """
     An Epoch wraps a bunch of Walk portions that can run in parallel, and
@@ -307,6 +313,9 @@ class Epoch(object):
         self._current_walk_idx += 1
 
         return walk_idx, branch_id, walk
+
+    def __next__(self):
+        return self.next()
 
 
 class WalkOptions(object):
@@ -367,7 +376,7 @@ class WalkOptions(object):
                                  actions])
                 self._segment_options.append(actions)
 
-        self.walk_count = reduce(operator.mul, self._sizes)
+        self.walk_count = functools.reduce(operator.mul, self._sizes)
         # During iteration, set to a list of:
         #  [(segment, start_idx, end_idx)]
         self._frontier = None
@@ -389,7 +398,7 @@ class WalkOptions(object):
             idx += 1
             current_options = segment_options[start_idx]
             walk_options.extend(current_options)
-            count = reduce(operator.mul, [len(wo) for wo in current_options])
+            count = functools.reduce(operator.mul, [len(wo) for wo in current_options])
 
         return walk_options, idx, count
 
@@ -432,7 +441,7 @@ class WalkOptions(object):
             sync_point_count = len(sync_points)
 
             assert (walk_count % sync_point_count) == 0
-            segment_walk_count = walk_count / sync_point_count
+            segment_walk_count = walk_count // sync_point_count
 
             walk_options, end_idx, walk_option_count = \
                     self._get_next_options(segment_options,
@@ -531,7 +540,7 @@ class WalkOptions(object):
         children = segment.children
         if children:
             assert (expected_walk_count % len(children)) == 0
-            walks_per_child = expected_walk_count / len(children)
+            walks_per_child = expected_walk_count // len(children)
 
             current_walk_idx_start = walk_idx_start
             slice_idx = 0
@@ -564,7 +573,7 @@ class WalkOptions(object):
         if self._frontier is None:
             segment_count = len(self.tree)
             assert (self.walk_count % segment_count) == 0
-            walks_per_segment = self.walk_count / segment_count
+            walks_per_segment = self.walk_count // segment_count
             walk_start_idx = 0
             frontier = []
             for segment in self.tree:
@@ -572,6 +581,7 @@ class WalkOptions(object):
                            walks_per_segment)
                 frontier.append(current)
                 walk_start_idx += walks_per_segment
+
             self._frontier = frontier
 
     def _expand_temp_frontier(self, epochs, frontier):
@@ -626,6 +636,9 @@ class WalkOptions(object):
 
         return epochs
 
+    def __next__(self):
+        return self.next()
+
 
 class StateCombinator(object):
     """
@@ -650,13 +663,16 @@ class StateCombinator(object):
             # don't need to.
             walk_actions = None
             while walk_actions is None:
-                new_walk_actions = self._iterator.next()
+                new_walk_actions = next(self._iterator)
                 for idx, action in enumerate(new_walk_actions):
                     if action.should_cancel(new_walk_actions, idx):
                         continue
                 walk_actions = new_walk_actions
 
             return self.walk_class(walk_actions)
+
+    def __next__(self):
+        return self.next()
 
     def as_json(self):
         class json_iter(object):

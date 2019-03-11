@@ -54,7 +54,7 @@ highly desireable given the sheer volume of cases likely to be generated.</li>
 <li>Test case logging and deterministic replay mechanisms, allowing the user
 to re-run any generated test case.</li>
 </ul>
-<p>These make it easy for a test writer to get started; and at the same time
+<p>These make it easy for a test writer to get started. At the same time,
 they are written to allow the advanced user to easily build out a custom
 workflow.</p>
 <p>At each step, the lib was designed with a small handful of concerns in mind:</p>
@@ -77,20 +77,21 @@ combinations of those cases, and maybe then to combine all of those with
 various configurations of their system. &#8220;But that is combinatorial explosion;
 you can&#8217;t test all that!&#8221; Nevertheless, in complex software systems it is
 sometimes necessary to do such a combining of tests/configs/etc to have
-confidence in the quality of the product. For even simpler software systems,
+confidence in the quality of the product. Even for simpler software systems,
 this can net a number of important advantages:</p>
 <ul class="simple">
 <li>Like fuzz testing, you can get exponentially more coverage than you can
 with tests specifically enumerated by a tester.</li>
 <li>Unlike fuzz testing, you get guaranteed, verifiable coverage, just like
 specifically enumerated tests.</li>
-<li>You get built-in deterministic replay of the test, unlike fuzz testing
-where that can sometimes be challenging.</li>
+<li>You get built-in deterministic replay of the test, unlike with some styles
+of fuzz testing where that can be challenging.</li>
 </ul>
 </div>
 <div class="section" id="high-level-example">
 <h1>High level example<a class="headerlink" href="#high-level-example" title="Permalink to this headline">¶</a></h1>
-<p>TODO</p>
+<p>Suppose one of us goes crazy and decides to write their own regex expression
+parser.</p>
 </div>
 
 

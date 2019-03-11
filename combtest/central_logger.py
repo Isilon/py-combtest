@@ -4,17 +4,22 @@ scalability. Logging millions of case starts/ends would be too heavy of a cost
 without some buffering I think.
 """
 import atexit
-import cPickle
+import pickle
 import logging
 from logging import ERROR, WARNING, INFO, DEBUG
 import logging.handlers
 from logging.handlers import MemoryHandler
 import os
-import SocketServer
 import struct
 import sys
 import threading
 import time
+
+import six
+if six.PY2:
+      from SocketServer import StreamRequestHandler, ThreadingTCPServer
+elif six.PY3:
+      from socketserver import StreamRequestHandler, ThreadingTCPServer
 
 import combtest.encode as encode
 from combtest.utils import get_my_IP
@@ -78,7 +83,7 @@ class OpTracer(object):
             pass
 
     def write(self, info):
-        os.write(self._handle, info)
+        os.write(self._handle, info.encode())
         os.fsync(self._handle)
 
     def trace(self, **op_info):
@@ -246,7 +251,7 @@ def add_socket_handler(host, port):
 
     logger.net_logger = nla
 
-class LogRecordStreamHandler(SocketServer.StreamRequestHandler):
+class LogRecordStreamHandler(StreamRequestHandler):
     """Handler for a streaming logging request.
 
     This basically logs the record using whatever logging policy is
@@ -271,7 +276,7 @@ class LogRecordStreamHandler(SocketServer.StreamRequestHandler):
         self.handleLogRecord(record)
 
     def unPickle(self, data):
-        return cPickle.loads(data)
+        return pickle.loads(data)
 
     def handleLogRecord(self, record):
         logger = self.server.logger
@@ -281,14 +286,14 @@ class LogRecordStreamHandler(SocketServer.StreamRequestHandler):
         # cycles and network bandwidth!
         logger.handle(record)
 
-class LogRecordSocketReceiver(SocketServer.ThreadingTCPServer):
+class LogRecordSocketReceiver(ThreadingTCPServer):
     """simple TCP socket-based logging receiver suitable for testing.
     """
 
     allow_reuse_address = 1
 
     def __init__(self, host, port, handler=LogRecordStreamHandler):
-        SocketServer.ThreadingTCPServer.__init__(self, (host, port), handler)
+        ThreadingTCPServer.__init__(self, (host, port), handler)
         self.abort = 0
         self.timeout = 1
         self.logger = logger.logger
@@ -307,6 +312,7 @@ class LogRecordSocketReceiver(SocketServer.ThreadingTCPServer):
 def logger_recv_main(host, port, parent):
     parent.server = LogRecordSocketReceiver(host=host, port=port)
     parent.server.serve_until_stopped()
+    parent.server.server_close()
 
 class LogRecvr(object):
     INSTANCES = set()

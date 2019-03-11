@@ -1,9 +1,0 @@
-FROM docker.west.isilon.com/mbryan/combtest_base:latest
-MAINTAINER Matthew J. Bryan "matthew.bryan@isilon.com"
-COPY . /combtest
-WORKDIR /combtest
-RUN python setup.py build
-RUN pip install .
-ENTRYPOINT ["python"]
-CMD ["-m", "unittest", "discover", "combtest.test"]
-

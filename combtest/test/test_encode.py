@@ -60,8 +60,8 @@ class TestGeneralEncodeDecode(unittest.TestCase):
         dec = encode.decode(s)
         s2 = encode.encode(dec)
 
-        self.assertEquals(obj, dec)
-        self.assertEquals(s, s2)
+        self.assertEqual(obj, dec)
+        self.assertEqual(s, s2)
 
         return s, dec
 
@@ -113,7 +113,7 @@ class TestGeneralEncodeDecode(unittest.TestCase):
         json_str, decoded = self.do_test(ac)
         decoded_from_cache = encode.decode(json_str)
         self.assertIs(decoded, decoded_from_cache)
-        self.assertEquals(ac, decoded)
+        self.assertEqual(ac, decoded)
 
     def test_magic_collision(self):
         class Inner(object):

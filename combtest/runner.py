@@ -130,8 +130,8 @@ class WalkExecutorService(worker.CoordinatorService):
     #: or in a child class
     WORKER_TYPE = WalkThreadPool
 
-    def on_connect(self):
-        super(WalkExecutorService, self).on_connect()
+    def on_connect(self, conn):
+        super(WalkExecutorService, self).on_connect(conn)
 
         # Maps worker_id->WalkRunner instance
         self._runners = {}
@@ -280,7 +280,7 @@ class WalkExecutorService(worker.CoordinatorService):
             ctxs_out = []
             for walk_ctx in ctx['walk_ctxs']:
                 ctx_out = {}
-                for k, v in walk_ctx.iteritems():
+                for k, v in walk_ctx.items():
                     if k in ['runner', 'walk_ctxs']:
                         continue
                     ctx_out[k] = v
@@ -611,9 +611,9 @@ class MultistageWalkRunningService(WalkExecutorService):
             runner = self._runners[worker_id]
             ctxs_out = {}
 
-            for walk_id, walk_ctx in runner.ctxs.iteritems():
+            for walk_id, walk_ctx in runner.ctxs.items():
                 ctx_out = {}
-                for k, v in walk_ctx.iteritems():
+                for k, v in walk_ctx.items():
                     if k in ['runner', 'walk_ctxs']:
                         continue
                     ctx_out[k] = v
@@ -702,7 +702,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
 
         id_map = id_map or self.id_map
         key_idx = 0
-        keys = self.clients.keys()
+        keys = list(self.clients.keys())
         key_count = len(keys)
 
         # Maps (ip, port)->worker ids
@@ -736,7 +736,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                         ctx=ctx, sync_point=epoch.sync_point)
                 worker_ids[target_key].append(worker_id)
 
-        for target_key, queue in out_queues.iteritems():
+        for target_key, queue in out_queues.items():
             client = clients[target_key]
             total_count += len(queue)
             worker_id = self._flush_queue(target_key, client, queue,
@@ -778,7 +778,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
         total_segment_count = 0
         total_error_count = 0
         total_walk_count = 0
-        for ip, ids in worker_ids.iteritems():
+        for ip, ids in worker_ids.items():
             for worker_id in ids:
                 resp = self.gather_resp(ip, worker_id)
                 if not resp or 'segment_count' not in resp:
@@ -806,7 +806,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                  locations
         """
         logs = {}
-        for cur_ip, client in self.clients.iteritems():
+        for cur_ip, client in self.clients.items():
             client_logs = client.start_remote_logging(
                     ip,
                     port,
@@ -818,7 +818,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
 
     def provide_logs(self, log_dir):
         logs = {}
-        for ip, client in self.clients.iteritems():
+        for ip, client in self.clients.items():
             client_logs = client.provide_logs(log_dir)
             logs[ip] = client_logs
         return logs
@@ -943,7 +943,7 @@ def run_multistage_walks(walk_order,
         if any([remote_log_locations.values()]):
             central_logger.log_status("Remote log locations:")
             logger.trace_op(id='master')
-            for ip, log_locations in remote_log_locations.iteritems():
+            for ip, log_locations in remote_log_locations.items():
                 logger.trace_op(ip=ip, logs=log_locations)
             master_location = logger.op_trace.fname
         master_log = {'master': master_location,
@@ -997,7 +997,7 @@ def run_multistage_walks(walk_order,
                 central_logger.log_status("Epoch of work sent; "
                                           "%d work items", count)
 
-                for ip, ids in worker_ids.iteritems():
+                for ip, ids in worker_ids.items():
                     if ip not in master_worker_ids:
                         master_worker_ids[ip] = []
                     master_worker_ids[ip].extend(ids)
@@ -1011,7 +1011,7 @@ def run_multistage_walks(walk_order,
         segment_count = 0
         error_count = 0
         walk_count = 0
-        for ip, ids in master_worker_ids.iteritems():
+        for ip, ids in master_worker_ids.items():
             if len(ids) == 0:
                 # No work sent, e.g. because we didn't have many walks
                 continue

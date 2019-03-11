@@ -224,7 +224,7 @@ class SyncPoint(Action):
 
                 walks_to_update[ip].append(walk_id)
 
-            for ip, walk_ids in walks_to_update.iteritems():
+            for ip, walk_ids in walks_to_update.items():
                 try:
                     service.update_remote_contexts(ip,
                             dynamic_ctx['update_remote_ctx']['worker_ids'],
@@ -277,13 +277,16 @@ class OptionSet(object):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         """
         Lazy iteration, meaning: generate the actual Actions on the fly to
         try to minimize mem footprint.
         :raise StopIteration: when the underlying options iterator is exhausted
         """
-        next_option = self._iter.next()
+        next_option = next(self._iter)
         return self._action_class(next_option)
 
     def to_json(self):

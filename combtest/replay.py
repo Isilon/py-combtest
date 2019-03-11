@@ -23,7 +23,7 @@ DEFAULT_REPLAY_FUNC_NAME = utils.get_class_qualname(
 _COMMAND_HELP = {'step': 'Replay, one step at a time',
                  'replay': 'Replay the walk'}
 COMMAND_HELP = "\n".join(["%s: %s" % (k, v) for k, v in
-                          _COMMAND_HELP.iteritems()])
+                          _COMMAND_HELP.items()])
 
 
 def load_from_trace(trace_file, walk_id):

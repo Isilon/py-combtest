@@ -24,7 +24,7 @@ export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 DOCSRC		= _src_doc
-VENV		= /tmp/combtest_$(CURRENT_REV)
+VENV		= /tmp/combtest_
 
 
 build: ## build this
@@ -54,26 +54,25 @@ lint:
 test: ## run tests quickly with the default Python
 	python -m unittest discover combtest.test
 
-docker-base:
-	docker build --file Dockerfile.base -t docker.west.isilon.com/mbryan/combtest_base .
-	docker push docker.west.isilon.com/mbryan/combtest_base
-
 docker-test:
-	docker build --file Dockerfile.test -t docker.west.isilon.com/pycombtest .
-	docker run --rm --network none docker.west.isilon.com/pycombtest
+	docker build --file Dockerfile.test2 -t docker.west.isilon.com/mbryan/pycombtest2 .
+	docker build --file Dockerfile.test3 -t docker.west.isilon.com/mbryan/pycombtest3 .
+	docker run --rm --network none docker.west.isilon.com/mbryan/pycombtest2
+	docker run --rm --network none docker.west.isilon.com/mbryan/pycombtest3
+	docker rmi docker.west.isilon.com/mbryan/pycombtest2
+	docker rmi docker.west.isilon.com/mbryan/pycombtest3
 
 
 docs-clean:
 	$(MAKE) -C $(DOCSRC) clean
 
-# TODO: autodoc / API docs
 docs: ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C $(DOCSRC) html
 	$(BROWSER) docs/index.html
 
 venv:
-	virtualenv --system-site-packages $(VENV)
-	$(VENV)/bin/pip install -r .
+	virtualenv $(VENV)
+	$(VENV)/bin/pip install .
 
 #release: clean ## package and upload a release
 #	python setup.py sdist upload # TODO

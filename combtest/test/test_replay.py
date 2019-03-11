@@ -47,7 +47,7 @@ class TestReplayByLib(unittest.TestCase):
 
         result = ctx['inner']
         expected = [a.static_ctx for a in test_walk]
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
 class TestReplayFromTrace(unittest.TestCase):
     def test_walk_replay(self):
@@ -66,15 +66,15 @@ class TestReplayFromTrace(unittest.TestCase):
                 log_dir=log_dir,
                 ctx=ctx,
                 gather_ctxs=True)
-        self.assertEquals(walk_count, 1)
-        self.assertEquals(error_count, 0)
+        self.assertEqual(walk_count, 1)
+        self.assertEqual(error_count, 0)
 
-        self.assertEquals(len(ctxs), 1)
+        self.assertEqual(len(ctxs), 1)
         ctxs = ctxs[0]
-        self.assertEquals(len(ctxs), 1)
-        ctx = ctxs.values()[0]
+        self.assertEqual(len(ctxs), 1)
+        ctx = list(ctxs.values())[0]
         ctx = ctx['inner']
-        self.assertEquals(ctx, expected)
+        self.assertEqual(ctx, expected)
 
         trace_logs = [log_locs[1] for log_locs in
                       logs['remote'].values()]
@@ -92,10 +92,10 @@ class TestReplayFromTrace(unittest.TestCase):
                         walks[walk_id] = []
                     walks[walk_id].append((current_walk, sync_point))
         # Checking my assumptions
-        self.assertEquals(len(walks), 1)
+        self.assertEqual(len(walks), 1)
 
         walk_to_replay = walk.Walk()
-        for segment in walks.values()[0]:
+        for segment in list(walks.values())[0]:
             walk_segment = segment[0]
             sync_point = segment[1]
             if sync_point:
@@ -106,14 +106,14 @@ class TestReplayFromTrace(unittest.TestCase):
         ctx = {}
         runner.replay_multistage_walk(walk_to_replay, ctx=ctx)
         self.assertTrue('inner' in ctx)
-        self.assertEquals(ctx['inner'], expected)
+        self.assertEqual(ctx['inner'], expected)
 
         # Now let's test the replay lib
         ctx = {}
         ctx = replay.replay_walk_by_id(logs['master'], walk_id, step=False,
                 ctx=ctx)
         self.assertTrue('inner' in ctx)
-        self.assertEquals(ctx['inner'], expected)
+        self.assertEqual(ctx['inner'], expected)
 
         shutil.rmtree(log_dir)
 

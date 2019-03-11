@@ -14,7 +14,7 @@ that a writer of such tests is likely to need. Examples:
 * Test case logging and deterministic replay mechanisms, allowing the user
   to re-run any generated test case.
 
-These make it easy for a test writer to get started; and at the same time
+These make it easy for a test writer to get started. At the same time,
 they are written to allow the advanced user to easily build out a custom
 workflow.
 
@@ -39,18 +39,20 @@ combinations of those cases, and maybe then to combine all of those with
 various configurations of their system. "But that is combinatorial explosion;
 you can't test all that!" Nevertheless, in complex software systems it is
 sometimes necessary to do such a combining of tests/configs/etc to have
-confidence in the quality of the product. For even simpler software systems,
+confidence in the quality of the product. Even for simpler software systems,
 this can net a number of important advantages:
 
 * Like fuzz testing, you can get exponentially more coverage than you can
   with tests specifically enumerated by a tester.
 * Unlike fuzz testing, you get guaranteed, verifiable coverage, just like
   specifically enumerated tests.
-* You get built-in deterministic replay of the test, unlike fuzz testing
-  where that can sometimes be challenging.
+* You get built-in deterministic replay of the test, unlike with some styles
+  of fuzz testing where that can be challenging.
 
 
 High level example
 ==================================================================
 
-TODO
+Suppose one of us goes crazy and decides to write their own regex expression
+parser. 
+

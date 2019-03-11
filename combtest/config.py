@@ -7,11 +7,15 @@ There are two layers of config provided: config loaded from file via
 below will enforce that ordering. The user provides overrides via the setters.
 """
 
-import ConfigParser
 import errno
 import json
 import multiprocessing
 
+import six
+if six.PY2:
+    from ConfigParser import SafeConfigParser
+elif six.PY3:
+    from configparser import SafeConfigParser
 
 #: Location of a config file to load, if the user wants to load config values
 #: that way
@@ -61,7 +65,7 @@ def refresh_cfg():
     """
     try:
         with open(CONFIG_LOC, 'r') as f:
-            parser = ConfigParser.SafeConfigParser()
+            parser = SafeConfigParser()
             parser.readfp(f)
 
             sections = parser.sections()
