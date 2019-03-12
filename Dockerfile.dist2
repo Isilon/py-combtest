@@ -1,0 +1,7 @@
+FROM python:2
+MAINTAINER Matthew J. Bryan "matthew.bryan@isilon.com"
+COPY . /combtest
+WORKDIR /combtest
+CMD ["python", "setup.py", "sdist"]
+CMD ["python", "setup.py", "bdist_wheel"]
+
