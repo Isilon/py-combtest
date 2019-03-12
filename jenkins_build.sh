@@ -30,6 +30,7 @@ fi
 #    exit $rc;
 #fi
 
+echo "My setuptools version is:"
 python -c "import setuptools; print setuptools.__version__"
 
 make dist
