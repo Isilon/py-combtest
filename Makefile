@@ -55,13 +55,16 @@ test: ## run tests quickly with the default Python
 	python -m unittest discover combtest.test
 
 docker-test:
+	-docker rm -fv pycombtest2
+	-docker rm -fv pycombtest3
 	docker build --file Dockerfile.test2 -t docker.west.isilon.com/mbryan/pycombtest2 .
 	docker build --file Dockerfile.test3 -t docker.west.isilon.com/mbryan/pycombtest3 .
-	docker run --rm --network none docker.west.isilon.com/mbryan/pycombtest2
-	docker run --rm --network none docker.west.isilon.com/mbryan/pycombtest3
+	docker run --rm --network none --name pycombtest2 docker.west.isilon.com/mbryan/pycombtest2
+	docker run --rm --network none --name pycombtest3 docker.west.isilon.com/mbryan/pycombtest3
 	docker rmi docker.west.isilon.com/mbryan/pycombtest2
 	docker rmi docker.west.isilon.com/mbryan/pycombtest3
-
+	-docker rm -fv pycombtest2
+	-docker rm -fv pycombtest3
 
 docs-clean:
 	$(MAKE) -C $(DOCSRC) clean
@@ -85,11 +88,12 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 docker-dist: clean ## builds source and wheel package
+	-docker rm -fv pycombtestdist2
 	docker build --file Dockerfile.dist2 -t docker.west.isilon.com/mbryan/pycombtestdist2 .
 	docker run --network none --name pycombtestdist2 docker.west.isilon.com/mbryan/pycombtestdist2
 	docker cp pycombtestdist2:/combtest/dist ./dist
 	ls -l dist
-	docker rm -fv pycombtestdist2
+	-docker rm -fv pycombtestdist2
 
 install: clean ## install the package to the active Python's site-packages
 	pip install .
