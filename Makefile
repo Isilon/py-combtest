@@ -84,6 +84,12 @@ dist: clean ## builds source and wheel package
 	python setup.py bdist_wheel
 	ls -l dist
 
+docker-dist: clean ## builds source and wheel package
+	docker build --file Dockerfile.dist2 -t docker.west.isilon.com/mbryan/pycombtestdist2 .
+	docker run --network none --name pycombtestdist2 docker.west.isilon.com/mbryan/pycombtestdist2
+	docker cp pycombtestdist2:/dist ./dist
+	ls -l dist
+	docker rm -fv pycombtestdist2
 
 install: clean ## install the package to the active Python's site-packages
 	pip install .
