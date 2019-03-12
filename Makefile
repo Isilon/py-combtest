@@ -87,7 +87,7 @@ dist: clean ## builds source and wheel package
 docker-dist: clean ## builds source and wheel package
 	docker build --file Dockerfile.dist2 -t docker.west.isilon.com/mbryan/pycombtestdist2 .
 	docker run --network none --name pycombtestdist2 docker.west.isilon.com/mbryan/pycombtestdist2
-	docker cp pycombtestdist2:/dist ./dist
+	docker cp pycombtestdist2:/combtest/dist ./dist
 	ls -l dist
 	docker rm -fv pycombtestdist2
 
