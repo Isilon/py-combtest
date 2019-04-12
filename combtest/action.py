@@ -7,7 +7,16 @@ import random
 
 import combtest.utils as utils
 
-class Action(object):
+
+
+class CancelWalk(RuntimeError):
+    """
+    Raised to immediately stop the execution of a :class:`combtest.walk.Walk`.
+    """
+    pass
+
+
+class BaseAction(object):
     """
     An Action class bundles a function that performs an operation, and all
     the different parameterizations for that operation. The
@@ -28,7 +37,7 @@ class Action(object):
     State is represented as an object provided by the user, which will be
     passed to :func:`~combtest.action.Action.run` call.
     """
-    def __init__(self, static_ctx):
+    def __init__(self, param):
         """
         The initializer takes a single argument: an object defining the
         parameters to pass to the operation (which is defined in the
@@ -37,24 +46,24 @@ class Action(object):
         immutable object representing a specific operation with its
         spcific parameters.
 
-        :param object ctx: an object that will be passed to the
-        :func:`~combtest.action.Action.run` method later.
+        :param object state: an object that will be passed to the
+                             :func:`~combtest.action.Action.run` method later.
         """
-        self._static_ctx = static_ctx
+        self._param = param
 
     @property
-    def static_ctx(self):
+    def param(self):
         """
         This instance's parameters, as passed to the initializer.
         """
         # XXX it would be nice to have a copy protocol here, but we would have
-        # to impose on the client code to have a copy-able ctx. So: we are
+        # to impose on the client code to have a copy-able state. So: we are
         # protecting our reference here but not the internal state of the thing
         # refered to. Up to the client code to make sure this is immutable.
-        return self._static_ctx
+        return self._param
 
-    def __call__(self, ctx=None):
-        self.run(self.static_ctx, dynamic_ctx=ctx)
+    def __call__(self, state=None):
+        self.run(self.param, state=state)
 
     def should_cancel(self, walk, idx):
         """
@@ -68,18 +77,18 @@ class Action(object):
         """
         return False
 
-    def run(self, static_ctx, dynamic_ctx=None):
+    def run(self, param, state=None):
         """
         This is called to actually run the operation. It does not need to be
         invoked directly by the user.
 
-        :param object static_ctx: this represents the paramaterization of the
+        :param object param: this represents the paramaterization of the
                                   operation. For example: if you are testing
                                   a GUI and this Action represents "set
-                                  the state of checkbox1", then static_ctx
+                                  the state of checkbox1", then param
                                   would be the checkbox1 setting.
 
-        :param object dynamic_ctx: this object is passed along from
+        :param object state: this object is passed along from
                                    Action-to-Action in a given Walk as the
                                    Actions execute. It represents any state
                                    that needs to be provided to the Action,
@@ -115,137 +124,147 @@ class Action(object):
         """
         Return something JSONifiable that can uniquely represent this instance.
         """
-        return self.static_ctx
+        return self.param
 
     @classmethod
     def from_json(cls, obj):
-        return cls(static_ctx=obj)
+        return cls(param=obj)
 
-class SyncPoint(Action):
+class Action(BaseAction):
     """
-    A SyncPoint is a type of Action which cannot be run in parallel with
+    Convenience form of BaseAction: let the user provide a simple iterable of
+    parameters, called ``OPTIONS``.
+    """
+    OPTIONS = None
+
+    @classmethod
+    def get_option_set(cls):
+        """
+        Return the full parameterization space for this Action type. For
+        example: if you are testing a GUI and this Action sets the state of a
+        checkbox, then perhaps this will return ``cls(True)`` and
+        ``cls(False)`` for 'set the box to checked' and 'set the box to
+        unchecked' respectively.
+
+        Note:
+            This returns cls instances, not the parameters themselves.
+
+        :return: An iterable of instances of type cls
+        """
+        if cls.OPTIONS is None:
+            raise NotImplementedError("Must provide a set of options this Action "
+                    "type supports, either via cls.OPTIONS, or by overriding "
+                    "this method.")
+
+        return OptionSet(cls.OPTIONS, action_class=cls)
+
+class SerialAction(Action):
+    """
+    A SerialAction is a type of Action which cannot be run in parallel with
     others, e.g. for when we are running a bunch of 'Walks' in parallel.
     Thinking in terms of parallel algorithms: this represents a pinch point
     where an operation must be serialized with everything else. In terms of
     testing: it is part of a test where we can't run other cases in parallel;
     e.g. if we are twiddling some global config option that affects all running
-    test cases.
+    test cases. We change the option once for all test cases after all
+    outstanding work has finished.
 
-    Fundamentally, a SyncPoint is run a single time for a given
+    Fundamentally, a SerialAction is run a single time for a given
     parameterization, regardless of how many Walks contain it. The part of the
-    Walks prior to the SyncPoint will be run first.
+    Walks prior to the SerialAction will be run first.
 
     Example: suppose we have three Walks:
-        * [Action1(1), Action2(2), SyncPoint1(1), Action3(3)],
-        * [Action1(1), Action2(3), SyncPoint1(1), Action3(3)],
-        * [Action1(1), Action2(2), Action3(3), SyncPoint1(1), Action4(4)]
+        * [Action1(1), Action2(2), SerialAction1(1), Action3(3)],
+        * [Action1(1), Action2(3), SerialAction1(1), Action3(3)],
+        * [Action1(1), Action2(2), Action3(3), SerialAction1(1), Action4(4)]
 
         We can run the first 'segment' of each Walk in parallel:
         * [Action1(1), Action2(2)],
         * [Action1(1), Action2(3)],
         * [Action1(1), Action2(2), Action3(3)]
 
-        Then, single a thread we will run SyncPoint1(1), then in parallal we
+        Then, single a thread we will run SerialAction1(1), then in parallal we
         can run:
         * [Action3(3)],
         * [Action3(3)],
         * [Action4(4)]
     """
-    def __init__(self, *args, **kwargs):
-        self.is_nop = False
-        super(SyncPoint, self).__init__(*args, **kwargs)
-
-    def __call__(self, ctx=None, **_kwargs):
-
-        if ctx is not None:
-            if not isinstance(ctx, dict):
-                # We can lock this type with Python3 annotations
-                raise ValueError("ctxs need to be dicts")
-            ctx_copy = copy.copy(ctx)
+    def __call__(self, state, branch_id=None, epoch=None, worker_ids=None,
+                 service=None):
+        if epoch is None or epoch.level == 0:
+            state_copy = state
         else:
-            ctx_copy = {}
+            state_copy = copy.copy(state)
 
-        if _kwargs:
-            if ('branch_id' not in _kwargs or
-                'service' not in _kwargs or
-                'worker_ids' not in _kwargs or
-                'epoch' not in _kwargs):
-                    raise ValueError("I don't recognize these kwargs; did you "
-                            "mean to pass these? %s" % str(_kwargs))
-            ctx_copy['update_remote_ctx'] = _kwargs
-
-        self.run(self.static_ctx, dynamic_ctx=ctx_copy)
+        #if _kwargs:
+        #    if ('branch_id' not in _kwargs or
+        #        'service' not in _kwargs or
+        #        'worker_ids' not in _kwargs or
+        #        'epoch' not in _kwargs):
+        #            raise ValueError("I don't recognize these kwargs; did you "
+        #                    "mean to pass these? %s" % str(_kwargs))
+        #    state_copy['update_remote_state'] = _kwargs
 
         try:
-            del ctx_copy['update_remote_ctx']
-        except KeyError:
-            pass
+            new_state = self.run(self.param, state=state_copy)
+        except CancelWalk:
+            raise RuntimeError("Raising CancelWalk in a SerialAction doesn't "
+                               "change behavior; just exclude its param "
+                               "instead, or use should_cancel.")
 
-        ctx_copy = ctx_copy or None
-        return ctx_copy
+        if new_state is not None:
+            self._update_remote_states(state_copy, epoch=epoch,
+                                       worker_ids=worker_ids,
+                                       service=service)
+            return new_state
+        return state
 
-    def update_remote_contexts(self, dynamic_ctx, **kwargs):
+    def _update_remote_states(self, state, epoch=None, worker_ids=None,
+                              service=None):
         """
-        Fundamentally, SyncPoints are run a single time for each
-        parameterization, as explained above. SyncPoint instances can
+        Fundamentally, SerialActions are run a single time for each
+        parameterization, as explained above. SerialAction instances can
         be executed in a totally different memory space than the rest of a
         :class:`combtest.walk.Walk` (e.g. due to using remote executors; see
-        :class:`combtest.worker.ServiceGroup`). So to update the state/``ctx``
+        :class:`combtest.worker.ServiceGroup`). So to update the state
         passed along with the Walk, the run() method can call this function to
-        push an update to the Walk's remote context.
+        push an update to the Walk's remote state.
 
-        :param object dynamic_ctx: this is the local state that was passed to
+        :param object state: this is the local state that was passed to
                                    the :func:`run` function.
         :param kwargs: these are key/value pairs to be pushed to the remote
-                       state/``ctx``.
+                       state
         """
-
-        if ('update_remote_ctx' not in dynamic_ctx or
-                dynamic_ctx['update_remote_ctx']['epoch'].level == 0):
+        if epoch is None or epoch.level == 0:
             # Either we are running locally (e.g. for replay) and so we have no
-            # remote contexts, or this is syncpoint is being run before any
-            # other actions, so we don't yet have any remote ctxs established.
-            # Either way, we straight-up update the local ctx. If we later
+            # remote states, or this SerialAction is being run before any
+            # other actions, so we don't yet have any remote states established.
+            # Either way, we straight-up update the local state. If we later
             # begin remote execution, the value will get passed to the
-            # appropriate walks via the ctx (via scatter_work).
-            dynamic_ctx.update(kwargs)
+            # appropriate Walks via the ``state`` arg (via scatter_work).
+            return
         else:
-            service = dynamic_ctx['update_remote_ctx']['service']
-            epoch = dynamic_ctx['update_remote_ctx']['epoch']
-            # Maps walk_id->ip
+            # Maps walk_id->connection_info
             id_map = service.id_map
 
-            # Maps ip->walk_id list
+            # Maps connection_info->walk_id list
             walks_to_update = {}
             for walk_id in range(epoch.walk_idx_start, epoch.walk_idx_end):
-                ip = id_map[walk_id]
-                if ip not in walks_to_update:
-                    walks_to_update[ip] = []
+                connection_info = id_map[walk_id]
+                if connection_info not in walks_to_update:
+                    walks_to_update[connection_info] = []
 
-                walks_to_update[ip].append(walk_id)
+                walks_to_update[connection_info].append(walk_id)
 
-            for ip, walk_ids in walks_to_update.items():
+            for connection_info, walk_ids in walks_to_update.items():
                 try:
-                    service.update_remote_contexts(ip,
-                            dynamic_ctx['update_remote_ctx']['worker_ids'],
-                            walk_ids, **kwargs)
+                    service.update_remote_states(connection_info,
+                                                 worker_ids,
+                                                 walk_ids,
+                                                 state)
                 except Exception as e:
-                    new_msg = str(e) + "\nIP was: %s" % ip
+                    new_msg = str(e) + "\nIP was: %s" % str(connection_info)
                     raise RuntimeError(new_msg)
-
-    def run_as_replay(self, static_ctx, dynamic_ctx):
-        """
-        When a SyncPoint is run during a Walk replay, its execution looks much
-        more like a vanilla Action. sometimes the logic needs to be slightly
-        different for a replay, e.g. because there is no remote context to
-        update. So if you intend to ever replay a Walk, you may want to
-        override this. Otherwise, it acts just like :func:`run`.
-        """
-        return self.run(static_ctx, dynamic_ctx=dynamic_ctx)
-
-    def replay(self, dynamic_ctx):
-        return self.run_as_replay(self.static_ctx, dynamic_ctx=dynamic_ctx)
-
 
 class OptionSet(object):
     """
@@ -257,8 +276,7 @@ class OptionSet(object):
         """
         :param iterable options: an iterable of paramaterizations of the
                                  given Action class. There parameters will
-                                 be provided as the Action's
-                                 static context.
+                                 be provided as the Action's ``param``.
 
         :param Action action_class: The :class:`Action` this iterator will be
                                     returning instances of.

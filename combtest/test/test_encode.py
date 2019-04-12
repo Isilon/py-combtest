@@ -45,7 +45,7 @@ class MyAction(Action):
     def __eq__(self, other):
         if not isinstance(other, MyAction):
             return False
-        return self._static_ctx == other._static_ctx
+        return self._param == other._param
 
     @classmethod
     def get_option_set(cls):
@@ -107,9 +107,9 @@ class TestGeneralEncodeDecode(unittest.TestCase):
         self.do_test(my_walk)
 
     def test_action_decode_cache(self):
-        ctx = MyClass()
-        ctx.a = 3
-        ac = MyAction(ctx)
+        state = MyClass()
+        state.a = 3
+        ac = MyAction(state)
         json_str, decoded = self.do_test(ac)
         decoded_from_cache = encode.decode(json_str)
         self.assertIs(decoded, decoded_from_cache)

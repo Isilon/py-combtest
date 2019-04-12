@@ -53,6 +53,71 @@ this can net a number of important advantages:
 High level example
 ==================================================================
 
-Suppose one of us goes crazy and decides to write their own regex expression
-parser. 
+Suppose we are doing whitebox testing of a GUI. The controls all have
+states, such as whether a checkbox is checked, what the content of a text box
+is, etc.
 
+And let's say we want to excercise every distinct and supported
+combination of control states. Distinctness here refers to states of the GUI
+which are distinct from the point of view of the tester. Let's say that
+entering the value "Hello world" in a text box fundamentally tests the same
+thing as entering "Foo bar", but that having the box empty, or having numerical
+data in the box, is different enough to constitute distinct test cases. Let's
+say we come up with 50 such distinct values to try in that text box during
+testing. This is the space of options we will try for this one control, and we
+come up with the space of options we will try for all the others, such as a
+check box being checked or not.
+
+Note that some combinations may not be possible: if clicking a check box
+reveals certain controls, those controls can only be interacted with if
+the check box has been clicked. We will need to take this into account
+while generating test cases.
+
+Suppose we define a simple function that takes a GUI instance as an argument,
+and text to enter in a specific text box on that GUI.  It might look like: ::
+
+ def mess_with_textbox1(gui_instance, value):
+     gui_instance.textbox1.value = value
+
+Then we can iterate all the interesting values we came up with: ::
+
+ for value in textbox1_values:
+     gui_instance = get_an_instance_of_my_GUI()
+     mess_with_textbox1(gui_instance, value)
+
+This is simple enough that we could generate cases programmatically for use
+in our favorite test framework like ``unittest``, ``pytest``, etc.
+
+Now let's say that we have a bunch of other controls on the GUI, each with a
+set of distinct states. Some combinations of these control states may not be
+valid (like setting values in a text box that is not visible). And let's say
+that we define functions for messing with these controls, like we did above.
+The resulting pseudocode now looks like: ::
+
+    for c1_state in c1_options:
+        for c2_state in c2_options:
+            for c3_state in c3_options:
+                if (c1_state, c2_state, c3_state) is a valid combination:
+                    g = get_an_instance_of_my_GUI()
+                    mess_with_c1(g, c1_state)
+                    mess_with_c2(g, c2_state)
+                    mess_with_c3(g, c3_state)
+
+There are a few other things we will probably want to go along with this:
+
+* If it is much easier for us to figure out at runtime if a combination of
+  operations is valid, then we may want to e.g. have a special exception or
+  return value from our individual op functions that indicates we should
+  immediately cancel execution of the test case.
+* A framework to run all the different combinations and count passes and
+  failures, etc.
+* Mechanisms for running the cases in parallel if the user chooses, since
+  we are likely to have a very large number of cases to run.
+* Logging and replay mechanisms.
+
+This lib provides the stuff you need to accomplish all of the above.
+
+
+Comparison to unittest and pytest case generation
+===================================================
+TODO

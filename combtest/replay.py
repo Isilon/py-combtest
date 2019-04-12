@@ -16,9 +16,9 @@ import combtest.walk as walk
 
 ACCEPTED_COMMANDS = ('step', 'replay')
 
-DEFAULT_REPLAY_FUNC = runner.replay_multistage_walk
+DEFAULT_REPLAY_FUNC = runner.replay_walk
 DEFAULT_REPLAY_FUNC_NAME = utils.get_class_qualname(
-        runner.replay_multistage_walk)
+        DEFAULT_REPLAY_FUNC)
 
 _COMMAND_HELP = {'step': 'Replay, one step at a time',
                  'replay': 'Replay the walk'}
@@ -94,7 +94,7 @@ def _load_walk(log_file, walk_id):
         return load_from_master(log_file, walk_id)
     return load_from_trace(log_file, walk_id)
 
-def replay_walk(walk_to_run, step=False, replay_func_qualname=None, ctx=None):
+def replay_walk(walk_to_run, step=False, replay_func_qualname=None, state=None):
     """
     Run a single :class:`combtest.walk.Walk`.
 
@@ -103,21 +103,21 @@ def replay_walk(walk_to_run, step=False, replay_func_qualname=None, ctx=None):
                       hits a key to proceed to the next Action.
     :param str replay_func_qualname: qualname of a replay function to use.
                                      Typically this will be
-                                     :func:`combtest.runner.replay_multistage_walk`,
+                                     :func:`combtest.runner.replay_walk`,
                                      but the user is free to provide their own.
-    :param object ctx: state/``ctx`` passed to the Walk for execution.
+    :param object state: ``state`` passed to the Walk for execution.
     """
     if replay_func_qualname is None:
-        replay_func = runner.replay_multistage_walk
+        replay_func = runner.replay_walk
     else:
         replay_func = utils.get_class_from_qualname(replay_func_qualname)
 
-    replay_func(walk_to_run, step=step, ctx=ctx)
+    replay_func(walk_to_run, step=step, state=state)
 
-    return ctx
+    return state
 
 def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
-                      ctx=None):
+                      state=None):
     """
     Run a single :class:`combtest.walk.Walk`. Load it by deserializing it from
     a trace file.
@@ -129,15 +129,15 @@ def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
                       hits a key to proceed to the next Action.
     :param str replay_func_qualname: qualname of a replay function to use.
                                      Typically this will be
-                                     :func:`combtest.runner.replay_multistage_walk`,
+                                     :func:`combtest.runner.replay_walk`,
                                      but the user is free to provide their own.
-    :param object ctx: state/``ctx`` passed to the Walk for execution.
+    :param object state: ``state`` passed to the Walk for execution.
     """
 
     walk_to_run = _load_walk(log_file, walk_id)
 
     return replay_walk(walk_to_run, step=step,
-                       replay_func_qualname=replay_func_qualname, ctx=ctx)
+                       replay_func_qualname=replay_func_qualname, state=state)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Replay combtests")
@@ -147,36 +147,36 @@ if __name__ == "__main__":
                         type=str,
                         help="Master log file created by the running test, "
                              "or a trace file created by a WalkOpTracer "
-                             "(e.g. via run_multistage_walks)."
+                             "(e.g. via run_tests)."
                        )
     parser.add_argument('--replay_func',
                         type=str,
                         help="Qualname for function used for replay; see %s" %
                               DEFAULT_REPLAY_FUNC_NAME,
                         default=DEFAULT_REPLAY_FUNC_NAME)
-    parser.add_argument('--ctx',
+    parser.add_argument('--state',
                         type=str,
-                        help="ctx provided as a "
+                        help="state provided as a "
                              "JSON string, decodable by %s" %
                              utils.get_class_qualname(encode.decode))
     parser.add_argument('walk_id', type=int)
-    parser.add_argument('--print_ctx', action='store_true')
+    parser.add_argument('--print_state', action='store_true')
     args = parser.parse_args()
 
     command = args.command
 
     step = command == 'step'
 
-    if args.ctx:
-        ctx = encode.decode(args.ctx)
+    if args.state:
+        state = encode.decode(args.state)
     else:
-        ctx = None
+        state = None
 
-    ctx = replay_walk_by_id(args.log_file,
+    state = replay_walk_by_id(args.log_file,
                             args.walk_id,
                             step=step,
                             replay_func_qualname=args.replay_func,
-                            ctx=ctx)
+                            state=state)
 
-    if args.print_ctx:
-        print(encode.encode(ctx))
+    if args.print_state:
+        print(encode.encode(state))

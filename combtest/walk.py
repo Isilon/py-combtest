@@ -12,18 +12,12 @@ import traceback
 
 from six import string_types
 
-from combtest.action import SyncPoint, Action
+from combtest.action import SerialAction, Action, CancelWalk
 import combtest.central_logger as central_logger
 from combtest.central_logger import logger
 import combtest.encode as encode
 from combtest.utils import RangeTree
 
-
-class CancelWalk(RuntimeError):
-    """
-    Raised to immediately stop the execution of a :class:`combtest.walk.Walk`.
-    """
-    pass
 
 class WalkFailedError(RuntimeError):
     """
@@ -31,8 +25,6 @@ class WalkFailedError(RuntimeError):
     for any reason (e.g. one of its operations raised an ``Exception``).
     """
     pass
-
-
 
 class Walk(object):
     """
@@ -86,7 +78,7 @@ class Walk(object):
     def __iter__(self):
         return iter(self._elems)
 
-    def execute(self, dynamic_ctx, log_errors=True):
+    def execute(self, state, log_errors=True):
         """
         Execute the ``Actions`` in order. If an Action raises
         :class:`CancelWalk`, we will stop executing immediately.
@@ -96,21 +88,22 @@ class Walk(object):
             for op in self:
                 # I will leave it up to the user to decide to log or not, and
                 # the appropriate verbosity.
-                op(ctx=dynamic_ctx)
+                op(state=state)
         except CancelWalk as e:
             # Likewise here: let the user decide to log or not in their layer
             return True
         except Exception as e:
-            # PORT/WRAP: no dynamic_ctx specifics here.
-            msg_ctx = "Walk was: %s\nctx: %s" % (repr(self), repr(dynamic_ctx))
-            exc = type(e)(str(e) + "\n" + msg_ctx)
+            # PORT/WRAP: no state specifics here.
+            msg_state = "Walk was: %s\nstate: %s" % (repr(self),
+                    encode.encode(state))
+            exc = type(e)(str(e) + "\n" + msg_state)
             if log_errors:
                 logger.exception(exc)
-                logger.error(msg_ctx)
+                logger.error(msg_state)
 
             new_msg = "Walk failed:\n"
             new_msg += traceback.format_exc()
-            new_msg += "\n" + msg_ctx
+            new_msg += "\n" + msg_state
             wfe = WalkFailedError(new_msg)
             if hasattr(e, 'errno'):
                 wfe.errno = e.errno
@@ -141,9 +134,9 @@ class Walk(object):
 class Segment(object):
     """
     This represents a collection of ``Walk`` portions to run. Example: if you
-    have 300 Walks made of: [Action1, Action2, SyncPoint1, Action3], the first
+    have 300 Walks made of: [Action1, Action2, SerialAction1, Action3], the first
     Segment will be the [Action1, Action2] portion of every one of those 300
-    walks. After running that Segment, we would then run the SyncPoint.
+    walks. After running that Segment, we would then run the SerialAction.
 
     A Segment is: (sync_point_instance, [list, of, Action option sets, ...])
 
@@ -154,7 +147,7 @@ class Segment(object):
                            portions for.
     :param iterable options: An iterable of Action sets, as you'd get from
                              MyActionType.get_option_set()
-    :param SyncPoint sync_point_instance: SyncPoint instance to run before the
+    :param SerialAction sync_point_instance: SerialAction instance to run before the
                                           Walk portions.
     :param int parent_period: how many options our parent segment is tracking
     :param int level: Effectively: how many segments came before this segment
@@ -168,14 +161,14 @@ class Segment(object):
 
         assert options or sync_point_instance
         assert sync_point_instance is None or isinstance(sync_point_instance,
-                                                         SyncPoint)
+                                                         SerialAction)
 
         self._walk_count = walk_count
         self._count_walks_produced = 0
         self._level = level
 
-        # Run *after* the SyncPoint, if there is one. That means that if this
-        # Segment represents the leaf of the tree and we have a SyncPoint,
+        # Run *after* the SerialAction, if there is one. That means that if this
+        # Segment represents the leaf of the tree and we have a SerialAction,
         # then options is None.
         # tuple([option1_class1, option2_class1, ...],
         #       [option1_class2, option2_class2, ...],
@@ -187,7 +180,7 @@ class Segment(object):
         self._parent_period = parent_period
 
         # Run *before* the segment; thus it is None if e.g. we have no
-        # SyncPoints at all.
+        # SerialActions at all.
         self._sync_point = sync_point_instance
 
         # Created after initialization because of our construction method
@@ -320,10 +313,10 @@ class Epoch(object):
 
 class WalkOptions(object):
     """
-    A WalkOptions accepts a set of :class:`Action` and :class:`SyncPoint`
+    A WalkOptions accepts a set of :class:`Action` and :class:`SerialAction`
     options and produces an iterable of :class:`Epoch`. Each `Epoch` represents
     a set of ``Walk`` segments which can run in parallel, and an optional
-    ``SyncPoint`` which should be run *before* the ``Walk`` portions.
+    ``SerialAction`` which should be run *before* the ``Walk`` portions.
 
     Not threadsafe.
 
@@ -351,7 +344,7 @@ class WalkOptions(object):
         action_class = None
         idx = 0
         for idx, action_class in enumerate(walk_order):
-            if issubclass(action_class, SyncPoint):
+            if issubclass(action_class, SerialAction):
                 self._sync_point_idxs.append(idx)
 
                 # Append any action-ish segments, and the sync point
@@ -360,7 +353,7 @@ class WalkOptions(object):
                     actions = tuple([tuple(ac.get_option_set()) for ac in
                                      actions])
                     self._segment_options.append(actions)
-                # else e.g. idx = 0: the first action_class is a SyncPoint
+                # else e.g. idx = 0: the first action_class is a SerialAction
                 self._segment_options.append(action_class)
 
                 seg_start_idx = idx + 1
@@ -369,7 +362,7 @@ class WalkOptions(object):
             self._sizes.append(len(option_set))
 
         # Tail flush, if we haven't already.
-        if not issubclass(action_class, SyncPoint):
+        if not issubclass(action_class, SerialAction):
             actions = walk_order[seg_start_idx:]
             if actions:
                 actions = tuple([tuple(ac.get_option_set()) for ac in
@@ -404,7 +397,7 @@ class WalkOptions(object):
 
     def _ensure_tree_impl(self, walk_count, segment_options, start_idx=0,
                           period=1, level=0):
-        # Called recursively with SyncPoint at start, or this is the first
+        # Called recursively with SerialAction at start, or this is the first
         # time it is called.
 
         # Base case
@@ -475,7 +468,7 @@ class WalkOptions(object):
             current_end_idx = current_start_idx + segment.walk_count
             assert current_end_idx <= end_idx
             if segment.sync_point is not None:
-                current_value = segment.sync_point.static_ctx
+                current_value = segment.sync_point.param
                 values.append(current_value)
             else:
                 values.append(None)
@@ -619,7 +612,7 @@ class WalkOptions(object):
 
             # This step gives us an efficiency improvement that is likely to be
             # noticeable, so I want to address it in this initial design. Some
-            # SyncPoint values are effectively no-ops, and in that case we
+            # SerialAction values are effectively no-ops, and in that case we
             # don't need to actually synchronize. So expand the corresponding
             # walks to go ahead and execute the next segment too.
             # Example: if we have a sync point with settings "take snapshot"
@@ -691,7 +684,7 @@ class StateCombinator(object):
 # TODO PORT/WRAP: add back path, lin, file_config
 class WalkOpTracer(central_logger.OpTracer):
     """
-    Traces a :class:`Walk` portion + its adjacent :class:`SyncPoint` and
+    Traces a :class:`Walk` portion + its adjacent :class:`SerialAction` and
     ``walk_id``. The id is consistent across portions so that you can relate
     them back together later.
     """

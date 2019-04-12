@@ -3,8 +3,8 @@ This module provides a set of mechanisms for dispatching "work" across a
 set of worker nodes. "Work" can mean "execute sets of arbitrary Python
 code". This system is made of a few pieces:
 
-* A basic thread pool implementation. There is a :class:`multiprocessing.ThreadPool`
-  implementation in Python already,
+* A basic thread pool implementation. There is a
+  :class:`multiprocessing.ThreadPool` implementation in Python already,
   but I want the control and flexibility of having my own. This and its
   decendents are the "workers" that actually e.g. execute test cases or
   run fuzz+stress load (see :class:`ThreadPool`). Thread
@@ -83,13 +83,13 @@ class ThreadPool(object):
                                      a time
         :param iterable work: a pop-able iterable of work items. Work
                               items are callable objects that take 0
-                              arguments unless a ``ctx`` is supplied to
+                              arguments unless a ``state`` is supplied to
                               :func:`start`, in which case they take 1
                               argument.
         """
         self._thread_count = max_thread_count or get_max_thread_count()
         self._work_queue = work or []
-        self._run_ctx = None
+        self._run_state = None
         self._running_threads = []
         self.should_stop = False
 
@@ -103,7 +103,7 @@ class ThreadPool(object):
         """
         self._work_queue.extend(list(work))
 
-    def on_start(self, ctx):
+    def on_start(self, state):
         """
         Called when threads start up to do work for the first time. Not re-run
         when they are "kicked".
@@ -117,40 +117,37 @@ class ThreadPool(object):
         """
         pass
 
-    def on_start_item(self, work_item, ctx):
+    def on_start_item(self, work_item, state):
         """
         Called after a work item is dequeued and before it is run.
         """
         pass
 
-    def on_finish_item(self, work_item, ctx):
+    def on_finish_item(self, work_item, state):
         """
         Called after a work item is finished running.
         """
         pass
 
-    def on_error_item(self, work_item, ctx, exc, tb):
+    def on_error_item(self, work_item, state, exc, tb):
         """
         Called if a work item errors out (via Exception).
         """
         raise
 
-    def _run_single(self, work_item, ctx):
+    def _run_single(self, work_item, state):
         """
         Called by a worker thread to run a work item.
         """
         try:
-            self.on_start_item(work_item, ctx)
-            if ctx is not None:
-                work_item(ctx)
-            else:
-                work_item()
-            self.on_finish_item(work_item, ctx)
+            self.on_start_item(work_item, state)
+            work_item(state)
+            self.on_finish_item(work_item, state)
         except Exception as exc:
             tb = traceback.format_exc(sys.exc_info())
-            self.on_error_item(work_item, ctx, exc, tb)
+            self.on_error_item(work_item, state, exc, tb)
 
-    def _thread_main(self, ctx, single=None):
+    def _thread_main(self, state, single=None):
         """
         Entry point for worker threads.
         """
@@ -159,7 +156,7 @@ class ThreadPool(object):
 
         try:
             if single is not None:
-                self._run_single(single, ctx)
+                self._run_single(single, state)
 
             while self._work_queue and not self.should_stop:
                 try:
@@ -169,7 +166,7 @@ class ThreadPool(object):
 
                 ## Left intentionally for future debugging
                 #start_time = time.time()
-                self._run_single(work_item, ctx)
+                self._run_single(work_item, state)
                 #logger.debug("Work item took %0.2fs", time.time() - start_time)
         finally:
             with self._rlock:
@@ -183,16 +180,17 @@ class ThreadPool(object):
         """
         self.should_stop = True
 
-    def start(self, ctx=None):
+    def start(self, state=None):
         """
         Tell threads to start working on any work already queued.
 
-        :param object ctx: an optional single arg to pass to the work callbacks
+        :param object state: an optional single arg to pass to the work
+                             callbacks
         """
-        self._run_ctx = ctx
+        self._run_state = state
         self.should_stop = False
 
-        self.on_start(ctx)
+        self.on_start(state)
 
         # We could dynamically scale up/down based on the size of the work
         # queue, but let's assume for now that the user won't use a ThreadPool
@@ -200,26 +198,27 @@ class ThreadPool(object):
         # providing it fast enough to busy the threads. Keeps things simple.
         while len(self._running_threads) < self._thread_count:
             t = threading.Thread(target=self._thread_main,
-                                 args=(self._run_ctx,))
+                                 args=(self._run_state,))
             t.start()
             self._running_threads.append(t)
 
-    def start_all_on_next(self, ctx=None):
+    def start_all_on_next(self, state=None):
         """
         This gets all threads running the next work item. This means the item
         will potentially be run more than once, and potentially multiple times
         in parallel.
 
-        :param object ctx: an optional single arg to pass to the work callbacks
+        :param object state: an optional single arg to pass to the work
+                             callbacks
         """
-        self._run_ctx = ctx
+        self._run_state = state
         self.should_stop = False
 
-        self.on_start(ctx)
+        self.on_start(state)
         work_item = self._work_queue.pop(0)
         while len(self._running_threads) < self._thread_count:
             t = threading.Thread(target=self._run_single, args=(work_item,
-                                                                self._run_ctx))
+                                                                self._run_state))
             t.start()
             self._running_threads.append(t)
 
@@ -237,7 +236,7 @@ class ThreadPool(object):
                 new_running_threads.append(thread)
             else:
                 new_thread = threading.Thread(target=self._thread_main,
-                                              args=(self._run_ctx,))
+                                              args=(self._run_state,))
                 new_thread.start()
                 new_running_threads.append(new_thread)
 
@@ -254,20 +253,21 @@ class ThreadPool(object):
 
         self.on_finish()
 
-    def run(self, ctx=None, all_on_next=False):
+    def run(self, state=None, all_on_next=False):
         """
         Run all queued work all the way through to completion, then join.
 
-        :param object ctx: an optional single arg to pass to the work callbacks
+        :param object state: an optional single arg to pass to the work
+                             callbacks
         :param bool all_on_next: rather than each thread popping an item that
                                  it runs (and therefore no other thread runs),
                                  pop a single item and have all threads run it.
         """
         # Synchronous interface
         if all_on_next:
-            self.start_all_on_next(ctx=ctx)
+            self.start_all_on_next(state=state)
         else:
-            self.start(ctx=ctx)
+            self.start(state=state)
 
         self.join()
 
@@ -293,12 +293,12 @@ class CoordinatorService(rpyc.Service):
         """
         # Maps integer id->worker
         self._workers = {}
-        # Maps same integer id->run ctx
-        self._ctxs = {}
+        # Maps same integer id->run state
+        self._states = {}
         self._next_worker_id = 0
         self.rlock = threading.RLock()
-        # Maps same integer id->resp
-        self._resps = {}
+        # Maps same integer id->runner ctx
+        self._ctxs = {}
 
     def _get_next_worker_id(self):
         """
@@ -331,7 +331,7 @@ class CoordinatorService(rpyc.Service):
         with self.rlock:
             del self._workers[worker_id]
 
-    def work_repack(self, work, ctx=None, resp=None):
+    def work_repack(self, work, state, ctx=None, **repack_kwargs):
         """
         This is called back to repackage each work item sent to the service.
         The call is an opportunity to e.g. do some deserialization, wrap the
@@ -340,16 +340,23 @@ class CoordinatorService(rpyc.Service):
 
         :param object work: the work to execute; typically this will be e.g. a
                             JSONified ``Walk``.
-        :param object ctx: a ``ctx`` copied in for executing the ``Walk``
-        :param dict resp: a dict to which response objects can be attached by
-                          the ``Walk`` for retrieval later.
+        :param object state: a ``state`` copied in for executing the ``Walk``
+        :param object ctx: the object returned by repack_ctx before
         """
         return work
 
-    def exposed_start_work(self, work, max_thread_count=None, ctx=None):
+    def repack_ctx(self, state, **repack_kwargs):
+        """
+        Called back when a new worker/runner is made to pack up kwargs that we
+        pass to the runner's initializer.
+        """
+        return {}
+
+    def exposed_start_work(self, work, state=None, max_thread_count=None,
+                           repack_kwargs=None):
         """
         Called by remote side to start some work running asynchronously. The
-        work and ctx are pickled and pulled through to this side in whole,
+        work and state are pickled and pulled through to this side in whole,
         rather than accessing via netrefs.
 
         :return: a worker_id to refer back to this work later for e.g. stopping
@@ -359,36 +366,46 @@ class CoordinatorService(rpyc.Service):
             max_thread_count = self.DEFAULT_MAX_THREAD_COUNT
 
         worker_id = self._get_next_worker_id()
-        resp = {}
-        self._resps[worker_id] = resp
         work = rpyc.utils.classic.obtain(work)
-        ctx = rpyc.utils.classic.obtain(ctx)
+        state = rpyc.utils.classic.obtain(state)
+        repack_kwargs = rpyc.utils.classic.obtain(repack_kwargs)
 
-        if ctx is None:
-            ctx = {}
+        if repack_kwargs:
+            ctx = self.repack_ctx(state, **repack_kwargs)
+        else:
+            ctx = self.repack_ctx(state)
 
         packed_work = []
         for work_item in work:
             materialized = rpyc.utils.classic.obtain(work_item)
-            packed_work.append(self.work_repack(materialized, ctx=ctx,
-                                                resp=resp))
+
+            if repack_kwargs:
+                new_packed_work = self.work_repack(materialized, state,
+                                                   ctx=ctx,
+                                                   **repack_kwargs)
+            else:
+                new_packed_work = self.work_repack(materialized,
+                                                   state,
+                                                   ctx=ctx)
+            packed_work.append(new_packed_work)
 
         worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
-                                  work=packed_work, static_ctx=ctx, resp=resp)
+                                  work=packed_work,
+                                  **ctx)
         self._set_worker_by_id(worker_id, worker)
+        self._states[worker_id] = state
         self._ctxs[worker_id] = ctx
-        worker.start(ctx=ctx)
+        worker.start(state=state)
 
-        central_logger.log_status("Started worker with id %d and type %s",
-                                  worker_id, str(type(worker)))
-
+        logger.debug("Started worker with id %d and type %s",
+                     worker_id, str(type(worker)))
 
         return worker_id
 
-    def exposed_add_work(self, worker_id, work):
+    def exposed_add_work(self, worker_id, work, repack_kwargs=None):
         """
-        Add work to an existing worker. The original ctx will be used.
-        If the user wants work to be executed with a different ctx,
+        Add work to an existing worker. The original state will be used.
+        If the user wants work to be executed with a different state,
         they start a new worker up via :func:`exposed_start_work`.
 
         :param int worker_id: the ``worker_id`` returned from the func used to
@@ -396,19 +413,29 @@ class CoordinatorService(rpyc.Service):
         :param object work: the work item
         """
         work = rpyc.utils.classic.obtain(work)
-        work = [self.work_repack(work_item,
-                                 ctx=self._ctxs[worker_id],
-                                 resp=self._resps[worker_id])
-                for work_item in work]
+        repack_kwargs = rpyc.utils.classic.obtain(repack_kwargs)
+
+        if repack_kwargs:
+            work = [self.work_repack(work_item,
+                                     self._states[worker_id],
+                                     ctx=self._ctxs[worker_id],
+                                     **repack_kwargs)
+                    for work_item in work]
+        else:
+            work = [self.work_repack(work_item,
+                                     self._states[worker_id],
+                                     ctx=self._ctxs[worker_id])
+                    for work_item in work]
         worker = self._get_worker_by_id(worker_id)
 
-        central_logger.log_status("Added %d items to worker with id %d",
-                                  len(work), worker_id)
+        logger.info("Added %d items to worker with id %d", len(work),
+                    worker_id)
 
         worker.add_work(work)
         worker.kick_workers()
 
-    def exposed_start_workers_on(self, work, max_thread_count=None, ctx=None):
+    def exposed_start_workers_on(self, work, max_thread_count=None,
+                                 state=None, repack_kwargs=None):
         """
         Similar to start_work, but a single item is sent, and all threads in
         the new worker will run that single item.
@@ -418,53 +445,76 @@ class CoordinatorService(rpyc.Service):
         if max_thread_count is None:
             max_thread_count = self.DEFAULT_MAX_THREAD_COUNT
         worker_id = self._get_next_worker_id()
-        resp = {}
-        self._resps[worker_id] = resp
         work = rpyc.utils.classic.obtain(work)
-        ctx = rpyc.utils.classic.obtain(ctx)
+        repack_kwargs = rpyc.utils.classic.obtain(repack_kwargs)
+        state = rpyc.utils.classic.obtain(state)
 
         materialized = rpyc.utils.classic.obtain(work)
-        packed_work = self.work_repack(materialized, ctx=ctx, resp=resp)
+
+        if repack_kwargs:
+            ctx = self.repack_ctx(state, **repack_kwargs)
+        else:
+            ctx = self.repack_ctx(state)
+
+        if repack_kwargs:
+            packed_work = self.work_repack(materialized, state, ctx=ctx,
+                                           **repack_kwargs)
+        else:
+            packed_work = self.work_repack(materialized, state, ctx=ctx)
+
         worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
-                                  work=[packed_work], static_ctx=ctx,
-                                  resp=resp)
+                                  work=[packed_work],
+                                  **ctx)
         self._set_worker_by_id(worker_id, worker)
+        self._states[worker_id] = state
         self._ctxs[worker_id] = ctx
-        worker.start_all_on_next(ctx=ctx)
+        worker.start_all_on_next(state=state)
 
         logger.debug("Started worker with id %d and type %s", worker_id,
                      str(type(worker)))
 
         return worker_id
 
-    def exposed_run(self, work, max_thread_count=None, ctx=None):
+    def exposed_run(self, work, max_thread_count=None, state=None,
+                    repack_kwargs=None):
         """
-        Run work synchronously. Return a ``worker_id`` so that responses/ctxs
+        Run work synchronously. Return a ``worker_id`` so that responses/states
         can be reclaimed.
         """
         if max_thread_count is None:
             max_thread_count = self.DEFAULT_MAX_THREAD_COUNT
         worker_id = self._get_next_worker_id()
-        resp = {}
-        self._resps[worker_id] = resp
         work = rpyc.utils.classic.obtain(work)
-        ctx = rpyc.utils.classic.obtain(ctx)
+        repack_kwargs = rpyc.utils.classic.obtain(repack_kwargs)
+        state = rpyc.utils.classic.obtain(state) or {}
+
+        if repack_kwargs:
+            ctx = self.repack_ctx(state, **repack_kwargs)
+        else:
+            ctx = self.repack_ctx(state)
 
         packed_work = []
         for work_item in work:
             materialized = rpyc.utils.classic.obtain(work_item)
-            packed_work.append(self.work_repack(materialized, ctx=ctx,
-                                                resp=resp))
+            if repack_kwargs:
+                packed_work.append(self.work_repack(materialized, state,
+                                                    ctx=ctx,
+                                                    **repack_kwargs))
+            else:
+                packed_work.append(self.work_repack(materialized, state,
+                                                    ctx=ctx))
 
         worker = self.WORKER_TYPE(max_thread_count=max_thread_count,
-                                  work=packed_work, static_ctx=ctx, resp=resp)
+                                  work=packed_work,
+                                  **ctx)
         self._set_worker_by_id(worker_id, worker)
+        self._states[worker_id] = state
         self._ctxs[worker_id] = ctx
 
         logger.debug("Running worker with id %d and type %s", worker_id,
                      str(type(worker)))
 
-        worker.run(ctx=ctx)
+        worker.run(state=state)
         self._del_worker_by_id(worker_id)
         return worker_id
 
@@ -499,9 +549,9 @@ class CoordinatorService(rpyc.Service):
     def exposed_join_workers(self, worker_id):
         """
         Join all working threads in a worker and toss the worker for further
-        use. The responses and ctxs will stay around until the client "cleans"
-        the worker state. That means this is *not* a stateless service. The
-        user needs to beware of leaking resources.
+        use. The responses and states will stay around until the client
+        "cleans" the worker state. That means this is *not* a stateless
+        service. The user needs to beware of leaking resources.
 
         :param int worker_id: the ``worker_id`` returned from the func used to
                               start work
@@ -518,23 +568,14 @@ class CoordinatorService(rpyc.Service):
         for worker_id in worker_ids:
             self._join_worker(worker_id)
 
-    def exposed_gather_ctx(self, worker_id):
+    def exposed_gather_state(self, worker_id):
         """
-        Return the ctx associated with the given worker.
+        Return the state associated with the given worker.
 
         :param int worker_id: the ``worker_id`` returned from the func used to
                               start work
         """
-        return self._ctxs[worker_id]
-
-    def exposed_gather_resp(self, worker_id):
-        """
-        Return the resp object associated with the given worker.
-
-        :param int worker_id: the ``worker_id`` returned from the func used to
-                              start work
-        """
-        return self._resps[worker_id]
+        return self._states[worker_id]
 
     def exposed_clean_worker(self, worker_id):
         """
@@ -546,8 +587,7 @@ class CoordinatorService(rpyc.Service):
         results.
         """
         self._join_worker(worker_id)
-        del self._resps[worker_id]
-        del self._ctxs[worker_id]
+        del self._states[worker_id]
 
 
 
@@ -818,20 +858,23 @@ class ServiceGroup(object):
         self.shutdown_clients(hard=hard)
         self.shutdown_services(hard=hard)
 
-    def scatter_work(self, work, max_thread_count=None, ctx=None):
+    def scatter_work(self, work, max_thread_count=None, state=None):
         """
         Partition the provided iterable of work into roughly even-sized
-        portions and send them to each of the remote services. ``ctx`` will be
-        copied to each node independently. The user must handle the logic of
-        retrieving results and stitching them together. See :func:`gather_ctx`,
-        :func:`gather_resp`.
+        portions and send them to each of the remote services. ``state`` will
+        be copied to each node independently. The user must handle the logic of
+        retrieving results and stitching them together. See
+        :func:`gather_state`.
 
         :param iterable work: iterable of work items
         :param int max_thread_count: override of how many threads each remote
                                      executor should have
-        :param object ctx: make sure it is picklable
+        :param object state: make sure it is picklable
         :return: a dict mapping (hostname/ip, port) -> worker_id
         """
+        if self._give_up:
+            return {}
+
         out_queues = []
         clients = self.clients
         service_count = len(clients)
@@ -858,8 +901,8 @@ class ServiceGroup(object):
                     logger.debug("Sending %d items to %s", len(current_q),
                                  str(current_key))
                     worker_id = clients[current_key].start_work(current_q,
-                                                                max_thread_count=max_thread_count,
-                                                                ctx=ctx)
+                                             max_thread_count=max_thread_count,
+                                             state=state)
                     worker_ids[client_idx] = worker_id
                 else:
                     logger.debug("Sending %d items to %s", len(current_q),
@@ -887,8 +930,8 @@ class ServiceGroup(object):
                     logger.debug("Sending %d items to %s", len(current_q),
                                  str(current_key))
                     worker_id = clients[current_key].start_work(current_q,
-                                                                max_thread_count=max_thread_count,
-                                                                ctx=ctx)
+                                            max_thread_count=max_thread_count,
+                                            state=state)
                     worker_ids[client_idx] = worker_id
                 else:
                     logger.debug("Sending %d items to %s", len(current_q),
@@ -900,22 +943,21 @@ class ServiceGroup(object):
         for client_idx, current_key in enumerate(keys):
             worker_ids_out[current_key] = worker_ids[client_idx]
 
-        central_logger.log_status("Started %s work items",
-                                  str(work_item_counts))
+        logger.info("Started %s work items", str(work_item_counts))
         return worker_ids_out
 
-    def start_all_on(self, work_item, shared_ctx=None):
+    def start_all_on(self, work_item, shared_state=None):
         """
         Start a single item of work running on all remote services.
 
         :param callable work: a single work item
-        :param object shared_ctx: make sure it is picklable. Will be shared
-                                  across all threads on a given service.
+        :param object shared_state: make sure it is picklable. Will be shared
+                                    across all threads on a given service.
         :return: a dict mapping (hostname/ip, port) -> worker_id
         """
         worker_ids_out = {}
         for ip, client in self.clients.items():
-            worker_id = client.start_workers_on(work_item, ctx=shared_ctx)
+            worker_id = client.start_workers_on(work_item, state=shared_state)
             worker_ids_out[ip] = worker_id
 
             if self._give_up:
@@ -933,44 +975,45 @@ class ServiceGroup(object):
         for client in self.clients.values():
             client.start_remote_logging(ip, port)
 
-    def run(self, work, ctx=None):
+    def run(self, work, state=None):
         """
         Scatter work to all remote services, wait for it to finish executing,
-        then return gathered responses.
+        then return gathered states.
 
         :param iterable work: iterable of work items
-        :param object ctx: make sure it is picklable
-        :return: a list of responses, whose ordering is not particularly
+        :param object state: make sure it is picklable
+        :return: a list of states, whose ordering is not particularly
                  important.
         """
-        worker_ids = self.scatter_work(work, ctx=ctx)
+        worker_ids = self.scatter_work(work, state=state)
         self.join()
-        return self.gather_all_resp(worker_ids)
+        return self.gather_all_states(worker_ids)
 
-    def gather_ctx(self, connection, worker_id):
+    def gather_state(self, connection, worker_id):
         """
-        Gather ``ctx`` from a remote service for a given worker. A running
-        :class:`Walk` is free to mutate its ``ctx``, and sometimes that is what
-        really constitutes the "response" or "output" of a quantum of work.
+        Gather ``state`` from a remote service for a given worker. A running
+        :class:`Walk` is free to mutate its ``state``, and sometimes that is
+        what really constitutes the "response" or "output" of a quantum of
+        work.
 
         :param tuple connection: str hostname/ip of the remote service, int
                                  port number
         :param int worker_id: id of remote worker, as returned when starting
                               the work (see :func:`scatter_work`).
         """
-        ctx = rpyc.utils.classic.obtain(self.clients[connection].gather_ctx(
-                                        worker_id))
-        return ctx
+        state = rpyc.utils.classic.obtain(
+                self.clients[connection].gather_state(worker_id))
+        return state
 
-    def gather_all_ctxs(self, worker_ids):
+    def gather_all_states(self, worker_ids):
         """
-        Gather ctxs from all the given workers.
+        Gather states from all the given workers.
 
         :param dict worker_ids: a mapping (hostname/ip, port)->worker_id
-        :return: a list of ctxs in no particular order.
+        :return: a list of states in no particular order.
         """
-        # Simple list of ctxs; no order implied.
-        ctxs = []
+        # Simple list of states; no order implied.
+        states = []
         for con, worker_id in worker_ids.items():
             if isinstance(worker_id, int):
                 wids = [worker_id,]
@@ -978,43 +1021,10 @@ class ServiceGroup(object):
                 wids = worker_id
             if wids is not None:
                 for wid in wids:
-                    ctx = self.gather_ctx(con, wid)
-                    ctxs.append(ctx)
+                    state = self.gather_state(con, wid)
+                    states.append(state)
 
-        return ctxs
-
-    def gather_resp(self, connection, worker_id):
-        """
-        Gather responses from all the given workers.
-
-        :param tuple connection: str hostname/ip of the remote service, int
-                                 port number
-        :param int worker_id: id of remote worker, as returned when starting
-                              the work (see :func:`scatter_work`).
-        :return: a response object, as passed to the ``Walk`` that ran on the
-                 remote side. See
-                 :func:`CoordinatorService.exposed_start_workers_on`
-        """
-        resp = rpyc.utils.classic.obtain(self.clients[connection].gather_resp(
-                                         worker_id))
-        return resp
-
-    def gather_all_resp(self, worker_ids):
-        """
-        Gather resp from all the given workers.
-
-        :param dict worker_ids: a mapping (hostname/ip, port)->worker_id
-        :return: a list of respones in no particular order.
-        """
-        # Simple list of responses; the user can attach e.g. IPs, hostnames,
-        # args, whatever they want to contextualize a response.
-        responses = []
-        for con, worker_id in worker_ids.items():
-            if worker_id is not None:
-                resp = self.gather_resp(con, worker_id)
-                responses.append(resp)
-
-        return responses
+        return states
 
     def join(self, hard=False):
         """

@@ -39,7 +39,6 @@ logger_formatter = logging.Formatter('%(asctime)s: %(levelname)s: '
 STATUS_LEVELV_NUM = ERROR + 1
 logging.addLevelName(STATUS_LEVELV_NUM, "STATUS")
 
-# "Op" level log lines are similar, but debug level.
 OP_LEVELV_NUM = DEBUG
 logging.addLevelName(OP_LEVELV_NUM, "OP")
 
@@ -225,6 +224,7 @@ logger = LoggerProxy(base_logger)
 # Socket stuff here down is adapted from the Python2 cookbook:
 # https://docs.python.org/2/howto/logging-cookbook.html#sending-and-receiving-logging-events-across-a-network
 # Accessed 03/15/18
+# I adapted it in March 2019 for python3 compat
 
 class NetLogAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):

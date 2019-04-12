@@ -1,14 +1,9 @@
-"""
-test_replay_multistage_walk
-test_run_multistage_walks
-* include all options
-"""
 import os
 import shutil
 import tempfile
 import unittest
 
-from combtest.action import OptionSet, SyncPoint
+from combtest.action import OptionSet, SerialAction, Action
 import combtest.bootstrap as bootstrap
 import combtest.encode as encode
 import combtest.runner as runner
@@ -21,7 +16,7 @@ import combtest.test.classes.actions as actions
 # for debugging purposes.
 CLEANUP_ON_EXIT = True
 
-class TestRunner(unittest.TestCase):
+class _TestBase(unittest.TestCase):
     def tearDown(self):
         if CLEANUP_ON_EXIT:
             try:
@@ -46,6 +41,15 @@ class TestRunner(unittest.TestCase):
 
         return log_dir
 
+class TestRunner(_TestBase):
+
+    def test_no_state_provided(self):
+        runner.run_tests([actions.ActionExpectNoState],
+                         gather_states=True)
+
+        runner.run_tests([actions.ActionExpectNoState],
+                         gather_states=False)
+
     def test_single_stage_dispatch(self):
         os1 = actions.ActionAppend1.get_option_set()
         os2 = actions.ActionAppend2.get_option_set()
@@ -57,25 +61,29 @@ class TestRunner(unittest.TestCase):
 
         expected_cnt = cnt1 * cnt2 * cnt3
 
-        total_count, error_count, elapsed, ctxs = \
-                runner.run_walks([os1, os2, os3],
-                                 gather_ctxs=True,
+        total_count, error_count, _, elapsed, states, _ = \
+                runner.run_tests([actions.ActionAppend1,
+                                  actions.ActionAppend2,
+                                  actions.ActionAppend3],
+                                 gather_states=True,
+                                 state={},
                                  verbose=True)
 
         self.assertEqual(total_count, expected_cnt)
         self.assertEqual(error_count, 0)
 
-        all_ctxs = []
-        for worker_ctxs in ctxs:
-            all_ctxs.extend([inner['inner'] for inner in worker_ctxs])
-        all_ctxs.sort()
+        all_states = []
+        for worker_states in states:
+            all_states.extend([inner['inner'] for inner in
+                               worker_states])
+        all_states.sort()
 
         current_idx = 0
         for i in range(cnt1):
             for j in range(cnt2):
                 for k in range(cnt3):
                     expected = [i, j, k]
-                    self.assertEqual(expected, all_ctxs[current_idx])
+                    self.assertEqual(expected, all_states[current_idx])
                     current_idx += 1
 
     def test_multistage(self):
@@ -83,28 +91,29 @@ class TestRunner(unittest.TestCase):
         cnt2 = len(actions.ActionAppend2.OPTION_SET)
         cnt3 = len(actions.ActionAppend3.OPTION_SET)
 
-        sp_cnt1 = len(actions.SyncPointAppend1.OPTION_SET)
-        sp_cnt2 = len(actions.SyncPointAppend2.OPTION_SET)
+        sp_cnt1 = len(actions.SerialActionAppend1.OPTION_SET)
+        sp_cnt2 = len(actions.SerialActionAppend2.OPTION_SET)
 
         expected_cnt = cnt1 * cnt2 * sp_cnt1 * cnt3 * sp_cnt2
 
         action_classes = [actions.ActionAppend1,
                           actions.ActionAppend2,
-                          actions.SyncPointAppend1,
+                          actions.SerialActionAppend1,
                           actions.ActionAppend3,
-                          actions.SyncPointAppend2,
+                          actions.SerialActionAppend2,
                          ]
 
         log_dir = self._get_temp_dir()
 
-        walk_count, error_count, segment_count, elapsed, ctxs, _ = \
-                runner.run_multistage_walks(action_classes,
-                                            gather_ctxs=True,
-                                            verbose=True,
-                                            # (assumes we are running
-                                            # everything locally)
-                                            log_dir=log_dir,
-                                           )
+        walk_count, error_count, segment_count, elapsed, states, _ = \
+                runner.run_tests(action_classes,
+                                 gather_states=True,
+                                 verbose=True,
+                                 state={},
+                                 # (assumes we are running
+                                 # everything locally)
+                                 log_dir=log_dir,
+                                )
 
         self.assertEqual(walk_count, expected_cnt)
         # 3 below from: segment before sp1, segment between sp1 and sp2, and
@@ -112,14 +121,14 @@ class TestRunner(unittest.TestCase):
         self.assertEqual(segment_count, expected_cnt * 3)
         self.assertEqual(error_count, 0)
 
-        all_ctxs = []
+        all_states = []
 
-        for worker_ctxs in ctxs:
-            for walk_id, walk_ctx in worker_ctxs.items():
-                inner = walk_ctx['inner']
-                inner.append(walk_ctx['sp_value'])
-                all_ctxs.append(inner)
-        all_ctxs.sort()
+        for worker_states in states:
+            for walk_state in worker_states:
+                inner = walk_state['inner']
+                inner.append(walk_state['sp_value'])
+                all_states.append(inner)
+        all_states.sort()
 
         current_idx = 0
         for i in range(cnt1):
@@ -128,7 +137,7 @@ class TestRunner(unittest.TestCase):
                     for l in range(cnt3):
                         for m in range(sp_cnt2):
                             expected = [i, j, k, l, m]
-                            self.assertEqual(expected, all_ctxs[current_idx])
+                            self.assertEqual(expected, all_states[current_idx])
                             current_idx += 1
 
 
@@ -136,23 +145,25 @@ class TestRunner(unittest.TestCase):
         cnt1 = len(actions.ActionAppend1.OPTION_SET)
         cnt2 = len(actions.ActionAppend2.OPTION_SET)
 
-        sp_cnt1 = len(actions.SyncPointAppend1.OPTION_SET)
-        sp_cnt2 = len(actions.SyncPointAppend2.OPTION_SET)
+        sp_cnt1 = len(actions.SerialActionAppend1.OPTION_SET)
+        sp_cnt2 = len(actions.SerialActionAppend2.OPTION_SET)
 
         expected_cnt = sp_cnt1 * cnt1 * cnt2 * sp_cnt2
 
         log_dir = self._get_temp_dir()
 
-        walk_count, error_count, segment_count, elapsed, ctxs, _ = \
-                runner.run_multistage_walks([
-                                            actions.SyncPointAppend1,
-                                            actions.ActionAppend1,
-                                            actions.ActionAppend2,
-                                            actions.SyncPointAppend2,
-                                            ],
-                                 gather_ctxs=True,
+        walk_count, error_count, segment_count, elapsed, states, _ = \
+                runner.run_tests([
+                                  actions.SerialActionAppend1,
+                                  actions.ActionAppend1,
+                                  actions.ActionAppend2,
+                                  actions.SerialActionAppend2,
+                                 ],
+                                 gather_states=True,
                                  log_dir=log_dir,
-                                 verbose=True)
+                                 verbose=True,
+                                 state={},
+                                )
 
         self.assertEqual(walk_count, expected_cnt)
         # 2 below from: segment between sp1 and sp2, and
@@ -160,14 +171,14 @@ class TestRunner(unittest.TestCase):
         self.assertEqual(segment_count, expected_cnt * 2)
         self.assertEqual(error_count, 0)
 
-        all_ctxs = []
+        all_states = []
 
-        for worker_ctxs in ctxs:
-            for walk_id, walk_ctx in worker_ctxs.items():
-                inner = walk_ctx['inner']
-                inner.append(walk_ctx['sp_value'])
-                all_ctxs.append(inner)
-        all_ctxs.sort()
+        for worker_states in states:
+            for walk_state in worker_states:
+                inner = walk_state['inner']
+                inner.append(walk_state['sp_value'])
+                all_states.append(inner)
+        all_states.sort()
 
         current_idx = 0
         for i in range(sp_cnt1):
@@ -175,8 +186,70 @@ class TestRunner(unittest.TestCase):
                 for k in range(cnt2):
                     for l in range(sp_cnt2):
                         expected = [i, j, k, l]
-                        self.assertEqual(expected, all_ctxs[current_idx])
+                        self.assertEqual(expected, all_states[current_idx])
                         current_idx += 1
+
+#class TestCustomState(_TestBase):
+#    def test_remote_state_update(self):
+#        #TODO: update w/ something bool(True)
+#        #TODO: update w/ something bool(False)
+
+class TestSerialActionNegativeCases(_TestBase):
+    def test_no_remote_update_supported(self):
+
+        log_dir = self._get_temp_dir()
+
+        # attempt to update the remote state (not supported, since it
+        # is a list). Should get an error back
+        action_classes = [actions.ActionAppendList1,
+                          actions.SerialActionTryUpdate,
+                          actions.ActionAppendList2]
+        state = []
+        self.assertRaises(RuntimeError,
+                          runner.run_tests,
+                          action_classes,
+                          gather_states=True,
+                          verbose=True,
+                          state=state,
+                          log_dir=log_dir,
+                         )
+
+    def test_dont_try(self):
+        log_dir = self._get_temp_dir()
+        action_classes = [actions.ActionAppendList1,
+                          actions.SerialActionDontTryUpdate,
+                          actions.ActionAppendList2]
+        state = []
+        walk_count, error_count, segment_count, elapsed, states, _ = \
+                runner.run_tests(action_classes,
+                                 gather_states=True,
+                                 log_dir=log_dir,
+                                 verbose=2,
+                                 state=state,
+                                )
+
+        expected_cnt = (len(actions.ActionAppendList1.OPTIONS) *
+                        len(actions.SerialActionDontTryUpdate.OPTIONS) *
+                        len(actions.ActionAppendList2.OPTIONS))
+        self.assertEqual(walk_count, expected_cnt)
+        self.assertEqual(error_count, 0)
+
+        # Split above/below the sync point
+        self.assertEqual(segment_count, expected_cnt * 2)
+
+        all_states = []
+        for worker_states in states:
+            for walk_state in worker_states:
+                all_states.append(walk_state)
+        all_states.sort()
+
+        current_idx = 0
+        for opt1 in actions.ActionAppendList1.OPTIONS:
+            for opt2 in actions.ActionAppendList2.OPTIONS:
+                expected = [opt1, opt2]
+                for _ in range(len(actions.SerialActionDontTryUpdate.OPTIONS)):
+                    self.assertEqual(expected, all_states[current_idx])
+                    current_idx += 1
 
 
 if __name__ == "__main__":

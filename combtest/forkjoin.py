@@ -117,7 +117,7 @@ def fork_join(work,
             running_work.append((idx, _RunningWorkItem(t, work_item,
                     result_container)))
         else:
-            time.sleep(1)
+            time.sleep(0.1)
 
     # There is no reason to have a hash here since we are indexed on
     # consecutive integers. So let's coerce this guy to a list.

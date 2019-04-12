@@ -8,8 +8,8 @@ We use this mechanism to serialize :class:`combtest.action.Action` and
 :class:`combtest.walk.Walk` instances for printing to a trace file, or other
 logs where human readability is handy.  The reason we don't use a custom
 encoder/decoder pair for those two classes is that the user can attach a
-static_ctx which has no default JSON behavior.  We let them write ``to_json()``
-etc. if they want ``static_ctx`` to be a member of a custom class.
+param which has no default JSON behavior.  We let them write ``to_json()``
+etc. if they want ``param`` to be a member of a custom class.
 """
 
 import json
@@ -44,25 +44,25 @@ class _Encoder(json.JSONEncoder):
 #### Decode
 # Simple cache, since we are likely to decode the same Action multiple times,
 # to the point it could threaten mem usage.
-# Maps (action_class, jsonified static_ctx) -> instance
+# Maps (action_class, jsonified param) -> instance
 _ACTION_CACHE = {}
 _ACTION_CACHE_LOCK = threading.RLock()
 
-def _get_cached_action(action_class, static_ctx):
+def _get_cached_action(action_class, param):
     """
     For Actions specifically, we are likely to repeatedly decode strings that
     result in a functionally equivalent action. This is because the 'comb' in
     'combtest' refers to running combinations of test options. To prevent mem
     explosion, we want all those decode attempts to return refs to the same
     underlying set of Actions.
-    action_class(static_ctx) would return the Action in question. We pass them
+    action_class(param) would return the Action in question. We pass them
     in separately so we have something to hash. (classes are hashable it seems)
     """
-    key = (action_class, encode(static_ctx))
+    key = (action_class, encode(param))
     if key not in _ACTION_CACHE:
         with _ACTION_CACHE_LOCK:
             if key not in _ACTION_CACHE:
-                instance = action_class(static_ctx)
+                instance = action_class(param)
                 _ACTION_CACHE[key] = instance
                 return instance
     return _ACTION_CACHE[key]
@@ -113,6 +113,6 @@ def decode(json_str):
     """
     Decode a JSON string which was provided by :func:`encode`. Will leverage
     a cache for single-instancing ``Actions``. An ``Action`` is defined by a
-    single, immutable ``static_ctx``, so we are safe to use interning.
+    single, immutable ``param``, so we are safe to use interning.
     """
     return json.loads(json_str, object_pairs_hook=_jd_object_pair_hook)
