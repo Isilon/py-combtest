@@ -1,47 +1,42 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Overview &mdash; py-combtest 1.0.0.0 documentation</title>
-    
+    <title>Overview &#8212; py-combtest 1.0.1.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.0.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="py-combtest 1.0.0.0 documentation" href="index.html" />
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Example code" href="examples.html" />
     <link rel="prev" title="py-combtest" href="index.html" />
    
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">  
+  </head><body>
+  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="overview">
 <h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
-<p>The term &#8216;combtest&#8217; refers to the systematic generation of test cases based on
+<p>The term ‘combtest’ refers to the systematic generation of test cases based on
 combinations of inputs, conditions, configs, etc. This lib supports the
 generation of cases in this way, and provides a metric ton of supporting tools
 that a writer of such tests is likely to need. Examples:</p>
@@ -50,7 +45,7 @@ that a writer of such tests is likely to need. Examples:</p>
 writing the tests and not the infrastructure.</li>
 <li>Test runners that support various parallel execution patterns, which is
 highly desireable given the sheer volume of cases likely to be generated.</li>
-<li><code class="docutils literal"><span class="pre">unittest</span></code>-like test results stats</li>
+<li><code class="docutils literal notranslate"><span class="pre">unittest</span></code>-like test results stats</li>
 <li>Test case logging and deterministic replay mechanisms, allowing the user
 to re-run any generated test case.</li>
 </ul>
@@ -59,7 +54,7 @@ they are written to allow the advanced user to easily build out a custom
 workflow.</p>
 <p>At each step, the lib was designed with a small handful of concerns in mind:</p>
 <ul class="simple">
-<li>Providing &#8216;telescoping&#8217; APIs, such that both beginning and advanced users can
+<li>Providing ‘telescoping’ APIs, such that both beginning and advanced users can
 leverage it in the way they need</li>
 <li>Scalability, particularly with respect to mem use, and providing remote
 test executors; combtesting can produce orders of magnitude more cases than
@@ -71,11 +66,11 @@ tests in serial would otherwise take orders of magnitude more time</li>
 <div class="section" id="why-this-kind-of-testing">
 <h1>Why this kind of testing?<a class="headerlink" href="#why-this-kind-of-testing" title="Permalink to this headline">¶</a></h1>
 <p>Seasoned test writers may have come across a scenario like this: they develop a
-set of N edge cases to test, and they hardcode <code class="docutils literal"><span class="pre">unittest</span></code> cases for those N;
+set of N edge cases to test, and they hardcode <code class="docutils literal notranslate"><span class="pre">unittest</span></code> cases for those N;
 then they come to realize that they really need to test some of the
 combinations of those cases, and maybe then to combine all of those with
-various configurations of their system. &#8220;But that is combinatorial explosion;
-you can&#8217;t test all that!&#8221; Nevertheless, in complex software systems it is
+various configurations of their system. “But that is combinatorial explosion;
+you can’t test all that!” Nevertheless, in complex software systems it is
 sometimes necessary to do such a combining of tests/configs/etc to have
 confidence in the quality of the product. Even for simpler software systems,
 this can net a number of important advantages:</p>
@@ -90,22 +85,108 @@ of fuzz testing where that can be challenging.</li>
 </div>
 <div class="section" id="high-level-example">
 <h1>High level example<a class="headerlink" href="#high-level-example" title="Permalink to this headline">¶</a></h1>
-<p>Suppose one of us goes crazy and decides to write their own regex expression
-parser.</p>
+<p>Suppose we are doing whitebox testing of a GUI. The controls all have
+states, such as whether a checkbox is checked, what the content of a text box
+is, etc.</p>
+<p>And let’s say we want to excercise every distinct and supported
+combination of control states. Distinctness here refers to states of the GUI
+which are distinct from the point of view of the tester. Let’s say that
+entering the value “Hello world” in a text box fundamentally tests the same
+thing as entering “Foo bar”, but that having the box empty, or having numerical
+data in the box, is different enough to constitute distinct test cases. Let’s
+say we come up with 50 such distinct values to try in that text box during
+testing. This is the space of options we will try for this one control, and we
+come up with the space of options we will try for all the others, such as a
+check box being checked or not.</p>
+<p>Note that some combinations may not be possible: if clicking a check box
+reveals certain controls, those controls can only be interacted with if
+the check box has been clicked. We will need to take this into account
+while generating test cases.</p>
+<p>Suppose we define a simple function that takes a GUI instance as an argument,
+and text to enter in a specific text box on that GUI.  It might look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">mess_with_textbox1</span><span class="p">(</span><span class="n">gui_instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">gui_instance</span><span class="o">.</span><span class="n">textbox1</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+</pre></div>
+</div>
+<p>Then we can iterate all the interesting values we came up with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">textbox1_values</span><span class="p">:</span>
+    <span class="n">gui_instance</span> <span class="o">=</span> <span class="n">get_an_instance_of_my_GUI</span><span class="p">()</span>
+    <span class="n">mess_with_textbox1</span><span class="p">(</span><span class="n">gui_instance</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is simple enough that we could generate cases programmatically for use
+in our favorite test framework like <code class="docutils literal notranslate"><span class="pre">unittest</span></code>, <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, etc.</p>
+<p>Now let’s say that we have a bunch of other controls on the GUI, each with a
+set of distinct states. Some combinations of these control states may not be
+valid (like setting values in a text box that is not visible). And let’s say
+that we define functions for messing with these controls, like we did above.
+The resulting pseudocode now looks like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">c1_state</span> <span class="ow">in</span> <span class="n">c1_options</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">c2_state</span> <span class="ow">in</span> <span class="n">c2_options</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">c3_state</span> <span class="ow">in</span> <span class="n">c3_options</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">c1_state</span><span class="p">,</span> <span class="n">c2_state</span><span class="p">,</span> <span class="n">c3_state</span><span class="p">)</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">valid</span> <span class="n">combination</span><span class="p">:</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">get_an_instance_of_my_GUI</span><span class="p">()</span>
+                <span class="n">mess_with_c1</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c1_state</span><span class="p">)</span>
+                <span class="n">mess_with_c2</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c2_state</span><span class="p">)</span>
+                <span class="n">mess_with_c3</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c3_state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There are a few other things we will probably want to go along with this:</p>
+<ul class="simple">
+<li>If it is much easier for us to figure out at runtime if a combination of
+operations is valid, then we may want to e.g. have a special exception or
+return value from our individual op functions that indicates we should
+immediately cancel execution of the test case.</li>
+<li>A framework to run all the different combinations and count passes and
+failures, etc.</li>
+<li>Mechanisms for running the cases in parallel if the user chooses, since
+we are likely to have a very large number of cases to run.</li>
+<li>Logging and replay mechanisms.</li>
+</ul>
+<p>This lib provides the stuff you need to accomplish all of the above.</p>
+</div>
+<div class="section" id="comparison-to-unittest-and-pytest-case-generation">
+<h1>Comparison to unittest and pytest case generation<a class="headerlink" href="#comparison-to-unittest-and-pytest-case-generation" title="Permalink to this headline">¶</a></h1>
+<p>TODO</p>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Overview</a></li>
-<li><a class="reference internal" href="#why-this-kind-of-testing">Why this kind of testing?</a></li>
-<li><a class="reference internal" href="#high-level-example">High level example</a></li>
+<h1 class="logo"><a href="index.html">py-combtest</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Quick start</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#why-this-kind-of-testing">Why this kind of testing?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#high-level-example">High level example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#generating-and-running-tests">Generating and Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#serial-actions">Serial Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#notes-on-serialization">Notes on Serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#logging-and-replay">Logging and Replay</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#config">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#notes-on-scalability">Notes on Scalability</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
 </ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">py-combtest API reference</a></li>
+</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -115,23 +196,26 @@ parser.</p>
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/introduction.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -140,11 +224,11 @@ parser.</p>
       &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/introduction.txt"
+      <a href="_sources/introduction.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

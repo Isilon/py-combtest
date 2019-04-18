@@ -1,41 +1,35 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>combtest.action &mdash; py-combtest 1.0.0.0 documentation</title>
-    
+    <title>combtest.action &#8212; py-combtest 1.0.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '1.0.0.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="py-combtest 1.0.0.0 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" />
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
    
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">  
+  </head><body>
+  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <h1>Source code for combtest.action</h1><div class="highlight"><pre>
@@ -46,9 +40,18 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">random</span>
 
-<span class="kn">import</span> <span class="nn">combtest.utils</span> <span class="kn">as</span> <span class="nn">utils</span>
+<span class="kn">import</span> <span class="nn">combtest.utils</span> <span class="k">as</span> <span class="nn">utils</span>
 
-<div class="viewcode-block" id="Action"><a class="viewcode-back" href="../../api.html#combtest.action.Action">[docs]</a><span class="k">class</span> <span class="nc">Action</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+
+<div class="viewcode-block" id="CancelWalk"><a class="viewcode-back" href="../../api.html#combtest.action.CancelWalk">[docs]</a><span class="k">class</span> <span class="nc">CancelWalk</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raised to immediately stop the execution of a :class:`combtest.walk.Walk`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseAction"><a class="viewcode-back" href="../../api.html#combtest.action.BaseAction">[docs]</a><span class="k">class</span> <span class="nc">BaseAction</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An Action class bundles a function that performs an operation, and all</span>
 <span class="sd">    the different parameterizations for that operation. The</span>
@@ -69,7 +72,7 @@
 <span class="sd">    State is represented as an object provided by the user, which will be</span>
 <span class="sd">    passed to :func:`~combtest.action.Action.run` call.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">static_ctx</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The initializer takes a single argument: an object defining the</span>
 <span class="sd">        parameters to pass to the operation (which is defined in the</span>
@@ -78,26 +81,26 @@
 <span class="sd">        immutable object representing a specific operation with its</span>
 <span class="sd">        spcific parameters.</span>
 
-<span class="sd">        :param object ctx: an object that will be passed to the</span>
-<span class="sd">        :func:`~combtest.action.Action.run` method later.</span>
+<span class="sd">        :param object state: an object that will be passed to the</span>
+<span class="sd">                             :func:`~combtest.action.Action.run` method later.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_static_ctx</span> <span class="o">=</span> <span class="n">static_ctx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param</span> <span class="o">=</span> <span class="n">param</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">static_ctx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">param</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This instance&#39;s parameters, as passed to the initializer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># XXX it would be nice to have a copy protocol here, but we would have</span>
-        <span class="c1"># to impose on the client code to have a copy-able ctx. So: we are</span>
+        <span class="c1"># to impose on the client code to have a copy-able state. So: we are</span>
         <span class="c1"># protecting our reference here but not the internal state of the thing</span>
         <span class="c1"># refered to. Up to the client code to make sure this is immutable.</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_static_ctx</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">static_ctx</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Action.should_cancel"><a class="viewcode-back" href="../../api.html#combtest.action.Action.should_cancel">[docs]</a>    <span class="k">def</span> <span class="nf">should_cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseAction.should_cancel"><a class="viewcode-back" href="../../api.html#combtest.action.BaseAction.should_cancel">[docs]</a>    <span class="k">def</span> <span class="nf">should_cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This method is called before a Walk containing this Action is run. This</span>
 <span class="sd">        gives an opportunity to prevent the Walk from running if this</span>
@@ -107,20 +110,20 @@
 <span class="sd">        :param int idx: the index we are at in the walk</span>
 <span class="sd">        :return: True if the Walk should not be run, else False</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">False</span></div>
+        <span class="k">return</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="Action.run"><a class="viewcode-back" href="../../api.html#combtest.action.Action.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">static_ctx</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseAction.run"><a class="viewcode-back" href="../../api.html#combtest.action.BaseAction.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is called to actually run the operation. It does not need to be</span>
 <span class="sd">        invoked directly by the user.</span>
 
-<span class="sd">        :param object static_ctx: this represents the paramaterization of the</span>
+<span class="sd">        :param object param: this represents the paramaterization of the</span>
 <span class="sd">                                  operation. For example: if you are testing</span>
 <span class="sd">                                  a GUI and this Action represents &quot;set</span>
-<span class="sd">                                  the state of checkbox1&quot;, then static_ctx</span>
+<span class="sd">                                  the state of checkbox1&quot;, then param</span>
 <span class="sd">                                  would be the checkbox1 setting.</span>
 
-<span class="sd">        :param object dynamic_ctx: this object is passed along from</span>
+<span class="sd">        :param object state: this object is passed along from</span>
 <span class="sd">                                   Action-to-Action in a given Walk as the</span>
 <span class="sd">                                   Actions execute. It represents any state</span>
 <span class="sd">                                   that needs to be provided to the Action,</span>
@@ -135,8 +138,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Must implement this Action&#39;s run method&quot;</span><span class="p">)</span></div>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Action.get_option_set"><a class="viewcode-back" href="../../api.html#combtest.action.Action.get_option_set">[docs]</a>    <span class="k">def</span> <span class="nf">get_option_set</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseAction.get_option_set"><a class="viewcode-back" href="../../api.html#combtest.action.BaseAction.get_option_set">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_option_set</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the full parameterization space for this Action type. For</span>
 <span class="sd">        example: if you are testing a GUI and this Action sets the state of a</span>
@@ -152,141 +155,151 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Must provide a set of options this Action &quot;</span>
                 <span class="s2">&quot;type supports&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Action.to_json"><a class="viewcode-back" href="../../api.html#combtest.action.Action.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseAction.to_json"><a class="viewcode-back" href="../../api.html#combtest.action.BaseAction.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return something JSONifiable that can uniquely represent this instance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_ctx</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span></div>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Action.from_json"><a class="viewcode-back" href="../../api.html#combtest.action.Action.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">static_ctx</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="BaseAction.from_json"><a class="viewcode-back" href="../../api.html#combtest.action.BaseAction.from_json">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span></div></div>
 
-<div class="viewcode-block" id="SyncPoint"><a class="viewcode-back" href="../../api.html#combtest.action.SyncPoint">[docs]</a><span class="k">class</span> <span class="nc">SyncPoint</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+<div class="viewcode-block" id="Action"><a class="viewcode-back" href="../../api.html#combtest.action.Action">[docs]</a><span class="k">class</span> <span class="nc">Action</span><span class="p">(</span><span class="n">BaseAction</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A SyncPoint is a type of Action which cannot be run in parallel with</span>
+<span class="sd">    Convenience form of BaseAction: let the user provide a simple iterable of</span>
+<span class="sd">    parameters, called ``OPTIONS``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">OPTIONS</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Action.get_option_set"><a class="viewcode-back" href="../../api.html#combtest.action.Action.get_option_set">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_option_set</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the full parameterization space for this Action type. For</span>
+<span class="sd">        example: if you are testing a GUI and this Action sets the state of a</span>
+<span class="sd">        checkbox, then perhaps this will return ``cls(True)`` and</span>
+<span class="sd">        ``cls(False)`` for &#39;set the box to checked&#39; and &#39;set the box to</span>
+<span class="sd">        unchecked&#39; respectively.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This returns cls instances, not the parameters themselves.</span>
+
+<span class="sd">        :return: An iterable of instances of type cls</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">OPTIONS</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Must provide a set of options this Action &quot;</span>
+                    <span class="s2">&quot;type supports, either via cls.OPTIONS, or by overriding &quot;</span>
+                    <span class="s2">&quot;this method.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OptionSet</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">OPTIONS</span><span class="p">,</span> <span class="n">action_class</span><span class="o">=</span><span class="bp">cls</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="SerialAction"><a class="viewcode-back" href="../../api.html#combtest.action.SerialAction">[docs]</a><span class="k">class</span> <span class="nc">SerialAction</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A SerialAction is a type of Action which cannot be run in parallel with</span>
 <span class="sd">    others, e.g. for when we are running a bunch of &#39;Walks&#39; in parallel.</span>
 <span class="sd">    Thinking in terms of parallel algorithms: this represents a pinch point</span>
 <span class="sd">    where an operation must be serialized with everything else. In terms of</span>
 <span class="sd">    testing: it is part of a test where we can&#39;t run other cases in parallel;</span>
 <span class="sd">    e.g. if we are twiddling some global config option that affects all running</span>
-<span class="sd">    test cases.</span>
+<span class="sd">    test cases. We change the option once for all test cases after all</span>
+<span class="sd">    outstanding work has finished.</span>
 
-<span class="sd">    Fundamentally, a SyncPoint is run a single time for a given</span>
+<span class="sd">    Fundamentally, a SerialAction is run a single time for a given</span>
 <span class="sd">    parameterization, regardless of how many Walks contain it. The part of the</span>
-<span class="sd">    Walks prior to the SyncPoint will be run first.</span>
+<span class="sd">    Walks prior to the SerialAction will be run first.</span>
 
 <span class="sd">    Example: suppose we have three Walks:</span>
-<span class="sd">        * [Action1(1), Action2(2), SyncPoint1(1), Action3(3)],</span>
-<span class="sd">        * [Action1(1), Action2(3), SyncPoint1(1), Action3(3)],</span>
-<span class="sd">        * [Action1(1), Action2(2), Action3(3), SyncPoint1(1), Action4(4)]</span>
+<span class="sd">        * [Action1(1), Action2(2), SerialAction1(1), Action3(3)],</span>
+<span class="sd">        * [Action1(1), Action2(3), SerialAction1(1), Action3(3)],</span>
+<span class="sd">        * [Action1(1), Action2(2), Action3(3), SerialAction1(1), Action4(4)]</span>
 
 <span class="sd">        We can run the first &#39;segment&#39; of each Walk in parallel:</span>
 <span class="sd">        * [Action1(1), Action2(2)],</span>
 <span class="sd">        * [Action1(1), Action2(3)],</span>
 <span class="sd">        * [Action1(1), Action2(2), Action3(3)]</span>
 
-<span class="sd">        Then, single a thread we will run SyncPoint1(1), then in parallal we</span>
+<span class="sd">        Then, single a thread we will run SerialAction1(1), then in parallal we</span>
 <span class="sd">        can run:</span>
 <span class="sd">        * [Action3(3)],</span>
 <span class="sd">        * [Action3(3)],</span>
 <span class="sd">        * [Action4(4)]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_nop</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SyncPoint</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>
-
-        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="c1"># We can lock this type with Python3 annotations</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;ctxs need to be dicts&quot;</span><span class="p">)</span>
-            <span class="n">ctx_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">branch_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">worker_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">service</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">epoch</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">state_copy</span> <span class="o">=</span> <span class="n">state</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ctx_copy</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">state_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">_kwargs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;branch_id&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_kwargs</span> <span class="ow">or</span>
-                <span class="s1">&#39;service&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_kwargs</span> <span class="ow">or</span>
-                <span class="s1">&#39;worker_ids&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_kwargs</span> <span class="ow">or</span>
-                <span class="s1">&#39;epoch&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_kwargs</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;I don&#39;t recognize these kwargs; did you &quot;</span>
-                            <span class="s2">&quot;mean to pass these? </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">_kwargs</span><span class="p">))</span>
-            <span class="n">ctx_copy</span><span class="p">[</span><span class="s1">&#39;update_remote_ctx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_kwargs</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">static_ctx</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="o">=</span><span class="n">ctx_copy</span><span class="p">)</span>
+        <span class="c1">#if _kwargs:</span>
+        <span class="c1">#    if (&#39;branch_id&#39; not in _kwargs or</span>
+        <span class="c1">#        &#39;service&#39; not in _kwargs or</span>
+        <span class="c1">#        &#39;worker_ids&#39; not in _kwargs or</span>
+        <span class="c1">#        &#39;epoch&#39; not in _kwargs):</span>
+        <span class="c1">#            raise ValueError(&quot;I don&#39;t recognize these kwargs; did you &quot;</span>
+        <span class="c1">#                    &quot;mean to pass these? %s&quot; % str(_kwargs))</span>
+        <span class="c1">#    state_copy[&#39;update_remote_state&#39;] = _kwargs</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">del</span> <span class="n">ctx_copy</span><span class="p">[</span><span class="s1">&#39;update_remote_ctx&#39;</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">pass</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state_copy</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">CancelWalk</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Raising CancelWalk in a SerialAction doesn&#39;t &quot;</span>
+                               <span class="s2">&quot;change behavior; just exclude its param &quot;</span>
+                               <span class="s2">&quot;instead, or use should_cancel.&quot;</span><span class="p">)</span>
 
-        <span class="n">ctx_copy</span> <span class="o">=</span> <span class="n">ctx_copy</span> <span class="ow">or</span> <span class="bp">None</span>
-        <span class="k">return</span> <span class="n">ctx_copy</span>
+        <span class="k">if</span> <span class="n">new_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_remote_states</span><span class="p">(</span><span class="n">state_copy</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                                       <span class="n">worker_ids</span><span class="o">=</span><span class="n">worker_ids</span><span class="p">,</span>
+                                       <span class="n">service</span><span class="o">=</span><span class="n">service</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_state</span>
+        <span class="k">return</span> <span class="n">state</span>
 
-<div class="viewcode-block" id="SyncPoint.update_remote_contexts"><a class="viewcode-back" href="../../api.html#combtest.action.SyncPoint.update_remote_contexts">[docs]</a>    <span class="k">def</span> <span class="nf">update_remote_contexts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_update_remote_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">worker_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">service</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Fundamentally, SyncPoints are run a single time for each</span>
-<span class="sd">        parameterization, as explained above. SyncPoint instances can</span>
+<span class="sd">        Fundamentally, SerialActions are run a single time for each</span>
+<span class="sd">        parameterization, as explained above. SerialAction instances can</span>
 <span class="sd">        be executed in a totally different memory space than the rest of a</span>
 <span class="sd">        :class:`combtest.walk.Walk` (e.g. due to using remote executors; see</span>
-<span class="sd">        :class:`combtest.worker.ServiceGroup`). So to update the state/``ctx``</span>
+<span class="sd">        :class:`combtest.worker.ServiceGroup`). So to update the state</span>
 <span class="sd">        passed along with the Walk, the run() method can call this function to</span>
-<span class="sd">        push an update to the Walk&#39;s remote context.</span>
+<span class="sd">        push an update to the Walk&#39;s remote state.</span>
 
-<span class="sd">        :param object dynamic_ctx: this is the local state that was passed to</span>
+<span class="sd">        :param object state: this is the local state that was passed to</span>
 <span class="sd">                                   the :func:`run` function.</span>
 <span class="sd">        :param kwargs: these are key/value pairs to be pushed to the remote</span>
-<span class="sd">                       state/``ctx``.</span>
+<span class="sd">                       state</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;update_remote_ctx&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dynamic_ctx</span> <span class="ow">or</span>
-                <span class="n">dynamic_ctx</span><span class="p">[</span><span class="s1">&#39;update_remote_ctx&#39;</span><span class="p">][</span><span class="s1">&#39;epoch&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">epoch</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Either we are running locally (e.g. for replay) and so we have no</span>
-            <span class="c1"># remote contexts, or this is syncpoint is being run before any</span>
-            <span class="c1"># other actions, so we don&#39;t yet have any remote ctxs established.</span>
-            <span class="c1"># Either way, we straight-up update the local ctx. If we later</span>
+            <span class="c1"># remote states, or this SerialAction is being run before any</span>
+            <span class="c1"># other actions, so we don&#39;t yet have any remote states established.</span>
+            <span class="c1"># Either way, we straight-up update the local state. If we later</span>
             <span class="c1"># begin remote execution, the value will get passed to the</span>
-            <span class="c1"># appropriate walks via the ctx (via scatter_work).</span>
-            <span class="n">dynamic_ctx</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="c1"># appropriate Walks via the ``state`` arg (via scatter_work).</span>
+            <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">service</span> <span class="o">=</span> <span class="n">dynamic_ctx</span><span class="p">[</span><span class="s1">&#39;update_remote_ctx&#39;</span><span class="p">][</span><span class="s1">&#39;service&#39;</span><span class="p">]</span>
-            <span class="n">epoch</span> <span class="o">=</span> <span class="n">dynamic_ctx</span><span class="p">[</span><span class="s1">&#39;update_remote_ctx&#39;</span><span class="p">][</span><span class="s1">&#39;epoch&#39;</span><span class="p">]</span>
-            <span class="c1"># Maps walk_id-&gt;ip</span>
+            <span class="c1"># Maps walk_id-&gt;connection_info</span>
             <span class="n">id_map</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="n">id_map</span>
 
-            <span class="c1"># Maps ip-&gt;walk_id list</span>
+            <span class="c1"># Maps connection_info-&gt;walk_id list</span>
             <span class="n">walks_to_update</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">walk_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epoch</span><span class="o">.</span><span class="n">walk_idx_start</span><span class="p">,</span> <span class="n">epoch</span><span class="o">.</span><span class="n">walk_idx_end</span><span class="p">):</span>
-                <span class="n">ip</span> <span class="o">=</span> <span class="n">id_map</span><span class="p">[</span><span class="n">walk_id</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">ip</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">walks_to_update</span><span class="p">:</span>
-                    <span class="n">walks_to_update</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">connection_info</span> <span class="o">=</span> <span class="n">id_map</span><span class="p">[</span><span class="n">walk_id</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">connection_info</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">walks_to_update</span><span class="p">:</span>
+                    <span class="n">walks_to_update</span><span class="p">[</span><span class="n">connection_info</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-                <span class="n">walks_to_update</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">walk_id</span><span class="p">)</span>
+                <span class="n">walks_to_update</span><span class="p">[</span><span class="n">connection_info</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">walk_id</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">ip</span><span class="p">,</span> <span class="n">walk_ids</span> <span class="ow">in</span> <span class="n">walks_to_update</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">connection_info</span><span class="p">,</span> <span class="n">walk_ids</span> <span class="ow">in</span> <span class="n">walks_to_update</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">service</span><span class="o">.</span><span class="n">update_remote_contexts</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span>
-                            <span class="n">dynamic_ctx</span><span class="p">[</span><span class="s1">&#39;update_remote_ctx&#39;</span><span class="p">][</span><span class="s1">&#39;worker_ids&#39;</span><span class="p">],</span>
-                            <span class="n">walk_ids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="n">service</span><span class="o">.</span><span class="n">update_remote_states</span><span class="p">(</span><span class="n">connection_info</span><span class="p">,</span>
+                                                 <span class="n">worker_ids</span><span class="p">,</span>
+                                                 <span class="n">walk_ids</span><span class="p">,</span>
+                                                 <span class="n">state</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">new_msg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">IP was: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ip</span>
+                    <span class="n">new_msg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">IP was: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">connection_info</span><span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">new_msg</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="SyncPoint.run_as_replay"><a class="viewcode-back" href="../../api.html#combtest.action.SyncPoint.run_as_replay">[docs]</a>    <span class="k">def</span> <span class="nf">run_as_replay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">static_ctx</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        When a SyncPoint is run during a Walk replay, its execution looks much</span>
-<span class="sd">        more like a vanilla Action. sometimes the logic needs to be slightly</span>
-<span class="sd">        different for a replay, e.g. because there is no remote context to</span>
-<span class="sd">        update. So if you intend to ever replay a Walk, you may want to</span>
-<span class="sd">        override this. Otherwise, it acts just like :func:`run`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">static_ctx</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="o">=</span><span class="n">dynamic_ctx</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="SyncPoint.replay"><a class="viewcode-back" href="../../api.html#combtest.action.SyncPoint.replay">[docs]</a>    <span class="k">def</span> <span class="nf">replay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_as_replay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">static_ctx</span><span class="p">,</span> <span class="n">dynamic_ctx</span><span class="o">=</span><span class="n">dynamic_ctx</span><span class="p">)</span></div></div>
-
 
 <div class="viewcode-block" id="OptionSet"><a class="viewcode-back" href="../../api.html#combtest.action.OptionSet">[docs]</a><span class="k">class</span> <span class="nc">OptionSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -294,12 +307,11 @@
 <span class="sd">    :class:`combtest.action.Action` class. This is typically used as a return</span>
 <span class="sd">    value from an Action&#39;s :func:`get_option_set` method.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">action_class</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">action_class</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param iterable options: an iterable of paramaterizations of the</span>
 <span class="sd">                                 given Action class. There parameters will</span>
-<span class="sd">                                 be provided as the Action&#39;s</span>
-<span class="sd">                                 static context.</span>
+<span class="sd">                                 be provided as the Action&#39;s ``param``.</span>
 
 <span class="sd">        :param Action action_class: The :class:`Action` this iterator will be</span>
 <span class="sd">                                    returning instances of.</span>
@@ -315,7 +327,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_action_class</span> <span class="o">=</span> <span class="n">action_class</span>
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -333,8 +345,8 @@
 <div class="viewcode-block" id="OptionSet.to_json"><a class="viewcode-back" href="../../api.html#combtest.action.OptionSet.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_qualname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_action_class</span><span class="p">))</span></div>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="OptionSet.from_json"><a class="viewcode-back" href="../../api.html#combtest.action.OptionSet.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+<div class="viewcode-block" id="OptionSet.from_json"><a class="viewcode-back" href="../../api.html#combtest.action.OptionSet.from_json">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">options</span><span class="p">,</span> <span class="n">action_class_qualname</span> <span class="o">=</span> <span class="n">obj</span>
             <span class="n">action_class</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_class_from_qualname</span><span class="p">(</span><span class="n">action_class_qualname</span><span class="p">)</span>
@@ -356,10 +368,43 @@
 </pre></div>
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">py-combtest</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Quick start</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#why-this-kind-of-testing">Why this kind of testing?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#high-level-example">High level example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Example code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#generating-and-running-tests">Generating and Running Tests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#serial-actions">Serial Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#distributed-test-execution">Distributed Test Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-serialization">Notes on Serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#logging-and-replay">Logging and Replay</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#config">Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-scalability">Notes on Scalability</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">py-combtest API reference</a></li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../index.html">Documentation overview</a><ul>
@@ -370,14 +415,24 @@
 </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -386,8 +441,8 @@
       &copy;2019, Matthew J. Bryan (Dell/EMC Isilon).
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

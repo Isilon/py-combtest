@@ -87,6 +87,7 @@ provide.
 are a few examples.
 
 Providing a custom ``state`` object: ::
+
     # You can provide some instance to serve as the state passed around during
     # the tests. There are two important details to know about this:
     #  * The state must be JSON-ifiable, but py-combtest provides a convenience
@@ -194,7 +195,24 @@ exactly the same way they provide other ``Actions``. ::
                Action3],
               ...)
 
+Notice above that the ``SerialAction`` is treated like any other. The framework
+will run all ``Action1`` and ``Action2`` in parallel, wait for them to finish,
+run ``ChangeConfigSerialAction`` once, then run all ``Action3`` in parallel. If
+the ``SerialAction`` had more than one option, each option will be run one at a
+time, serially.
 
+Distributed Test Execution
+============================
+
+``py-combtest`` provides a number of ways to execute tests in a distributed +
+parallel fashion. The mechanisms for that are as follows:
+
+ * A generalized thread pool implementation that can execute multiple callables
+   in parallel in a given process. (:class:`ThreadPool`)
+ * An ``rpyc`` -based service which receives lists of tests (or portions
+   of tests) to run, dispatches them to a thread pool for for execution, and
+   which collects outputs, statistics, etc. (:class:`CoordinatorService`)
+ * A client class that starts 
 
 Notes on Serialization
 ========================
@@ -222,10 +240,18 @@ former provides some JSON-ifiable object. ``py-combtest`` will recursively call
 custom class with a ``to_json`` method, the above example will still work.
 
 The latter receives a copy of that object during deserialization and returns
-a deserialized instance of the given class.
+a deserialized instance of the given class. That is: it maps the thing
+returned by ``to_json`` on the class's constructor.
 
 Logging and Replay
 ====================
+
+There are three main types of logging ``combtest`` uses:
+ * Standard Python logging, which the user can leverge as normal
+ * An extension to Python logging, called :class:`central_logger`; the user
+   can treat this like standard Python logging, but logs will automatically
+   be sent between 
+
 
 Config
 ========
