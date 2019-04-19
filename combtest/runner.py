@@ -29,7 +29,7 @@ import combtest.worker as worker
 
 
 Result = namedtuple('Result', 'walk_count error_count segment_count elapsed '
-        'states logs')
+        'states logs failed_tests')
 
 # NOTE: A WalkRunner is associated 1-to-1 with a worker_id
 class WalkRunner(object):
@@ -39,9 +39,10 @@ class WalkRunner(object):
     see fit.
     """
     def __init__(self, reporting_interval=10000):
-        self.stats = {'count': 0,
+        self.stats = {
+                      'count': 0,
                       'error_count': 0,
-                      'cancel_count': 0
+                      'cancel_count': 0,
                      }
         self.reporting_interval = reporting_interval
         self.rlock = threading.RLock()
@@ -289,6 +290,7 @@ class WalkExecutorService(worker.CoordinatorService):
                 'count': 0,
                 'error_count': 0,
                 'cancel_count': 0,
+                'failed_walk_ids': [],
                }
         try:
             state = self._runners[worker_id].get_state()
@@ -365,6 +367,8 @@ class MultistageWalkRunner(WalkRunner):
         # Maps walk_id->dict of extra walk info (e.g. whether it has been canceled)
         self._state_supplement = {}
 
+        self.stats['failed_walk_ids'] = set()
+
     def clean_walk_states(self):
         states = copy.copy(self._walk_states)
         self._walk_states = {}
@@ -372,15 +376,15 @@ class MultistageWalkRunner(WalkRunner):
 
     # PORT/WRAP - add self.PANIC
     def run_walk(self, walk_id, branch_id, walk_to_run, state,
-            sync_point=None):
+                 serial_action=None):
         walk_id, branch_id, cancel, state = self._get_walks_state(walk_id,
                 branch_id, state=state)
 
         if cancel:
             return
 
-        if sync_point is not None:
-            self._set_supplemental_state(walk_id, sync_point=sync_point)
+        if serial_action is not None:
+            self._set_supplemental_state(walk_id, serial_action=serial_action)
 
         # PORT/WRAP - add self.PANIC
         #logger.trace_op(test_file=cur_ctx.test_file,
@@ -389,7 +393,7 @@ class MultistageWalkRunner(WalkRunner):
         #                file_config=cur_ctx['file_config'])
         logger.trace_op(walk=walk_to_run,
                         walk_id=walk_id,
-                        sync_point=sync_point,
+                        serial_action=serial_action,
                         branch_id=branch_id)
         #start_time = time.time()
 
@@ -430,7 +434,7 @@ class MultistageWalkRunner(WalkRunner):
             supplement = {'walk_id': walk_id,
                           'branch_id': branch_id,
                           'cancel': False,
-                          'sync_point': None,
+                          'serial_action': None,
                          }
             self._walk_states[walk_id] = copy.copy(state)
             self._state_supplement[walk_id] = supplement
@@ -466,19 +470,20 @@ class MultistageWalkRunner(WalkRunner):
                                  "a dict)")
 
     def prep_work_call(self, work):
-        walk_id, branch_id, walk_to_run, sync_point = work
+        walk_id, branch_id, walk_to_run, serial_action = work
 
-        if sync_point is not None:
-            sync_point = encode.decode(sync_point)
+        if serial_action is not None:
+            serial_action = encode.decode(serial_action)
 
         def run(state):
             try:
                 self.run_walk(walk_id, branch_id, walk_to_run, state,
-                              sync_point=sync_point)
+                              serial_action=serial_action)
             except CancelWalk:
                 self.count_cancel()
             except Exception as e:
                 self.count_error()
+                self.stats['failed_walk_ids'].add(walk_id)
                 try:
                     self._state_supplement[walk_id]['cancel'] = True
                 except KeyError:
@@ -503,7 +508,8 @@ class MultistageWalkRunningService(WalkExecutorService):
 
         walk_id, branch_id, current_walk = encode.decode(work)
         call = runner.prep_work_call((walk_id, branch_id, current_walk,
-                                      repack_kwargs.get('sync_point', None)))
+                                      repack_kwargs.get('serial_action',
+                                                        None)))
         return call
 
     def repack_ctx(self, state, **repack_kwargs):
@@ -596,13 +602,13 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
         raise RuntimeError("You're using this wrong; use scatter_work")
 
     def _flush_queue(self, client_key, client, queue, max_thread_count=None,
-                     state=None, sync_point=None):
+                     state=None, serial_action=None):
         logger.debug("Sending %d items to %s", len(queue), str(client_key))
 
         state = copy.copy(state)
-        if sync_point is not None:
-            sync_point = encode.encode(sync_point)
-            repack_kwargs = {'sync_point': sync_point}
+        if serial_action is not None:
+            serial_action = encode.encode(serial_action)
+            repack_kwargs = {'serial_action': serial_action}
         else:
             repack_kwargs = None
 
@@ -664,7 +670,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                 total_count += len(current_queue)
                 worker_id = self._flush_queue(target_key, clients[target_key],
                         current_queue, max_thread_count=max_thread_count,
-                        state=state, sync_point=epoch.sync_point)
+                        state=state, serial_action=epoch.serial_action)
                 worker_ids[target_key].append(worker_id)
 
         for target_key, queue in out_queues.items():
@@ -673,7 +679,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
             worker_id = self._flush_queue(target_key, client, queue,
                                           max_thread_count=max_thread_count,
                                           state=state,
-                                          sync_point=epoch.sync_point)
+                                          serial_action=epoch.serial_action)
             worker_ids[target_key].append(worker_id)
 
         self.id_map = id_map
@@ -722,11 +728,12 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                                 ``worker_ids`` from which we should
                                 gather responses.
         :return: count of Walk segments run, count of Walk execution errors,
-                 count of Walks run
+                 count of Walks run, list of walk_ids of failed Walks
         """
         total_segment_count = 0
         total_error_count = 0
         total_walk_count = 0
+        failed_walk_ids = []
         for connection, ids in worker_ids.items():
             for worker_id in ids:
                 resp = self.gather_runner_state(connection, worker_id)
@@ -737,7 +744,9 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                 total_segment_count += resp['segment_count']
                 total_error_count += resp['error_count']
                 total_walk_count += resp['walk_count']
-        return total_segment_count, total_error_count, total_walk_count
+                failed_walk_ids.extend(list(resp['failed_walk_ids']))
+        return total_segment_count, total_error_count, total_walk_count, \
+               failed_walk_ids
 
     def gather_state(self, connection, worker_id, full=False):
         """
@@ -980,7 +989,7 @@ def run_tests(walk_order,
                                       len(epoch_list))
             for epoch in epoch_list:
                 state_copy = copy.copy(state)
-                if epoch.sync_point is not None:
+                if epoch.serial_action is not None:
                     for branch_id in epoch.branch_ids:
                         # PORT/WRAP
                         #sp_ctx = {"base_dir": test_path,
@@ -989,12 +998,12 @@ def run_tests(walk_order,
                         #          "worker_ids": master_worker_ids,
                         #          "epoch": epoch
                         #         }
-                        state_copy = epoch.sync_point(state=state_copy,
-                                                      branch_id=branch_id,
-                                                      epoch=epoch,
-                                                      service=sg,
-                                                      worker_ids=master_worker_ids
-                                                     )
+                        state_copy = epoch.serial_action(state=state_copy,
+                                                         branch_id=branch_id,
+                                                         epoch=epoch,
+                                                         service=sg,
+                                                         worker_ids=master_worker_ids
+                                                        )
 
                 _, count, worker_ids = sg.scatter_work(epoch,
                                              state=state_copy,
@@ -1015,6 +1024,8 @@ def run_tests(walk_order,
         segment_count = 0
         error_count = 0
         walk_count = 0
+        # List of walk_ids
+        failed_tests = []
         for connection_info, ids in master_worker_ids.items():
             if len(ids) == 0:
                 # No work sent, e.g. because we didn't have many walks
@@ -1023,11 +1034,13 @@ def run_tests(walk_order,
             # NOTE: taking advantage of singleton
             wid = ids[0]
             wids = {connection_info: [wid,]}
-            current_segment_count, current_error_count, current_walk_count = \
+            current_segment_count, current_error_count, \
+                    current_walk_count, current_failed_walk_ids = \
                     sg.gather_all_runner_states(wids)
             segment_count += current_segment_count
             error_count += current_error_count
             walk_count += current_walk_count
+            failed_tests.extend(current_failed_walk_ids)
 
         elapsed = time.time() - start_time
         central_logger.log_status("Ran %d walks (%d errors) in %0.2fs" %
@@ -1052,7 +1065,7 @@ def run_tests(walk_order,
             pass
 
     return Result(walk_count, error_count, segment_count, elapsed, states_out,
-                  master_log)
+                  master_log, failed_tests)
 
 
 # TODO: PORT/WRAP
