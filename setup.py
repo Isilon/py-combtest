@@ -5,7 +5,7 @@ import os
 # Provides __version__
 exec(open('version.py').read())
 
-from setuptools import setup, Command
+from setuptools import setup, find_packages, Command
 
 
 class CleanCommand(Command):
@@ -40,11 +40,8 @@ setup(
     include_package_data=True,
     author_email='matthew.bryan@isilon.com',
     url='https://github.west.com/mbryan/py-combtest',
-    packages=[
-        'combtest',
-        'combtest.test.',
-        'combtest.test.classes',
-    ],
+    package_dir={'': 'src'},
+    packages=find_packages('src'),
     install_requires=requirements,
     keywords='combtest',
     classifiers=[
