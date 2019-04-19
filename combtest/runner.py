@@ -142,7 +142,6 @@ class WalkExecutorService(worker.CoordinatorService):
         The user should probably not be calling into this directly. They
         should be starting it up via rpyc.
     """
-    # TODO: PORT/WRAP
     #: Override the type of ``WalkRunner`` used, here or in a child class
     WALK_RUNNER_TYPE = WalkRunner
     #: Override the type of ``ThreadPool`` used for executing ``Walks``, here
@@ -429,7 +428,6 @@ class MultistageWalkRunner(WalkRunner):
         self._state_supplement[walk_id].update(**kwargs)
 
     def _get_walks_state(self, walk_id, branch_id, state):
-        # PORT/WRAP
         if walk_id not in self._walk_states:
             supplement = {'walk_id': walk_id,
                           'branch_id': branch_id,
@@ -461,7 +459,6 @@ class MultistageWalkRunner(WalkRunner):
         return states_out
 
     def update_walks_state(self, walk_id, state_update):
-        # PORT/WRAP
         try:
             self._walk_states[walk_id].update(state_update)
         except AttributeError:
@@ -823,7 +820,6 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
             logs[ip] = client_logs
         return logs
 
-# TODO: PORT/WRAP
 def run_tests(walk_order,
               state=None,
               verbose=1,
@@ -835,8 +831,6 @@ def run_tests(walk_order,
               max_thread_count=None,
               gather_states=False,
               log_dir=None,
-              # PORT/WRAP test_path=utils.DEFAULT_TEST_PATH,
-              #**file_config_kwargs,
              ):
     """
     Run a collection of :class:`combtest.walk.Walk`. This should be the main
@@ -906,15 +900,7 @@ def run_tests(walk_order,
         central_logger.set_level(central_logger.DEBUG)
 
 
-    # PORT/WRAP
-    #if log_dir is None:
-    #    log_dir = ac_config.get_log_dir()
-    #    if log_dir is None or log_dir == ".":
-    #        log_dir = "/var/crash"
-    #log_dir = os.path.join(log_dir, SUBDIR_NAME)
-
     my_ip = utils.get_my_IP()
-    #rtt.remote_cmd(my_ip, 'isi_for_array "mkdir -p %s"' % log_dir)
 
     if log_dir is not None:
         central_logger.log_status("Log files will be at: %s", log_dir)
@@ -943,12 +929,10 @@ def run_tests(walk_order,
                                  service_handler_class=service_handler_class
                                 )
 
-        # PORT/WRAP: pass test_path
         remote_log_locations = sg.start_remote_logging(my_ip,
                                                        logger_port,
                                                        log_dir,
                                                        verbose=verbose)
-        #            test_path, verbose=verbose)
 
         master_location = ""
 
@@ -971,18 +955,6 @@ def run_tests(walk_order,
         logger.info("Scattering work")
         start_time = time.time()
 
-        # PORT/WRAP
-        #ctx = {}
-        #if file_config_kwargs:
-        #    ctx['runner_opts'] = copy.copy(file_config_kwargs)
-        #if verbose:
-        #    ctx['verbose'] = True
-
-        #ctx['test_path'] = test_path
-        #ctx['log_dir'] = log_dir
-
-        # central_logger.log_status("Test path: %s", test_path)
-
         master_worker_ids = {}
         for epoch_list in wo:
             logger.info("Epoch list has %d epochs",
@@ -991,13 +963,6 @@ def run_tests(walk_order,
                 state_copy = copy.copy(state)
                 if epoch.serial_action is not None:
                     for branch_id in epoch.branch_ids:
-                        # PORT/WRAP
-                        #sp_ctx = {"base_dir": test_path,
-                        #          "branch_id": branch_id,
-                        #          "service": sg,
-                        #          "worker_ids": master_worker_ids,
-                        #          "epoch": epoch
-                        #         }
                         state_copy = epoch.serial_action(state=state_copy,
                                                          branch_id=branch_id,
                                                          epoch=epoch,
@@ -1068,7 +1033,6 @@ def run_tests(walk_order,
                   master_log, failed_tests)
 
 
-# TODO: PORT/WRAP
 def replay_walk(walk_to_run, step=False, log_errors=True, state=None):
     """
     Run a single :class:`combtest.walk.Walk`
@@ -1087,8 +1051,6 @@ def replay_walk(walk_to_run, step=False, log_errors=True, state=None):
                 print(str(type(op)))
                 raw_input("Press key to continue...")
 
-        # PORT/WRAP if verify:
-        # PORT/WRAP     test_file.verify_nonsparse_logical_all()
     except CancelWalk as e:
         return True
     except Exception as e:

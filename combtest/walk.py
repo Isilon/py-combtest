@@ -93,7 +93,6 @@ class Walk(object):
             # Likewise here: let the user decide to log or not in their layer
             return True
         except Exception as e:
-            # PORT/WRAP: no state specifics here.
             msg_state = "Walk was: %s\nstate: %s" % (repr(self),
                     encode.encode(state))
             exc = type(e)(str(e) + "\n" + msg_state)
@@ -582,7 +581,7 @@ class WalkOptions(object):
         Args:
             frontier - an iterable of Segment
         """
-        # TODO
+        # We could do something more advanced here...
         return epochs, frontier
 
     def next(self):
@@ -681,7 +680,6 @@ class StateCombinator(object):
 
         return json_iter()
 
-# TODO PORT/WRAP: add back path, lin, file_config
 class WalkOpTracer(central_logger.OpTracer):
     """
     Traces a :class:`Walk` portion + its adjacent :class:`SerialAction` and
