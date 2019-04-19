@@ -22,8 +22,7 @@ class CleanCommand(Command):
         os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info')
         os.system('rm -vrf combtest/version.py')
 
-requirements = ['paramiko~=2.4',
-                'rpyc~=4.0',
+requirements = ['rpyc~=4.0',
                 'six~=1.12',
                 'sphinx~=1.4']
 
