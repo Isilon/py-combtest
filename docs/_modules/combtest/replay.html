@@ -78,11 +78,11 @@
                 <span class="k">continue</span>
 
             <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">sync_point</span> <span class="o">=</span> <span class="n">decoded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync_point&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">serial_action</span> <span class="o">=</span> <span class="n">decoded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;serial_action&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="n">walk_segment</span> <span class="o">=</span> <span class="n">decoded</span><span class="p">[</span><span class="s1">&#39;walk&#39;</span><span class="p">]</span>
 
-            <span class="k">if</span> <span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">walk_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sync_point</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">serial_action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">walk_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">serial_action</span><span class="p">)</span>
 
             <span class="n">walk_out</span> <span class="o">+=</span> <span class="n">walk_segment</span>
 
@@ -157,7 +157,7 @@
 <span class="sd">    Run a single :class:`combtest.walk.Walk`. Load it by deserializing it from</span>
 <span class="sd">    a trace file.</span>
 
-<span class="sd">    :param str log_file: path to either a master log file or trace file</span>
+<span class="sd">    :param object log_file: &#39;logs&#39; object returned from :func:`run_tests`</span>
 <span class="sd">    :param int walk_id: a walk_id that appears in the trace file, or one of the</span>
 <span class="sd">                        trace files referenced by the master log file.</span>
 <span class="sd">    :param bool step: if True, step Action-by-Action through the Walk; the user</span>
@@ -169,7 +169,7 @@
 <span class="sd">    :param object state: ``state`` passed to the Walk for execution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">walk_to_run</span> <span class="o">=</span> <span class="n">_load_walk</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="n">walk_id</span><span class="p">)</span>
+    <span class="n">walk_to_run</span> <span class="o">=</span> <span class="n">_load_walk</span><span class="p">(</span><span class="n">log_file</span><span class="p">[</span><span class="s1">&#39;master&#39;</span><span class="p">],</span> <span class="n">walk_id</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">replay_walk</span><span class="p">(</span><span class="n">walk_to_run</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
                        <span class="n">replay_func_qualname</span><span class="o">=</span><span class="n">replay_func_qualname</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span></div>
@@ -240,14 +240,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#high-level-example">High level example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Example code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#generating-and-running-tests">Generating and Running Tests</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#serial-actions">Serial Actions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#distributed-test-execution">Distributed Test Execution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-serialization">Notes on Serialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#logging-and-replay">Logging and Replay</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#config">Config</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-scalability">Notes on Scalability</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Reference</span></p>
 <ul>

@@ -3,15 +3,17 @@ Example code
 
 The first step we need is to define the operations that we will be combining.
 In combtest these are called ``Actions``. Each is a decendent class
-of :class:`Action`. Such classes require a ``run()`` function that defines
-the actual operation. Acceptable parameters for passing to the function can
+of :class:`~combtest.action.Action`. Such classes require a
+:class:`~combtest.action.BaseAction.run` function that defines the actual
+operation. Acceptable parameters for passing to the function can
 be provided via the ``OPTIONS`` class member.
 
-A test case is represented as a sequence of :class:`Action` instances. These
-cases are :class:`Walk` instances, which will be generated via combination of
-the ``Actions`` the user provides. ``Walks`` are simply executables that
-execute the ``run()`` functions of their ``Actions`` in order, passing a
-shared object called ``state`` to each.
+A test case is represented as a sequence of :class:`~combtest.action.Action`
+instances. These cases are :class:`~combtest.walk.Walk` instances, which
+will be generated via combination of the ``Actions`` the user provides.
+``Walks`` are simply executables that execute the :func:`~combtest.action.BaseAction.run`
+functions of their ``Actions`` in order, passing a shared object called
+``state`` to each.
 
 Example: ::
 
@@ -39,7 +41,7 @@ Example: ::
 
 If you prefer to generate the options of an ``Action`` in some more interesting
 way, or want to return an iterator of options, you can override the
-:func:`get_option_set` classmethod: ::
+:func:`~combtest.action.BaseAction.get_option_set` classmethod: ::
 
     from combtest.action import Action, OptionSet
 
@@ -56,15 +58,15 @@ way, or want to return an iterator of options, you can override the
             return OptionSet(my_lib.some_iterator, cls)
 
 
-That is it; once you have defined your :class:`Action` classes, you can pass
-them to the ``py-combtest`` framework to be run.
+That is it; once you have defined your :class:`~combtest.action.Action`
+classes, you can pass them to the ``py-combtest`` framework to be run.
 
 
 Generating and Running Tests
-==============================
+------------------------------
 
-Once you have written your :class:`Action` classes, running tests is as simple
-as: ::
+Once you have written your :class:`~combtest.action.Action` classes, running
+tests is as simple as: ::
 
     from combtest.runner import run_tests
 
@@ -83,8 +85,8 @@ as: ::
 Tests will be generated automatically given the options that your ``Actions``
 provide.
 
-:func:`run_test` has many options, which are worth reading in the docs. Here
-are a few examples.
+:func:`~combtest.runner.run_tests` has many options, which are worth reading
+in the docs. Here are a few examples.
 
 Providing a custom ``state`` object: ::
 
@@ -140,7 +142,7 @@ The output for this case looks like this: ::
     Resulting states: [[{u'A': 1, u'B': 1}, {u'A': 2, u'B': 1}, {u'A': 3, u'B': 1}], [{u'A': 1, u'B': 2}, {u'A': 2, u'B': 2}, {u'A': 3, u'B': 2}], [{u'A': 3, u'B': 3}, {u'A': 1, u'B': 3}, {u'A': 2, u'B': 3}]]
 
 You can vary the log directory and verbosity of logs, and can record replays
-of each ``Walk`` so you can re-run them later. ::
+of each :class:`~combtest.walk.Walk` so you can re-run them later. ::
 
     # Minimalist logging. Verbose can be 0, 1, 2, with increasing log verbosity
     run_tests(...,
@@ -160,10 +162,11 @@ of each ``Walk`` so you can re-run them later. ::
 
 
 Serial Actions
-========================
+------------------------
 
 Sometimes we need to perform an operation that affects multiple tests that we
-want to run in parallel. py-combtest provides a feature for accomplishing that.
+want to run in parallel. ``py-combtest`` provides a feature for accomplishing
+that.
 
 By way of example: suppose we are performing a system test, and that the system
 has some global config setting that affects all tests. First We need all tests
@@ -172,8 +175,9 @@ that point we perform the config change once and for all, and then release the
 next part of the tests to once again run in parallel.
 
 The operation that needs to run once-and-for-all and serial is represented
-with a :class:`SerialAction`. The user provides their ``SerialAction`` in
-exactly the same way they provide other ``Actions``. ::
+with a :class:`~combtest.action.SerialAction`. The user provides their
+``SerialAction`` in exactly the same way they provide other
+``Actions``. ::
 
     from combtest.action import SerialAction
 
@@ -201,21 +205,73 @@ run ``ChangeConfigSerialAction`` once, then run all ``Action3`` in parallel. If
 the ``SerialAction`` had more than one option, each option will be run one at a
 time, serially.
 
-Distributed Test Execution
-============================
+Notes on Distributed Test Execution
+-------------------------------------
 
 ``py-combtest`` provides a number of ways to execute tests in a distributed +
 parallel fashion. The mechanisms for that are as follows:
 
  * A generalized thread pool implementation that can execute multiple callables
-   in parallel in a given process. (:class:`ThreadPool`)
+   in parallel in a given process. (:class:`~combtest.worker.ThreadPool`)
  * An ``rpyc`` -based service which receives lists of tests (or portions
    of tests) to run, dispatches them to a thread pool for for execution, and
-   which collects outputs, statistics, etc. (:class:`CoordinatorService`)
- * A client class that starts 
+   which collects outputs, statistics, etc.
+   (:class:`~combtest.worker.CoordinatorService`)
+ * A client class that bootstraps test executors, potentially across many
+   machines, and dispatches tests to them for running.
+   (:class:`~combtest.worker.ServiceGroup`)
+ * Customizable mechanisms for bootstrapping the services - e.g. via SSH,
+   multiprocessing. (:class:`~combtest.bootstrap.ServiceHandler`)
+
+For most purposes the user should not need to inherit or override any of these,
+but they are designed to make that possible. For convenience, all overrides can
+be made at the :func:`~combtest.runner.run_tests` call. Example: ::
+
+    class MyTestService(MultistageWalkRunningService):
+        ...
+
+    ...
+
+    run_tests(..., runner_class=MyTestService)
+
+Using SSH To Bootstrap Test Executors Across Machines
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The user is free to specify how test executors are bootstrapped, but two
+convenience implementations are provided:
+
+ * A ``multiprocessing``-based method, which spins up multiple processes on the
+   local machine. This is the default implementation.
+ * An optional ``paramiko``-based SSH implementation, which makes it relatively
+   simple to bootstrap test executors across machines.
+
+The latter is used by simply installing it and passing it to
+:func:`~combtest.runner.run_tests`: ::
+
+    import combtest.ssh_handle as ssh
+
+    ...
+
+    run_test(..., service_handler_class=ssh.ServiceHandler_SSH)
+
+The trick to using this is the need to provide authentication. Authentication
+credentials can be specified using the :class:`~combtest.config` module
+(see below). A path to an rsakey file can be provided for example.
+``paramiko`` also supports username/password authentication, among other
+methods.
+
+NOTE: ``paramiko`` is not installed by default with ``py-combtest``. You will
+need to ensure it is installed to use :class:`~combtest.ssh_handle`.
+
+Custom Service Bootstrapping Methods
++++++++++++++++++++++++++++++++++++++++
+
+The user is free to specify other ways of bootstrapping test executors,
+though that will not be required for most users. See the interface provided
+by :class:`~combtest.bootstrap.ServiceHandler` for reference.
 
 Notes on Serialization
-========================
+------------------------
 
 Several objects need to be serialized to work properly, such as custom
 ``state`` objects. ``py-combtest`` uses a callback pattern to make it
@@ -244,20 +300,98 @@ a deserialized instance of the given class. That is: it maps the thing
 returned by ``to_json`` on the class's constructor.
 
 Logging and Replay
-====================
+--------------------
 
 There are three main types of logging ``combtest`` uses:
  * Standard Python logging, which the user can leverge as normal
- * An extension to Python logging, called :class:`central_logger`; the user
-   can treat this like standard Python logging, but logs will automatically
-   be sent between 
+ * An extension to Python logging, called :class:`~combtest.central_logger`;
+   the user can treat this like standard Python logging, but logs will
+   automatically be sent between the test execution services and the
+   coordinating process (where :func:`~combtest.runner.run_tests` was called).
+ * Human-readable representations of test cases; these service as traces of
+   the cases which were run, and can be fed back to the
+   :class:`~combtest.replay` module to be re-run individually.
 
+Distributed Logging
++++++++++++++++++++++
+To log using :class:`~combtest.central_logger`, simply leverage the logger
+it exposes instead of using a logger from the standard logging lib: ::
+
+    from combtest.central_logger import logger
+
+    ...
+
+    logger.error("We are having trouble here.")
+
+These log lines will automatically be dispatched back to the coordinating
+process, where they may be printed to e.g. stdout and/or to a log file,
+depending on the verbosity settings the user chose.
+
+Replay
+++++++++
+
+We collect human-readable traces of the tests we run whenever the user
+provides a log directory to :func:`~combtest.runner.run_tests`. After the
+tests run, we can pass the logs, log string, or :class:`~combtest.walk.Walk`
+to the :class:`~combtest.replay` module to run an individual case.
+
+Running a single :class:`~combtest.walk.Walk`: ::
+
+    import combtest.replay as replay
+    import combtest.walk as walk
+
+    import my_test
+
+    actions = [
+               my_test.ActionClass1(1),
+               my_test.ActionClass2(True),
+               my_test.SerialActionClass1("qqq"),
+              ]
+    my_walk = walk.Walk(actions)
+
+    my_state = {"some": "stuff}
+    replay.replay_walk(my_walk, state=my_state)
+
+Re-running a :class:`~combtest.walk.Walk` from a trace file: ::
+
+    # Suppose we run some tests, and some of them failed:
+    results = run_test(...)
+
+    # We can replay one of the failed tests from the trace logs:
+    my_state = {"some": "thing"}
+    replay.replay_walk_by_id(results.logs, results.failed_tests[17],
+                             state=my_state)
+
+You can actually run any :class:`~combtest.walk.Walk` from the trace, not
+just failed ``Walks``. The second argument to
+:func:`~combtest.replay.replay_walk_by_id` is an integer identifier of
+the ``Walk``, which can be found in the trace file.
 
 Config
-========
+--------
 
-Notes on Scalability
-========================
+``py-combtest`` uses a minimalist config for parameterizing things like
+thread counts and authentication information for machines where test
+executors should run. The values can be set at runtime or by config
+file.
 
-Custom Executor Bootstrapping Methods
-=======================================
+By default, :class:`~combtest.config` will look for a file called
+``combtest.cfg`` in the current working directory and attempt to load it. It
+could be used for example to specify the maximum number of worker threads the
+test executors are allowed.  When using SSH to bootstrap the test executors,
+``config`` can be used to provide authentication information. Example file: ::
+
+    [NET]
+    rsakey: /path/to/my/rsakey/file
+
+    [WORKER]
+    max_thread_count: 10
+
+The values can also be overridden programatically by the user: ::
+
+    import combtest.config as config
+
+    # Default port we will bind our rpyc instance to on a given machine. If we
+    # bind more than one on a given machine, this will be the first port, and
+    # all ports will be consecutive.
+    config.set_service_port(6009)

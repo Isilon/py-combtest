@@ -791,7 +791,7 @@ a trace file.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>log_file</strong> (<em>str</em>) – path to either a master log file or trace file</li>
+<li><strong>log_file</strong> (<em>object</em>) – ‘logs’ object returned from <code class="xref py py-func docutils literal notranslate"><span class="pre">run_tests()</span></code></li>
 <li><strong>walk_id</strong> (<em>int</em>) – a walk_id that appears in the trace file, or one of the
 trace files referenced by the master log file.</li>
 <li><strong>step</strong> (<em>bool</em>) – if True, step Action-by-Action through the Walk; the user
@@ -835,7 +835,7 @@ include any new stats they think of.</p>
 gather responses.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">count of Walk segments run, count of Walk execution errors,
-count of Walks run</td>
+count of Walks run, list of walk_ids of failed Walks</td>
 </tr>
 </tbody>
 </table>
@@ -1045,7 +1045,7 @@ argument: the <code class="docutils literal notranslate"><span class="pre">state
 
 <dl class="method">
 <dt id="combtest.runner.MultistageWalkRunner.run_walk">
-<code class="descname">run_walk</code><span class="sig-paren">(</span><em>walk_id</em>, <em>branch_id</em>, <em>walk_to_run</em>, <em>state</em>, <em>sync_point=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunner.run_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunner.run_walk" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run_walk</code><span class="sig-paren">(</span><em>walk_id</em>, <em>branch_id</em>, <em>walk_to_run</em>, <em>state</em>, <em>serial_action=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunner.run_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunner.run_walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to run an individual <code class="docutils literal notranslate"><span class="pre">Walk</span></code>.</p>
 </dd></dl>
 
@@ -1114,7 +1114,7 @@ JSONified <code class="docutils literal notranslate"><span class="pre">Walk</spa
 
 <dl class="class">
 <dt id="combtest.runner.Result">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">Result</code><span class="sig-paren">(</span><em>walk_count</em>, <em>error_count</em>, <em>segment_count</em>, <em>elapsed</em>, <em>states</em>, <em>logs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.Result" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">Result</code><span class="sig-paren">(</span><em>walk_count</em>, <em>error_count</em>, <em>segment_count</em>, <em>elapsed</em>, <em>states</em>, <em>logs</em>, <em>failed_tests</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.Result" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <dl class="attribute">
 <dt id="combtest.runner.Result.elapsed">
@@ -1126,6 +1126,12 @@ JSONified <code class="docutils literal notranslate"><span class="pre">Walk</spa
 <dt id="combtest.runner.Result.error_count">
 <code class="descname">error_count</code><a class="headerlink" href="#combtest.runner.Result.error_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="combtest.runner.Result.failed_tests">
+<code class="descname">failed_tests</code><a class="headerlink" href="#combtest.runner.Result.failed_tests" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 6</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -2299,13 +2305,6 @@ isn’t provided by the caller, we we get a value from
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#high-level-example">High level example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Example code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#generating-and-running-tests">Generating and Running Tests</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#serial-actions">Serial Actions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#notes-on-serialization">Notes on Serialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#logging-and-replay">Logging and Replay</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#config">Config</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#notes-on-scalability">Notes on Scalability</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Reference</span></p>
 <ul class="current">

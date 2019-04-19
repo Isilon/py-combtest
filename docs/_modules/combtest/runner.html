@@ -64,7 +64,7 @@
 
 
 <span class="n">Result</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Result&#39;</span><span class="p">,</span> <span class="s1">&#39;walk_count error_count segment_count elapsed &#39;</span>
-        <span class="s1">&#39;states logs&#39;</span><span class="p">)</span>
+        <span class="s1">&#39;states logs failed_tests&#39;</span><span class="p">)</span>
 
 <span class="c1"># NOTE: A WalkRunner is associated 1-to-1 with a worker_id</span>
 <div class="viewcode-block" id="WalkRunner"><a class="viewcode-back" href="../../api.html#combtest.runner.WalkRunner">[docs]</a><span class="k">class</span> <span class="nc">WalkRunner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -74,9 +74,10 @@
 <span class="sd">    see fit.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reporting_interval</span><span class="o">=</span><span class="mi">10000</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+                      <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                       <span class="s1">&#39;error_count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                      <span class="s1">&#39;cancel_count&#39;</span><span class="p">:</span> <span class="mi">0</span>
+                      <span class="s1">&#39;cancel_count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                      <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reporting_interval</span> <span class="o">=</span> <span class="n">reporting_interval</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rlock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
@@ -324,6 +325,7 @@
                 <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                 <span class="s1">&#39;error_count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                 <span class="s1">&#39;cancel_count&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s1">&#39;failed_walk_ids&#39;</span><span class="p">:</span> <span class="p">[],</span>
                <span class="p">}</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runners</span><span class="p">[</span><span class="n">worker_id</span><span class="p">]</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
@@ -400,6 +402,8 @@
         <span class="c1"># Maps walk_id-&gt;dict of extra walk info (e.g. whether it has been canceled)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_supplement</span> <span class="o">=</span> <span class="p">{}</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;failed_walk_ids&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">clean_walk_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">states</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_walk_states</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_walk_states</span> <span class="o">=</span> <span class="p">{}</span>
@@ -407,15 +411,15 @@
 
     <span class="c1"># PORT/WRAP - add self.PANIC</span>
 <div class="viewcode-block" id="MultistageWalkRunner.run_walk"><a class="viewcode-back" href="../../api.html#combtest.runner.MultistageWalkRunner.run_walk">[docs]</a>    <span class="k">def</span> <span class="nf">run_walk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk_to_run</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span>
-            <span class="n">sync_point</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">serial_action</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">cancel</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_walks_state</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span>
                 <span class="n">branch_id</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cancel</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_supplemental_state</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">sync_point</span><span class="o">=</span><span class="n">sync_point</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">serial_action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_supplemental_state</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">serial_action</span><span class="o">=</span><span class="n">serial_action</span><span class="p">)</span>
 
         <span class="c1"># PORT/WRAP - add self.PANIC</span>
         <span class="c1">#logger.trace_op(test_file=cur_ctx.test_file,</span>
@@ -424,7 +428,7 @@
         <span class="c1">#                file_config=cur_ctx[&#39;file_config&#39;])</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">trace_op</span><span class="p">(</span><span class="n">walk</span><span class="o">=</span><span class="n">walk_to_run</span><span class="p">,</span>
                         <span class="n">walk_id</span><span class="o">=</span><span class="n">walk_id</span><span class="p">,</span>
-                        <span class="n">sync_point</span><span class="o">=</span><span class="n">sync_point</span><span class="p">,</span>
+                        <span class="n">serial_action</span><span class="o">=</span><span class="n">serial_action</span><span class="p">,</span>
                         <span class="n">branch_id</span><span class="o">=</span><span class="n">branch_id</span><span class="p">)</span>
         <span class="c1">#start_time = time.time()</span>
 
@@ -465,7 +469,7 @@
             <span class="n">supplement</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;walk_id&#39;</span><span class="p">:</span> <span class="n">walk_id</span><span class="p">,</span>
                           <span class="s1">&#39;branch_id&#39;</span><span class="p">:</span> <span class="n">branch_id</span><span class="p">,</span>
                           <span class="s1">&#39;cancel&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-                          <span class="s1">&#39;sync_point&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="s1">&#39;serial_action&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
                          <span class="p">}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_walk_states</span><span class="p">[</span><span class="n">walk_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state_supplement</span><span class="p">[</span><span class="n">walk_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">supplement</span>
@@ -501,19 +505,20 @@
                                  <span class="s2">&quot;a dict)&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MultistageWalkRunner.prep_work_call"><a class="viewcode-back" href="../../api.html#combtest.runner.MultistageWalkRunner.prep_work_call">[docs]</a>    <span class="k">def</span> <span class="nf">prep_work_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">work</span><span class="p">):</span>
-        <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk_to_run</span><span class="p">,</span> <span class="n">sync_point</span> <span class="o">=</span> <span class="n">work</span>
+        <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk_to_run</span><span class="p">,</span> <span class="n">serial_action</span> <span class="o">=</span> <span class="n">work</span>
 
-        <span class="k">if</span> <span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sync_point</span> <span class="o">=</span> <span class="n">encode</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">sync_point</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">serial_action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">serial_action</span> <span class="o">=</span> <span class="n">encode</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">serial_action</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">run_walk</span><span class="p">(</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">walk_to_run</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span>
-                              <span class="n">sync_point</span><span class="o">=</span><span class="n">sync_point</span><span class="p">)</span>
+                              <span class="n">serial_action</span><span class="o">=</span><span class="n">serial_action</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">CancelWalk</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">count_cancel</span><span class="p">()</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">count_error</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;failed_walk_ids&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">walk_id</span><span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_state_supplement</span><span class="p">[</span><span class="n">walk_id</span><span class="p">][</span><span class="s1">&#39;cancel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
@@ -538,7 +543,8 @@
 
         <span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">current_walk</span> <span class="o">=</span> <span class="n">encode</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
         <span class="n">call</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">prep_work_call</span><span class="p">((</span><span class="n">walk_id</span><span class="p">,</span> <span class="n">branch_id</span><span class="p">,</span> <span class="n">current_walk</span><span class="p">,</span>
-                                      <span class="n">repack_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync_point&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
+                                      <span class="n">repack_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;serial_action&#39;</span><span class="p">,</span>
+                                                        <span class="kc">None</span><span class="p">)))</span>
         <span class="k">return</span> <span class="n">call</span></div>
 
 <div class="viewcode-block" id="MultistageWalkRunningService.repack_ctx"><a class="viewcode-back" href="../../api.html#combtest.runner.MultistageWalkRunningService.repack_ctx">[docs]</a>    <span class="k">def</span> <span class="nf">repack_ctx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">repack_kwargs</span><span class="p">):</span>
@@ -631,13 +637,13 @@
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;You&#39;re using this wrong; use scatter_work&quot;</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_flush_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_key</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">max_thread_count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                     <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sync_point</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                     <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">serial_action</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending </span><span class="si">%d</span><span class="s2"> items to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">queue</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">client_key</span><span class="p">))</span>
 
         <span class="n">state</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sync_point</span> <span class="o">=</span> <span class="n">encode</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sync_point</span><span class="p">)</span>
-            <span class="n">repack_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sync_point&#39;</span><span class="p">:</span> <span class="n">sync_point</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">serial_action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">serial_action</span> <span class="o">=</span> <span class="n">encode</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">serial_action</span><span class="p">)</span>
+            <span class="n">repack_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;serial_action&#39;</span><span class="p">:</span> <span class="n">serial_action</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">repack_kwargs</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -699,7 +705,7 @@
                 <span class="n">total_count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_queue</span><span class="p">)</span>
                 <span class="n">worker_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flush_queue</span><span class="p">(</span><span class="n">target_key</span><span class="p">,</span> <span class="n">clients</span><span class="p">[</span><span class="n">target_key</span><span class="p">],</span>
                         <span class="n">current_queue</span><span class="p">,</span> <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
-                        <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">sync_point</span><span class="o">=</span><span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span><span class="p">)</span>
+                        <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">serial_action</span><span class="o">=</span><span class="n">epoch</span><span class="o">.</span><span class="n">serial_action</span><span class="p">)</span>
                 <span class="n">worker_ids</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">target_key</span><span class="p">,</span> <span class="n">queue</span> <span class="ow">in</span> <span class="n">out_queues</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -708,7 +714,7 @@
             <span class="n">worker_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flush_queue</span><span class="p">(</span><span class="n">target_key</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span>
                                           <span class="n">max_thread_count</span><span class="o">=</span><span class="n">max_thread_count</span><span class="p">,</span>
                                           <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
-                                          <span class="n">sync_point</span><span class="o">=</span><span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span><span class="p">)</span>
+                                          <span class="n">serial_action</span><span class="o">=</span><span class="n">epoch</span><span class="o">.</span><span class="n">serial_action</span><span class="p">)</span>
             <span class="n">worker_ids</span><span class="p">[</span><span class="n">target_key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">worker_id</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">id_map</span> <span class="o">=</span> <span class="n">id_map</span>
@@ -757,11 +763,12 @@
 <span class="sd">                                ``worker_ids`` from which we should</span>
 <span class="sd">                                gather responses.</span>
 <span class="sd">        :return: count of Walk segments run, count of Walk execution errors,</span>
-<span class="sd">                 count of Walks run</span>
+<span class="sd">                 count of Walks run, list of walk_ids of failed Walks</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">total_segment_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">total_error_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">total_walk_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">failed_walk_ids</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">connection</span><span class="p">,</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">worker_ids</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">worker_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
                 <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_runner_state</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">)</span>
@@ -772,7 +779,9 @@
                 <span class="n">total_segment_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;segment_count&#39;</span><span class="p">]</span>
                 <span class="n">total_error_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;error_count&#39;</span><span class="p">]</span>
                 <span class="n">total_walk_count</span> <span class="o">+=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;walk_count&#39;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">total_segment_count</span><span class="p">,</span> <span class="n">total_error_count</span><span class="p">,</span> <span class="n">total_walk_count</span></div>
+                <span class="n">failed_walk_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">resp</span><span class="p">[</span><span class="s1">&#39;failed_walk_ids&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">total_segment_count</span><span class="p">,</span> <span class="n">total_error_count</span><span class="p">,</span> <span class="n">total_walk_count</span><span class="p">,</span> \
+               <span class="n">failed_walk_ids</span></div>
 
 <div class="viewcode-block" id="ContinuingWalkServiceGroup.gather_state"><a class="viewcode-back" href="../../api.html#combtest.runner.ContinuingWalkServiceGroup.gather_state">[docs]</a>    <span class="k">def</span> <span class="nf">gather_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span> <span class="n">full</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1015,7 +1024,7 @@
                                       <span class="nb">len</span><span class="p">(</span><span class="n">epoch_list</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">epoch_list</span><span class="p">:</span>
                 <span class="n">state_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">epoch</span><span class="o">.</span><span class="n">serial_action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">branch_id</span> <span class="ow">in</span> <span class="n">epoch</span><span class="o">.</span><span class="n">branch_ids</span><span class="p">:</span>
                         <span class="c1"># PORT/WRAP</span>
                         <span class="c1">#sp_ctx = {&quot;base_dir&quot;: test_path,</span>
@@ -1024,12 +1033,12 @@
                         <span class="c1">#          &quot;worker_ids&quot;: master_worker_ids,</span>
                         <span class="c1">#          &quot;epoch&quot;: epoch</span>
                         <span class="c1">#         }</span>
-                        <span class="n">state_copy</span> <span class="o">=</span> <span class="n">epoch</span><span class="o">.</span><span class="n">sync_point</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state_copy</span><span class="p">,</span>
-                                                      <span class="n">branch_id</span><span class="o">=</span><span class="n">branch_id</span><span class="p">,</span>
-                                                      <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
-                                                      <span class="n">service</span><span class="o">=</span><span class="n">sg</span><span class="p">,</span>
-                                                      <span class="n">worker_ids</span><span class="o">=</span><span class="n">master_worker_ids</span>
-                                                     <span class="p">)</span>
+                        <span class="n">state_copy</span> <span class="o">=</span> <span class="n">epoch</span><span class="o">.</span><span class="n">serial_action</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state_copy</span><span class="p">,</span>
+                                                         <span class="n">branch_id</span><span class="o">=</span><span class="n">branch_id</span><span class="p">,</span>
+                                                         <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                                                         <span class="n">service</span><span class="o">=</span><span class="n">sg</span><span class="p">,</span>
+                                                         <span class="n">worker_ids</span><span class="o">=</span><span class="n">master_worker_ids</span>
+                                                        <span class="p">)</span>
 
                 <span class="n">_</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">worker_ids</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">scatter_work</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span>
                                              <span class="n">state</span><span class="o">=</span><span class="n">state_copy</span><span class="p">,</span>
@@ -1050,6 +1059,8 @@
         <span class="n">segment_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">error_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">walk_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># List of walk_ids</span>
+        <span class="n">failed_tests</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">connection_info</span><span class="p">,</span> <span class="n">ids</span> <span class="ow">in</span> <span class="n">master_worker_ids</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="c1"># No work sent, e.g. because we didn&#39;t have many walks</span>
@@ -1058,11 +1069,13 @@
             <span class="c1"># NOTE: taking advantage of singleton</span>
             <span class="n">wid</span> <span class="o">=</span> <span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">wids</span> <span class="o">=</span> <span class="p">{</span><span class="n">connection_info</span><span class="p">:</span> <span class="p">[</span><span class="n">wid</span><span class="p">,]}</span>
-            <span class="n">current_segment_count</span><span class="p">,</span> <span class="n">current_error_count</span><span class="p">,</span> <span class="n">current_walk_count</span> <span class="o">=</span> \
+            <span class="n">current_segment_count</span><span class="p">,</span> <span class="n">current_error_count</span><span class="p">,</span> \
+                    <span class="n">current_walk_count</span><span class="p">,</span> <span class="n">current_failed_walk_ids</span> <span class="o">=</span> \
                     <span class="n">sg</span><span class="o">.</span><span class="n">gather_all_runner_states</span><span class="p">(</span><span class="n">wids</span><span class="p">)</span>
             <span class="n">segment_count</span> <span class="o">+=</span> <span class="n">current_segment_count</span>
             <span class="n">error_count</span> <span class="o">+=</span> <span class="n">current_error_count</span>
             <span class="n">walk_count</span> <span class="o">+=</span> <span class="n">current_walk_count</span>
+            <span class="n">failed_tests</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">current_failed_walk_ids</span><span class="p">)</span>
 
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="n">central_logger</span><span class="o">.</span><span class="n">log_status</span><span class="p">(</span><span class="s2">&quot;Ran </span><span class="si">%d</span><span class="s2"> walks (</span><span class="si">%d</span><span class="s2"> errors) in </span><span class="si">%0.2f</span><span class="s2">s&quot;</span> <span class="o">%</span>
@@ -1087,7 +1100,7 @@
             <span class="k">pass</span>
 
     <span class="k">return</span> <span class="n">Result</span><span class="p">(</span><span class="n">walk_count</span><span class="p">,</span> <span class="n">error_count</span><span class="p">,</span> <span class="n">segment_count</span><span class="p">,</span> <span class="n">elapsed</span><span class="p">,</span> <span class="n">states_out</span><span class="p">,</span>
-                  <span class="n">master_log</span><span class="p">)</span></div>
+                  <span class="n">master_log</span><span class="p">,</span> <span class="n">failed_tests</span><span class="p">)</span></div>
 
 
 <span class="c1"># TODO: PORT/WRAP</span>
@@ -1155,14 +1168,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#high-level-example">High level example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Example code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#generating-and-running-tests">Generating and Running Tests</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#serial-actions">Serial Actions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#distributed-test-execution">Distributed Test Execution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-serialization">Notes on Serialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#logging-and-replay">Logging and Replay</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#config">Config</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-scalability">Notes on Scalability</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Reference</span></p>
 <ul>

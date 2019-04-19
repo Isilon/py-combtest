@@ -38,14 +38,16 @@
 <h1>Example code<a class="headerlink" href="#example-code" title="Permalink to this headline">¶</a></h1>
 <p>The first step we need is to define the operations that we will be combining.
 In combtest these are called <code class="docutils literal notranslate"><span class="pre">Actions</span></code>. Each is a decendent class
-of <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code>. Such classes require a <code class="docutils literal notranslate"><span class="pre">run()</span></code> function that defines
-the actual operation. Acceptable parameters for passing to the function can
+of <a class="reference internal" href="api.html#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a>. Such classes require a
+<a class="reference internal" href="api.html#combtest.action.BaseAction.run" title="combtest.action.BaseAction.run"><code class="xref py py-class docutils literal notranslate"><span class="pre">run</span></code></a> function that defines the actual
+operation. Acceptable parameters for passing to the function can
 be provided via the <code class="docutils literal notranslate"><span class="pre">OPTIONS</span></code> class member.</p>
-<p>A test case is represented as a sequence of <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code> instances. These
-cases are <code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code> instances, which will be generated via combination of
-the <code class="docutils literal notranslate"><span class="pre">Actions</span></code> the user provides. <code class="docutils literal notranslate"><span class="pre">Walks</span></code> are simply executables that
-execute the <code class="docutils literal notranslate"><span class="pre">run()</span></code> functions of their <code class="docutils literal notranslate"><span class="pre">Actions</span></code> in order, passing a
-shared object called <code class="docutils literal notranslate"><span class="pre">state</span></code> to each.</p>
+<p>A test case is represented as a sequence of <a class="reference internal" href="api.html#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a>
+instances. These cases are <a class="reference internal" href="api.html#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a> instances, which
+will be generated via combination of the <code class="docutils literal notranslate"><span class="pre">Actions</span></code> the user provides.
+<code class="docutils literal notranslate"><span class="pre">Walks</span></code> are simply executables that execute the <a class="reference internal" href="api.html#combtest.action.BaseAction.run" title="combtest.action.BaseAction.run"><code class="xref py py-func docutils literal notranslate"><span class="pre">run()</span></code></a>
+functions of their <code class="docutils literal notranslate"><span class="pre">Actions</span></code> in order, passing a shared object called
+<code class="docutils literal notranslate"><span class="pre">state</span></code> to each.</p>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">combtest.action</span> <span class="k">import</span> <span class="n">Action</span>
 
@@ -71,7 +73,7 @@ shared object called <code class="docutils literal notranslate"><span class="pre
 </div>
 <p>If you prefer to generate the options of an <code class="docutils literal notranslate"><span class="pre">Action</span></code> in some more interesting
 way, or want to return an iterator of options, you can override the
-<code class="xref py py-func docutils literal notranslate"><span class="pre">get_option_set()</span></code> classmethod:</p>
+<a class="reference internal" href="api.html#combtest.action.BaseAction.get_option_set" title="combtest.action.BaseAction.get_option_set"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_option_set()</span></code></a> classmethod:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">combtest.action</span> <span class="k">import</span> <span class="n">Action</span><span class="p">,</span> <span class="n">OptionSet</span>
 
 <span class="kn">import</span> <span class="nn">my_lib</span>
@@ -87,13 +89,12 @@ way, or want to return an iterator of options, you can override the
         <span class="k">return</span> <span class="n">OptionSet</span><span class="p">(</span><span class="n">my_lib</span><span class="o">.</span><span class="n">some_iterator</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>That is it; once you have defined your <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code> classes, you can pass
-them to the <code class="docutils literal notranslate"><span class="pre">py-combtest</span></code> framework to be run.</p>
-</div>
+<p>That is it; once you have defined your <a class="reference internal" href="api.html#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a>
+classes, you can pass them to the <code class="docutils literal notranslate"><span class="pre">py-combtest</span></code> framework to be run.</p>
 <div class="section" id="generating-and-running-tests">
-<h1>Generating and Running Tests<a class="headerlink" href="#generating-and-running-tests" title="Permalink to this headline">¶</a></h1>
-<p>Once you have written your <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code> classes, running tests is as simple
-as:</p>
+<h2>Generating and Running Tests<a class="headerlink" href="#generating-and-running-tests" title="Permalink to this headline">¶</a></h2>
+<p>Once you have written your <a class="reference internal" href="api.html#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a> classes, running
+tests is as simple as:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">combtest.runner</span> <span class="k">import</span> <span class="n">run_tests</span>
 
 <span class="n">action_order</span> <span class="o">=</span> <span class="p">[</span>
@@ -111,8 +112,8 @@ as:</p>
 </div>
 <p>Tests will be generated automatically given the options that your <code class="docutils literal notranslate"><span class="pre">Actions</span></code>
 provide.</p>
-<p><code class="xref py py-func docutils literal notranslate"><span class="pre">run_test()</span></code> has many options, which are worth reading in the docs. Here
-are a few examples.</p>
+<p><a class="reference internal" href="api.html#combtest.runner.run_tests" title="combtest.runner.run_tests"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_tests()</span></code></a> has many options, which are worth reading
+in the docs. Here are a few examples.</p>
 <p>Providing a custom <code class="docutils literal notranslate"><span class="pre">state</span></code> object:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># You can provide some instance to serve as the state passed around during</span>
 <span class="c1"># the tests. There are two important details to know about this:</span>
@@ -168,7 +169,7 @@ are a few examples.</p>
 <dd>Resulting states: [[{u’A’: 1, u’B’: 1}, {u’A’: 2, u’B’: 1}, {u’A’: 3, u’B’: 1}], [{u’A’: 1, u’B’: 2}, {u’A’: 2, u’B’: 2}, {u’A’: 3, u’B’: 2}], [{u’A’: 3, u’B’: 3}, {u’A’: 1, u’B’: 3}, {u’A’: 2, u’B’: 3}]]</dd>
 </dl>
 <p>You can vary the log directory and verbosity of logs, and can record replays
-of each <code class="docutils literal notranslate"><span class="pre">Walk</span></code> so you can re-run them later.</p>
+of each <a class="reference internal" href="api.html#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a> so you can re-run them later.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Minimalist logging. Verbose can be 0, 1, 2, with increasing log verbosity</span>
 <span class="n">run_tests</span><span class="p">(</span><span class="o">...</span><span class="p">,</span>
           <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -188,17 +189,19 @@ of each <code class="docutils literal notranslate"><span class="pre">Walk</span>
 </div>
 </div>
 <div class="section" id="serial-actions">
-<h1>Serial Actions<a class="headerlink" href="#serial-actions" title="Permalink to this headline">¶</a></h1>
+<h2>Serial Actions<a class="headerlink" href="#serial-actions" title="Permalink to this headline">¶</a></h2>
 <p>Sometimes we need to perform an operation that affects multiple tests that we
-want to run in parallel. py-combtest provides a feature for accomplishing that.</p>
+want to run in parallel. <code class="docutils literal notranslate"><span class="pre">py-combtest</span></code> provides a feature for accomplishing
+that.</p>
 <p>By way of example: suppose we are performing a system test, and that the system
 has some global config setting that affects all tests. First We need all tests
 to finish executing up to the point that the config change should happen. At
 that point we perform the config change once and for all, and then release the
 next part of the tests to once again run in parallel.</p>
 <p>The operation that needs to run once-and-for-all and serial is represented
-with a <code class="xref py py-class docutils literal notranslate"><span class="pre">SerialAction</span></code>. The user provides their <code class="docutils literal notranslate"><span class="pre">SerialAction</span></code> in
-exactly the same way they provide other <code class="docutils literal notranslate"><span class="pre">Actions</span></code>.</p>
+with a <a class="reference internal" href="api.html#combtest.action.SerialAction" title="combtest.action.SerialAction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SerialAction</span></code></a>. The user provides their
+<code class="docutils literal notranslate"><span class="pre">SerialAction</span></code> in exactly the same way they provide other
+<code class="docutils literal notranslate"><span class="pre">Actions</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">combtest.action</span> <span class="k">import</span> <span class="n">SerialAction</span>
 
 <span class="kn">import</span> <span class="nn">my_system</span>
@@ -226,23 +229,74 @@ run <code class="docutils literal notranslate"><span class="pre">ChangeConfigSer
 the <code class="docutils literal notranslate"><span class="pre">SerialAction</span></code> had more than one option, each option will be run one at a
 time, serially.</p>
 </div>
-<div class="section" id="distributed-test-execution">
-<h1>Distributed Test Execution<a class="headerlink" href="#distributed-test-execution" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="notes-on-distributed-test-execution">
+<h2>Notes on Distributed Test Execution<a class="headerlink" href="#notes-on-distributed-test-execution" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">py-combtest</span></code> provides a number of ways to execute tests in a distributed +
 parallel fashion. The mechanisms for that are as follows:</p>
 <blockquote>
 <div><ul class="simple">
 <li>A generalized thread pool implementation that can execute multiple callables
-in parallel in a given process. (<code class="xref py py-class docutils literal notranslate"><span class="pre">ThreadPool</span></code>)</li>
+in parallel in a given process. (<a class="reference internal" href="api.html#combtest.worker.ThreadPool" title="combtest.worker.ThreadPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">ThreadPool</span></code></a>)</li>
 <li>An <code class="docutils literal notranslate"><span class="pre">rpyc</span></code> -based service which receives lists of tests (or portions
 of tests) to run, dispatches them to a thread pool for for execution, and
-which collects outputs, statistics, etc. (<code class="xref py py-class docutils literal notranslate"><span class="pre">CoordinatorService</span></code>)</li>
-<li>A client class that starts</li>
+which collects outputs, statistics, etc.
+(<a class="reference internal" href="api.html#combtest.worker.CoordinatorService" title="combtest.worker.CoordinatorService"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoordinatorService</span></code></a>)</li>
+<li>A client class that bootstraps test executors, potentially across many
+machines, and dispatches tests to them for running.
+(<a class="reference internal" href="api.html#combtest.worker.ServiceGroup" title="combtest.worker.ServiceGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServiceGroup</span></code></a>)</li>
+<li>Customizable mechanisms for bootstrapping the services - e.g. via SSH,
+multiprocessing. (<a class="reference internal" href="api.html#combtest.bootstrap.ServiceHandler" title="combtest.bootstrap.ServiceHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServiceHandler</span></code></a>)</li>
 </ul>
 </div></blockquote>
+<p>For most purposes the user should not need to inherit or override any of these,
+but they are designed to make that possible. For convenience, all overrides can
+be made at the <a class="reference internal" href="api.html#combtest.runner.run_tests" title="combtest.runner.run_tests"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_tests()</span></code></a> call. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyTestService</span><span class="p">(</span><span class="n">MultistageWalkRunningService</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="o">...</span>
+
+<span class="n">run_tests</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">runner_class</span><span class="o">=</span><span class="n">MyTestService</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="using-ssh-to-bootstrap-test-executors-across-machines">
+<h3>Using SSH To Bootstrap Test Executors Across Machines<a class="headerlink" href="#using-ssh-to-bootstrap-test-executors-across-machines" title="Permalink to this headline">¶</a></h3>
+<p>The user is free to specify how test executors are bootstrapped, but two
+convenience implementations are provided:</p>
+<blockquote>
+<div><ul class="simple">
+<li>A <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code>-based method, which spins up multiple processes on the
+local machine. This is the default implementation.</li>
+<li>An optional <code class="docutils literal notranslate"><span class="pre">paramiko</span></code>-based SSH implementation, which makes it relatively
+simple to bootstrap test executors across machines.</li>
+</ul>
+</div></blockquote>
+<p>The latter is used by simply installing it and passing it to
+<a class="reference internal" href="api.html#combtest.runner.run_tests" title="combtest.runner.run_tests"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_tests()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">combtest.ssh_handle</span> <span class="k">as</span> <span class="nn">ssh</span>
+
+<span class="o">...</span>
+
+<span class="n">run_test</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">service_handler_class</span><span class="o">=</span><span class="n">ssh</span><span class="o">.</span><span class="n">ServiceHandler_SSH</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The trick to using this is the need to provide authentication. Authentication
+credentials can be specified using the <a class="reference internal" href="api.html#module-combtest.config" title="combtest.config"><code class="xref py py-class docutils literal notranslate"><span class="pre">config</span></code></a> module
+(see below). A path to an rsakey file can be provided for example.
+<code class="docutils literal notranslate"><span class="pre">paramiko</span></code> also supports username/password authentication, among other
+methods.</p>
+<p>NOTE: <code class="docutils literal notranslate"><span class="pre">paramiko</span></code> is not installed by default with <code class="docutils literal notranslate"><span class="pre">py-combtest</span></code>. You will
+need to ensure it is installed to use <a class="reference internal" href="api.html#module-combtest.ssh_handle" title="combtest.ssh_handle"><code class="xref py py-class docutils literal notranslate"><span class="pre">ssh_handle</span></code></a>.</p>
+</div>
+<div class="section" id="custom-service-bootstrapping-methods">
+<h3>Custom Service Bootstrapping Methods<a class="headerlink" href="#custom-service-bootstrapping-methods" title="Permalink to this headline">¶</a></h3>
+<p>The user is free to specify other ways of bootstrapping test executors,
+though that will not be required for most users. See the interface provided
+by <a class="reference internal" href="api.html#combtest.bootstrap.ServiceHandler" title="combtest.bootstrap.ServiceHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServiceHandler</span></code></a> for reference.</p>
+</div>
 </div>
 <div class="section" id="notes-on-serialization">
-<h1>Notes on Serialization<a class="headerlink" href="#notes-on-serialization" title="Permalink to this headline">¶</a></h1>
+<h2>Notes on Serialization<a class="headerlink" href="#notes-on-serialization" title="Permalink to this headline">¶</a></h2>
 <p>Several objects need to be serialized to work properly, such as custom
 <code class="docutils literal notranslate"><span class="pre">state</span></code> objects. <code class="docutils literal notranslate"><span class="pre">py-combtest</span></code> uses a callback pattern to make it
 easy for the user to provide JSON serializers for any classes they
@@ -269,26 +323,103 @@ a deserialized instance of the given class. That is: it maps the thing
 returned by <code class="docutils literal notranslate"><span class="pre">to_json</span></code> on the class’s constructor.</p>
 </div>
 <div class="section" id="logging-and-replay">
-<h1>Logging and Replay<a class="headerlink" href="#logging-and-replay" title="Permalink to this headline">¶</a></h1>
+<h2>Logging and Replay<a class="headerlink" href="#logging-and-replay" title="Permalink to this headline">¶</a></h2>
 <dl class="docutils">
 <dt>There are three main types of logging <code class="docutils literal notranslate"><span class="pre">combtest</span></code> uses:</dt>
 <dd><ul class="first last simple">
 <li>Standard Python logging, which the user can leverge as normal</li>
-<li>An extension to Python logging, called <code class="xref py py-class docutils literal notranslate"><span class="pre">central_logger</span></code>; the user
-can treat this like standard Python logging, but logs will automatically
-be sent between</li>
+<li>An extension to Python logging, called <code class="xref py py-class docutils literal notranslate"><span class="pre">central_logger</span></code>;
+the user can treat this like standard Python logging, but logs will
+automatically be sent between the test execution services and the
+coordinating process (where <a class="reference internal" href="api.html#combtest.runner.run_tests" title="combtest.runner.run_tests"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_tests()</span></code></a> was called).</li>
+<li>Human-readable representations of test cases; these service as traces of
+the cases which were run, and can be fed back to the
+<a class="reference internal" href="api.html#module-combtest.replay" title="combtest.replay"><code class="xref py py-class docutils literal notranslate"><span class="pre">replay</span></code></a> module to be re-run individually.</li>
 </ul>
 </dd>
 </dl>
+<div class="section" id="distributed-logging">
+<h3>Distributed Logging<a class="headerlink" href="#distributed-logging" title="Permalink to this headline">¶</a></h3>
+<p>To log using <code class="xref py py-class docutils literal notranslate"><span class="pre">central_logger</span></code>, simply leverage the logger
+it exposes instead of using a logger from the standard logging lib:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">combtest.central_logger</span> <span class="k">import</span> <span class="n">logger</span>
+
+<span class="o">...</span>
+
+<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;We are having trouble here.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These log lines will automatically be dispatched back to the coordinating
+process, where they may be printed to e.g. stdout and/or to a log file,
+depending on the verbosity settings the user chose.</p>
+</div>
+<div class="section" id="replay">
+<h3>Replay<a class="headerlink" href="#replay" title="Permalink to this headline">¶</a></h3>
+<p>We collect human-readable traces of the tests we run whenever the user
+provides a log directory to <a class="reference internal" href="api.html#combtest.runner.run_tests" title="combtest.runner.run_tests"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_tests()</span></code></a>. After the
+tests run, we can pass the logs, log string, or <a class="reference internal" href="api.html#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a>
+to the <a class="reference internal" href="api.html#module-combtest.replay" title="combtest.replay"><code class="xref py py-class docutils literal notranslate"><span class="pre">replay</span></code></a> module to run an individual case.</p>
+<p>Running a single <a class="reference internal" href="api.html#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">combtest.replay</span> <span class="k">as</span> <span class="nn">replay</span>
+<span class="kn">import</span> <span class="nn">combtest.walk</span> <span class="k">as</span> <span class="nn">walk</span>
+
+<span class="kn">import</span> <span class="nn">my_test</span>
+
+<span class="n">actions</span> <span class="o">=</span> <span class="p">[</span>
+           <span class="n">my_test</span><span class="o">.</span><span class="n">ActionClass1</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+           <span class="n">my_test</span><span class="o">.</span><span class="n">ActionClass2</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+           <span class="n">my_test</span><span class="o">.</span><span class="n">SerialActionClass1</span><span class="p">(</span><span class="s2">&quot;qqq&quot;</span><span class="p">),</span>
+          <span class="p">]</span>
+<span class="n">my_walk</span> <span class="o">=</span> <span class="n">walk</span><span class="o">.</span><span class="n">Walk</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span>
+
+<span class="n">my_state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;some&quot;</span><span class="p">:</span> <span class="s2">&quot;stuff}</span>
+<span class="n">replay</span><span class="o">.</span><span class="n">replay_walk</span><span class="p">(</span><span class="n">my_walk</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">my_state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Re-running a <a class="reference internal" href="api.html#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a> from a trace file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Suppose we run some tests, and some of them failed:</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">run_test</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="c1"># We can replay one of the failed tests from the trace logs:</span>
+<span class="n">my_state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;some&quot;</span><span class="p">:</span> <span class="s2">&quot;thing&quot;</span><span class="p">}</span>
+<span class="n">replay</span><span class="o">.</span><span class="n">replay_walk_by_id</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">logs</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">failed_tests</span><span class="p">[</span><span class="mi">17</span><span class="p">],</span>
+                         <span class="n">state</span><span class="o">=</span><span class="n">my_state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can actually run any <a class="reference internal" href="api.html#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a> from the trace, not
+just failed <code class="docutils literal notranslate"><span class="pre">Walks</span></code>. The second argument to
+<a class="reference internal" href="api.html#combtest.replay.replay_walk_by_id" title="combtest.replay.replay_walk_by_id"><code class="xref py py-func docutils literal notranslate"><span class="pre">replay_walk_by_id()</span></code></a> is an integer identifier of
+the <code class="docutils literal notranslate"><span class="pre">Walk</span></code>, which can be found in the trace file.</p>
+</div>
 </div>
 <div class="section" id="config">
-<h1>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h1>
+<h2>Config<a class="headerlink" href="#config" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">py-combtest</span></code> uses a minimalist config for parameterizing things like
+thread counts and authentication information for machines where test
+executors should run. The values can be set at runtime or by config
+file.</p>
+<p>By default, <a class="reference internal" href="api.html#module-combtest.config" title="combtest.config"><code class="xref py py-class docutils literal notranslate"><span class="pre">config</span></code></a> will look for a file called
+<code class="docutils literal notranslate"><span class="pre">combtest.cfg</span></code> in the current working directory and attempt to load it. It
+could be used for example to specify the maximum number of worker threads the
+test executors are allowed.  When using SSH to bootstrap the test executors,
+<code class="docutils literal notranslate"><span class="pre">config</span></code> can be used to provide authentication information. Example file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">NET</span><span class="p">]</span>
+<span class="n">rsakey</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">my</span><span class="o">/</span><span class="n">rsakey</span><span class="o">/</span><span class="n">file</span>
+
+<span class="p">[</span><span class="n">WORKER</span><span class="p">]</span>
+<span class="n">max_thread_count</span><span class="p">:</span> <span class="mi">10</span>
+</pre></div>
 </div>
-<div class="section" id="notes-on-scalability">
-<h1>Notes on Scalability<a class="headerlink" href="#notes-on-scalability" title="Permalink to this headline">¶</a></h1>
+<p>The values can also be overridden programatically by the user:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">combtest.config</span> <span class="k">as</span> <span class="nn">config</span>
+
+<span class="c1"># Default port we will bind our rpyc instance to on a given machine. If we</span>
+<span class="c1"># bind more than one on a given machine, this will be the first port, and</span>
+<span class="c1"># all ports will be consecutive.</span>
+<span class="n">config</span><span class="o">.</span><span class="n">set_service_port</span><span class="p">(</span><span class="mi">6009</span><span class="p">)</span>
+</pre></div>
 </div>
-<div class="section" id="custom-executor-bootstrapping-methods">
-<h1>Custom Executor Bootstrapping Methods<a class="headerlink" href="#custom-executor-bootstrapping-methods" title="Permalink to this headline">¶</a></h1>
+</div>
 </div>
 
 
@@ -314,15 +445,15 @@ be sent between</li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#why-this-kind-of-testing">Why this kind of testing?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#high-level-example">High level example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Example code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#generating-and-running-tests">Generating and Running Tests</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#serial-actions">Serial Actions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#distributed-test-execution">Distributed Test Execution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#notes-on-serialization">Notes on Serialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#logging-and-replay">Logging and Replay</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#config">Config</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#notes-on-scalability">Notes on Scalability</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#generating-and-running-tests">Generating and Running Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#serial-actions">Serial Actions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes-on-distributed-test-execution">Notes on Distributed Test Execution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes-on-serialization">Notes on Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logging-and-replay">Logging and Replay</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#config">Config</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">Reference</span></p>
 <ul>

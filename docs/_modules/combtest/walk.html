@@ -173,7 +173,7 @@
 <span class="sd">    Segment will be the [Action1, Action2] portion of every one of those 300</span>
 <span class="sd">    walks. After running that Segment, we would then run the SerialAction.</span>
 
-<span class="sd">    A Segment is: (sync_point_instance, [list, of, Action option sets, ...])</span>
+<span class="sd">    A Segment is: (serial_action_instance, [list, of, Action option sets, ...])</span>
 
 <span class="sd">    It&#39;s iterator produces the Walk portions + consistent indexing of those</span>
 <span class="sd">    portions so that a later portion can reclaim the earlier portion&#39;s state.</span>
@@ -182,21 +182,21 @@
 <span class="sd">                           portions for.</span>
 <span class="sd">    :param iterable options: An iterable of Action sets, as you&#39;d get from</span>
 <span class="sd">                             MyActionType.get_option_set()</span>
-<span class="sd">    :param SerialAction sync_point_instance: SerialAction instance to run before the</span>
-<span class="sd">                                          Walk portions.</span>
+<span class="sd">    :param SerialAction serial_action_instance: SerialAction instance to</span>
+<span class="sd">                                                run before the Walk portions.</span>
 <span class="sd">    :param int parent_period: how many options our parent segment is tracking</span>
 <span class="sd">    :param int level: Effectively: how many segments came before this segment</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Presume not threadsafe</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk_count</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">(),</span>
-                 <span class="n">sync_point_instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">serial_action_instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">parent_period</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                  <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 
-        <span class="k">assert</span> <span class="n">options</span> <span class="ow">or</span> <span class="n">sync_point_instance</span>
-        <span class="k">assert</span> <span class="n">sync_point_instance</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sync_point_instance</span><span class="p">,</span>
-                                                         <span class="n">SerialAction</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">options</span> <span class="ow">or</span> <span class="n">serial_action_instance</span>
+        <span class="k">assert</span> <span class="n">serial_action_instance</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">serial_action_instance</span><span class="p">,</span> <span class="n">SerialAction</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_walk_count</span> <span class="o">=</span> <span class="n">walk_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_count_walks_produced</span> <span class="o">=</span> <span class="mi">0</span>
@@ -216,7 +216,7 @@
 
         <span class="c1"># Run *before* the segment; thus it is None if e.g. we have no</span>
         <span class="c1"># SerialActions at all.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_point</span> <span class="o">=</span> <span class="n">sync_point_instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serial_action</span> <span class="o">=</span> <span class="n">serial_action_instance</span>
 
         <span class="c1"># Created after initialization because of our construction method</span>
         <span class="c1"># below.</span>
@@ -237,8 +237,8 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sync_point</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sync_point</span>
+    <span class="k">def</span> <span class="nf">serial_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serial_action</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">walk_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -296,14 +296,14 @@
     <span class="c1"># Not threadsafe</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk_idx_start</span><span class="p">,</span> <span class="n">walk_idx_end</span><span class="p">,</span> <span class="n">range_tree</span><span class="p">,</span>
-                 <span class="n">sync_point</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">walks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+                 <span class="n">serial_action</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">walks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Represents a set of stuff (e.g. walk segments) that can run</span>
 <span class="sd">        in parallel to other such sets of stuff. The sync point will be</span>
 <span class="sd">        executed before the walks. &#39;child&#39; points to a segment we can run</span>
 <span class="sd">        once this Epoch finishes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sync_point</span> <span class="o">=</span> <span class="n">sync_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serial_action</span> <span class="o">=</span> <span class="n">serial_action</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">walks</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">walks</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">child</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">walk_idx_start</span> <span class="o">=</span> <span class="n">walk_idx_start</span>
@@ -358,7 +358,7 @@
 <span class="sd">    :param iterable walk_order: An iterable :class:`Action` types</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">walk_order</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_point_idxs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serial_action_idxs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># Calculated on first use, cached here; safe since since we are</span>
@@ -380,7 +380,7 @@
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">action_class</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">walk_order</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">action_class</span><span class="p">,</span> <span class="n">SerialAction</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_sync_point_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_serial_action_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
 
                 <span class="c1"># Append any action-ish segments, and the sync point</span>
                 <span class="n">actions</span> <span class="o">=</span> <span class="n">walk_order</span><span class="p">[</span><span class="n">seg_start_idx</span><span class="p">:</span><span class="n">idx</span><span class="p">]</span>
@@ -463,13 +463,13 @@
 
             <span class="n">root_segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_segment</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">current_sync_point</span> <span class="o">=</span> <span class="n">segment_options</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span>
-            <span class="n">sync_points</span> <span class="o">=</span> <span class="p">[</span><span class="n">instance</span> <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span>
-                           <span class="n">current_sync_point</span><span class="o">.</span><span class="n">get_option_set</span><span class="p">()]</span>
-            <span class="n">sync_point_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sync_points</span><span class="p">)</span>
+            <span class="n">current_serial_action</span> <span class="o">=</span> <span class="n">segment_options</span><span class="p">[</span><span class="n">start_idx</span><span class="p">]</span>
+            <span class="n">serial_actions</span> <span class="o">=</span> <span class="p">[</span><span class="n">instance</span> <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span>
+                              <span class="n">current_serial_action</span><span class="o">.</span><span class="n">get_option_set</span><span class="p">()]</span>
+            <span class="n">serial_action_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">serial_actions</span><span class="p">)</span>
 
-            <span class="k">assert</span> <span class="p">(</span><span class="n">walk_count</span> <span class="o">%</span> <span class="n">sync_point_count</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="n">segment_walk_count</span> <span class="o">=</span> <span class="n">walk_count</span> <span class="o">//</span> <span class="n">sync_point_count</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">walk_count</span> <span class="o">%</span> <span class="n">serial_action_count</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">segment_walk_count</span> <span class="o">=</span> <span class="n">walk_count</span> <span class="o">//</span> <span class="n">serial_action_count</span>
 
             <span class="n">walk_options</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">,</span> <span class="n">walk_option_count</span> <span class="o">=</span> \
                     <span class="bp">self</span><span class="o">.</span><span class="n">_get_next_options</span><span class="p">(</span><span class="n">segment_options</span><span class="p">,</span>
@@ -483,9 +483,9 @@
                                               <span class="n">period</span><span class="o">=</span><span class="p">(</span><span class="n">period</span> <span class="o">*</span> <span class="n">walk_option_count</span><span class="p">),</span>
                                               <span class="n">level</span><span class="o">=</span><span class="p">(</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
 
-            <span class="k">for</span> <span class="n">sync_point</span> <span class="ow">in</span> <span class="n">sync_points</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">serial_action</span> <span class="ow">in</span> <span class="n">serial_actions</span><span class="p">:</span>
                 <span class="n">new_segment</span> <span class="o">=</span> <span class="n">Segment</span><span class="p">(</span><span class="n">segment_walk_count</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">walk_options</span><span class="p">,</span>
-                                      <span class="n">sync_point_instance</span><span class="o">=</span><span class="n">sync_point</span><span class="p">,</span>
+                                      <span class="n">serial_action_instance</span><span class="o">=</span><span class="n">serial_action</span><span class="p">,</span>
                                       <span class="n">parent_period</span><span class="o">=</span><span class="n">period</span><span class="p">,</span>
                                       <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
@@ -502,8 +502,8 @@
         <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
             <span class="n">current_end_idx</span> <span class="o">=</span> <span class="n">current_start_idx</span> <span class="o">+</span> <span class="n">segment</span><span class="o">.</span><span class="n">walk_count</span>
             <span class="k">assert</span> <span class="n">current_end_idx</span> <span class="o">&lt;=</span> <span class="n">end_idx</span>
-            <span class="k">if</span> <span class="n">segment</span><span class="o">.</span><span class="n">sync_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">current_value</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">sync_point</span><span class="o">.</span><span class="n">param</span>
+            <span class="k">if</span> <span class="n">segment</span><span class="o">.</span><span class="n">serial_action</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">current_value</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">serial_action</span><span class="o">.</span><span class="n">param</span>
                 <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_value</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
@@ -577,7 +577,7 @@
                 <span class="n">current_epoch</span> <span class="o">=</span> <span class="n">Epoch</span><span class="p">(</span><span class="n">current_walk_idx_start</span><span class="p">,</span>
                                       <span class="n">current_walk_idx_start</span> <span class="o">+</span> <span class="n">walks_per_child</span><span class="p">,</span>
                                       <span class="bp">self</span><span class="o">.</span><span class="n">_branch_ids</span><span class="p">,</span>
-                                      <span class="n">sync_point</span><span class="o">=</span><span class="n">segment</span><span class="o">.</span><span class="n">sync_point</span><span class="p">,</span>
+                                      <span class="n">serial_action</span><span class="o">=</span><span class="n">segment</span><span class="o">.</span><span class="n">serial_action</span><span class="p">,</span>
                                       <span class="n">walks</span><span class="o">=</span><span class="n">current_walks</span><span class="p">,</span>
                                       <span class="n">child</span><span class="o">=</span><span class="n">child</span><span class="p">,</span>
                                       <span class="n">level</span><span class="o">=</span><span class="n">segment</span><span class="o">.</span><span class="n">level</span><span class="p">)</span>
@@ -589,7 +589,7 @@
             <span class="n">current_epoch</span> <span class="o">=</span> <span class="n">Epoch</span><span class="p">(</span><span class="n">walk_idx_start</span><span class="p">,</span>
                                   <span class="n">walk_idx_end</span><span class="p">,</span>
                                   <span class="bp">self</span><span class="o">.</span><span class="n">_branch_ids</span><span class="p">,</span>
-                                  <span class="n">sync_point</span><span class="o">=</span><span class="n">segment</span><span class="o">.</span><span class="n">sync_point</span><span class="p">,</span>
+                                  <span class="n">serial_action</span><span class="o">=</span><span class="n">segment</span><span class="o">.</span><span class="n">serial_action</span><span class="p">,</span>
                                   <span class="n">walks</span><span class="o">=</span><span class="n">walks</span><span class="p">,</span>
                                   <span class="n">child</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                   <span class="n">level</span><span class="o">=</span><span class="n">segment</span><span class="o">.</span><span class="n">level</span><span class="p">)</span>
@@ -724,14 +724,14 @@
 <span class="sd">    them back together later.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">op_info</span><span class="p">):</span>
-        <span class="n">sync_point</span> <span class="o">=</span> <span class="n">op_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync_point&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">serial_action</span> <span class="o">=</span> <span class="n">op_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;serial_action&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">walk</span> <span class="o">=</span> <span class="n">op_info</span><span class="p">[</span><span class="s1">&#39;walk&#39;</span><span class="p">]</span>
         <span class="n">walk_id</span> <span class="o">=</span> <span class="n">op_info</span><span class="p">[</span><span class="s1">&#39;walk_id&#39;</span><span class="p">]</span>
 
         <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s1">&#39;walk_id&#39;</span><span class="p">:</span> <span class="n">walk_id</span><span class="p">,</span>
                 <span class="s1">&#39;walk&#39;</span><span class="p">:</span> <span class="n">walk</span><span class="p">,</span>
-                <span class="s1">&#39;sync_point&#39;</span><span class="p">:</span> <span class="n">sync_point</span><span class="p">,</span>
+                <span class="s1">&#39;serial_action&#39;</span><span class="p">:</span> <span class="n">serial_action</span><span class="p">,</span>
                <span class="p">}</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">WalkOpTracer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="o">**</span><span class="n">info</span><span class="p">)</span></div>
 
@@ -760,14 +760,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#high-level-example">High level example</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#comparison-to-unittest-and-pytest-case-generation">Comparison to unittest and pytest case generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples.html">Example code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#generating-and-running-tests">Generating and Running Tests</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#serial-actions">Serial Actions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#distributed-test-execution">Distributed Test Execution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-serialization">Notes on Serialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#logging-and-replay">Logging and Replay</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#config">Config</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#notes-on-scalability">Notes on Scalability</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html#custom-executor-bootstrapping-methods">Custom Executor Bootstrapping Methods</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Reference</span></p>
 <ul>
