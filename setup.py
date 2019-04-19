@@ -42,6 +42,7 @@ setup(
     url='https://github.west.com/mbryan/py-combtest',
     package_dir={'': 'src'},
     packages=find_packages('src'),
+    python_requires='>=2.7,!=3.0,!=3.1,!=3.2,!=3.3,!=3.4,<4',
     install_requires=requirements,
     keywords='combtest',
     classifiers=[
@@ -49,6 +50,9 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     cmdclass={
         'clean': CleanCommand,
