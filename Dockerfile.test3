@@ -3,5 +3,5 @@ MAINTAINER Matthew J. Bryan "matthew.bryan@isilon.com"
 COPY . /combtest
 WORKDIR /combtest
 RUN pip install .
-CMD ["python", "-m", "unittest", "discover", "combtest/test"]
+CMD ["python", "-m", "unittest", "discover", "src/combtest/test"]
 
