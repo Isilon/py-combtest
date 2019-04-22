@@ -1,2 +1,3 @@
+graft src
 include version.py
 include README.md
