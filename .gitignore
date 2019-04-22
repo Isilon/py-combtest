@@ -1,4 +1,5 @@
 src/combtest/version.py
+_src_docs/doctrees
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
