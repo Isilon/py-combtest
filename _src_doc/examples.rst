@@ -7,7 +7,7 @@ of :class:`Action`. Such classes require a ``run()`` function that defines
 the actual operation. Acceptable parameters for passing to the function can
 be provided via the ``OPTIONS`` class member.
 
-A test case is represented as a sequence of :class:`Action` instances. These
+A test case is represented as a sequence of :class:`combtest.action.Action` instances. These
 cases are :class:`Walk` instances, which will be generated via combination of
 the ``Actions`` the user provides. ``Walks`` are simply executables that
 execute the ``run()`` functions of their ``Actions`` in order, passing a
