@@ -81,9 +81,9 @@ assert len(t) == 1
 s1 = t[0]
 assert s1._walk_count == 972
 assert len(s1._children) == 2
-assert s1._sync_point is None
+assert s1._serial_action is None
 s2 = s1._children[0]
-assert isinstance(s2._sync_point, SerialAction1)
+assert isinstance(s2._serial_action, SerialAction1)
 assert len(s2._children) == 2
 # (half went down the other child of s1)
 assert s2._walk_count == (972 / 2)
@@ -115,9 +115,9 @@ for epoch_list in wo:
             else:
                 branch_ids[idx] = branch_id
 
-        if epoch.sync_point is not None:
+        if epoch.serial_action is not None:
             for idx in idxs:
-                epoch.sync_point(state[idx])
+                epoch.serial_action(state[idx])
 
         for i, walk in enumerate(walks):
             idx = idxs[i]
@@ -176,7 +176,7 @@ print(wo2)
 assert len(t) == 2
 s1 = t[0]
 assert s1._walk_count == (108 / 2)
-assert s1._sync_point is not None
+assert s1._serial_action is not None
 assert len(s1._options) == 3
 for option_set in s1._options:
     assert len(option_set) == 3
@@ -184,7 +184,7 @@ assert len(s1._children) == 2
 s2 = s1._children[0]
 assert not s2._options
 assert not s2._children
-assert s2._sync_point is not None
+assert s2._serial_action is not None
 
 print("Try running the walks")
 state = []
@@ -207,9 +207,9 @@ for epoch_list in wo2:
             else:
                 branch_ids[idx] = branch_id
 
-        if epoch.sync_point is not None:
+        if epoch.serial_action is not None:
             for idx in idxs:
-                epoch.sync_point(state[idx])
+                epoch.serial_action(state[idx])
 
         for i, walk in enumerate(walks):
             idx = idxs[i]
@@ -263,7 +263,7 @@ assert len(t) == 1
 s1 = t[0]
 assert s1._walk_count == 81
 assert len(s1._children) == 0
-assert s1._sync_point is None
+assert s1._serial_action is None
 
 print("Try running the walks")
 state = []
@@ -271,8 +271,8 @@ for _ in range(81):
     state.append({'l': []})
 for epoch_list in wo3:
     for epoch in epoch_list:
-        if epoch.sync_point is not None:
-            epoch.sync_point(state)
+        if epoch.serial_action is not None:
+            epoch.serial_action(state)
         for idx, branch_id, walk in epoch:
             assert not branch_id
             walk.execute(state[idx])

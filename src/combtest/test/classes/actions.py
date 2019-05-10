@@ -57,6 +57,12 @@ class ActionAppendList1(Action):
     def run(self, param, state):
         state.append(param)
 
+class ActionFail(Action):
+    OPTIONS = (True,)
+
+    def run(self, param, state):
+        assert not param, "Uh Oh"
+
 class SerialActionTryUpdate(SerialAction):
     OPTIONS = (True, True)
     def run(self, param, state):

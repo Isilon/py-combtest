@@ -50,6 +50,12 @@ class TestRunner(_TestBase):
         runner.run_tests([actions.ActionExpectNoState],
                          gather_states=False)
 
+    def test_fail_count(self):
+        results = runner.run_tests([actions.ActionFail,])
+        self.assertEqual(results.error_count, 1)
+        self.assertEqual(results.walk_count, 1)
+        self.assertEqual(len(results.failed_tests), 1)
+
     def test_single_stage_dispatch(self):
         os1 = actions.ActionAppend1.get_option_set()
         os2 = actions.ActionAppend2.get_option_set()
@@ -61,7 +67,7 @@ class TestRunner(_TestBase):
 
         expected_cnt = cnt1 * cnt2 * cnt3
 
-        total_count, error_count, _, elapsed, states, _ = \
+        total_count, error_count, _, elapsed, states, _, _ = \
                 runner.run_tests([actions.ActionAppend1,
                                   actions.ActionAppend2,
                                   actions.ActionAppend3],
@@ -105,7 +111,7 @@ class TestRunner(_TestBase):
 
         log_dir = self._get_temp_dir()
 
-        walk_count, error_count, segment_count, elapsed, states, _ = \
+        walk_count, error_count, segment_count, elapsed, states, _, _ = \
                 runner.run_tests(action_classes,
                                  gather_states=True,
                                  verbose=True,
@@ -152,7 +158,7 @@ class TestRunner(_TestBase):
 
         log_dir = self._get_temp_dir()
 
-        walk_count, error_count, segment_count, elapsed, states, _ = \
+        walk_count, error_count, segment_count, elapsed, states, _, _ = \
                 runner.run_tests([
                                   actions.SerialActionAppend1,
                                   actions.ActionAppend1,
@@ -220,7 +226,7 @@ class TestSerialActionNegativeCases(_TestBase):
                           actions.SerialActionDontTryUpdate,
                           actions.ActionAppendList2]
         state = []
-        walk_count, error_count, segment_count, elapsed, states, _ = \
+        walk_count, error_count, segment_count, elapsed, states, _, _ = \
                 runner.run_tests(action_classes,
                                  gather_states=True,
                                  log_dir=log_dir,

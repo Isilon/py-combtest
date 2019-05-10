@@ -43,11 +43,11 @@ def load_from_trace(trace_file, walk_id):
                 continue
 
             found = True
-            sync_point = decoded.get('sync_point', None)
+            serial_action = decoded.get('serial_action', None)
             walk_segment = decoded['walk']
 
-            if sync_point is not None:
-                walk_out.append(sync_point)
+            if serial_action is not None:
+                walk_out.append(serial_action)
 
             walk_out += walk_segment
 
@@ -122,7 +122,7 @@ def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
     Run a single :class:`combtest.walk.Walk`. Load it by deserializing it from
     a trace file.
 
-    :param str log_file: path to either a master log file or trace file
+    :param object log_file: 'logs' object returned from :func:`run_tests`
     :param int walk_id: a walk_id that appears in the trace file, or one of the
                         trace files referenced by the master log file.
     :param bool step: if True, step Action-by-Action through the Walk; the user
@@ -134,7 +134,7 @@ def replay_walk_by_id(log_file, walk_id, step=False, replay_func_qualname=None,
     :param object state: ``state`` passed to the Walk for execution.
     """
 
-    walk_to_run = _load_walk(log_file, walk_id)
+    walk_to_run = _load_walk(log_file['master'], walk_id)
 
     return replay_walk(walk_to_run, step=step,
                        replay_func_qualname=replay_func_qualname, state=state)

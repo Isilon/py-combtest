@@ -63,7 +63,7 @@ class TestReplayFromTrace(unittest.TestCase):
         expected = [1, 2, 0, 3]
 
         state = {}
-        walk_count, error_count, _, _, states, logs = \
+        walk_count, error_count, _, _, states, logs, _ = \
                 runner.run_tests(walk_order,
                                  verbose=2,
                                  log_dir=log_dir,
@@ -91,20 +91,20 @@ class TestReplayFromTrace(unittest.TestCase):
                     record = encode.decode(line)
                     walk_id = record['walk_id']
                     current_walk = record['walk']
-                    sync_point = record['sync_point']
+                    serial_action = record['serial_action']
 
                     if walk_id not in walks:
                         walks[walk_id] = []
-                    walks[walk_id].append((current_walk, sync_point))
+                    walks[walk_id].append((current_walk, serial_action))
         # Checking my assumptions
         self.assertEqual(len(walks), 1)
 
         walk_to_replay = walk.Walk()
         for segment in list(walks.values())[0]:
             walk_segment = segment[0]
-            sync_point = segment[1]
-            if sync_point:
-                walk_to_replay.append(sync_point)
+            serial_action = segment[1]
+            if serial_action:
+                walk_to_replay.append(serial_action)
             walk_to_replay += walk_segment
 
         # Replay walk directly
@@ -115,7 +115,7 @@ class TestReplayFromTrace(unittest.TestCase):
 
         # Now let's test the replay lib
         state = {}
-        state = replay.replay_walk_by_id(logs['master'], walk_id, step=False,
+        state = replay.replay_walk_by_id(logs, walk_id, step=False,
                                          state=state)
         self.assertTrue('inner' in state)
         self.assertEqual(state['inner'], expected)

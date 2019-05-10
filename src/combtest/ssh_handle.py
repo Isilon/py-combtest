@@ -5,7 +5,12 @@ wanting to write their own connection logic.
 """
 import copy
 
-import paramiko
+try:
+    import paramiko
+except ImportError:
+    raise ImportError("SSH bootstrapping requires paramiko, which is an "
+                      "open-source Python library which provides a simple SSH "
+                      "client; please install it.")
 
 from six import string_types
 

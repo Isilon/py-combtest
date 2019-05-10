@@ -5,7 +5,7 @@ import os
 # Provides __version__
 exec(open('version.py').read())
 
-from setuptools import setup, Command
+from setuptools import setup, find_packages, Command
 
 
 class CleanCommand(Command):
@@ -22,8 +22,7 @@ class CleanCommand(Command):
         os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info')
         os.system('rm -vrf combtest/version.py')
 
-requirements = ['paramiko~=2.4',
-                'rpyc~=4.0',
+requirements = ['rpyc~=4.0',
                 'six~=1.12',
                 'sphinx~=1.4']
 
@@ -41,11 +40,9 @@ setup(
     include_package_data=True,
     author_email='matthew.bryan@isilon.com',
     url='https://github.west.com/mbryan/py-combtest',
-    packages=[
-        'combtest',
-        'combtest.test.',
-        'combtest.test.classes',
-    ],
+    package_dir={'': 'src'},
+    packages=find_packages('src'),
+    python_requires='>=2.7,!=3.0,!=3.1,!=3.2,!=3.3,!=3.4,<4',
     install_requires=requirements,
     keywords='combtest',
     classifiers=[
@@ -53,6 +50,9 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     cmdclass={
         'clean': CleanCommand,

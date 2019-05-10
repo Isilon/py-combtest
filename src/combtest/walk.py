@@ -93,7 +93,6 @@ class Walk(object):
             # Likewise here: let the user decide to log or not in their layer
             return True
         except Exception as e:
-            # PORT/WRAP: no state specifics here.
             msg_state = "Walk was: %s\nstate: %s" % (repr(self),
                     encode.encode(state))
             exc = type(e)(str(e) + "\n" + msg_state)
@@ -138,7 +137,7 @@ class Segment(object):
     Segment will be the [Action1, Action2] portion of every one of those 300
     walks. After running that Segment, we would then run the SerialAction.
 
-    A Segment is: (sync_point_instance, [list, of, Action option sets, ...])
+    A Segment is: (serial_action_instance, [list, of, Action option sets, ...])
 
     It's iterator produces the Walk portions + consistent indexing of those
     portions so that a later portion can reclaim the earlier portion's state.
@@ -147,21 +146,21 @@ class Segment(object):
                            portions for.
     :param iterable options: An iterable of Action sets, as you'd get from
                              MyActionType.get_option_set()
-    :param SerialAction sync_point_instance: SerialAction instance to run before the
-                                          Walk portions.
+    :param SerialAction serial_action_instance: SerialAction instance to
+                                                run before the Walk portions.
     :param int parent_period: how many options our parent segment is tracking
     :param int level: Effectively: how many segments came before this segment
     """
     # Presume not threadsafe
 
     def __init__(self, walk_count, options=(),
-                 sync_point_instance=None,
+                 serial_action_instance=None,
                  parent_period=1,
                  level=0):
 
-        assert options or sync_point_instance
-        assert sync_point_instance is None or isinstance(sync_point_instance,
-                                                         SerialAction)
+        assert options or serial_action_instance
+        assert serial_action_instance is None or isinstance(
+                serial_action_instance, SerialAction)
 
         self._walk_count = walk_count
         self._count_walks_produced = 0
@@ -181,7 +180,7 @@ class Segment(object):
 
         # Run *before* the segment; thus it is None if e.g. we have no
         # SerialActions at all.
-        self._sync_point = sync_point_instance
+        self._serial_action = serial_action_instance
 
         # Created after initialization because of our construction method
         # below.
@@ -202,8 +201,8 @@ class Segment(object):
         return copy.copy(self._children)
 
     @property
-    def sync_point(self):
-        return self._sync_point
+    def serial_action(self):
+        return self._serial_action
 
     @property
     def walk_count(self):
@@ -261,14 +260,14 @@ class Epoch(object):
     # Not threadsafe
 
     def __init__(self, walk_idx_start, walk_idx_end, range_tree,
-                 sync_point=None, walks=None, child=None, level=0):
+                 serial_action=None, walks=None, child=None, level=0):
         """
         Represents a set of stuff (e.g. walk segments) that can run
         in parallel to other such sets of stuff. The sync point will be
         executed before the walks. 'child' points to a segment we can run
         once this Epoch finishes.
         """
-        self.sync_point = sync_point
+        self.serial_action = serial_action
         self.walks = tuple(walks)
         self.child = child
         self.walk_idx_start = walk_idx_start
@@ -323,7 +322,7 @@ class WalkOptions(object):
     :param iterable walk_order: An iterable :class:`Action` types
     """
     def __init__(self, walk_order):
-        self._sync_point_idxs = []
+        self._serial_action_idxs = []
         self._sizes = []
 
         # Calculated on first use, cached here; safe since since we are
@@ -345,7 +344,7 @@ class WalkOptions(object):
         idx = 0
         for idx, action_class in enumerate(walk_order):
             if issubclass(action_class, SerialAction):
-                self._sync_point_idxs.append(idx)
+                self._serial_action_idxs.append(idx)
 
                 # Append any action-ish segments, and the sync point
                 actions = walk_order[seg_start_idx:idx]
@@ -428,13 +427,13 @@ class WalkOptions(object):
 
             root_segments.append(new_segment)
         else:
-            current_sync_point = segment_options[start_idx]
-            sync_points = [instance for instance in
-                           current_sync_point.get_option_set()]
-            sync_point_count = len(sync_points)
+            current_serial_action = segment_options[start_idx]
+            serial_actions = [instance for instance in
+                              current_serial_action.get_option_set()]
+            serial_action_count = len(serial_actions)
 
-            assert (walk_count % sync_point_count) == 0
-            segment_walk_count = walk_count // sync_point_count
+            assert (walk_count % serial_action_count) == 0
+            segment_walk_count = walk_count // serial_action_count
 
             walk_options, end_idx, walk_option_count = \
                     self._get_next_options(segment_options,
@@ -448,9 +447,9 @@ class WalkOptions(object):
                                               period=(period * walk_option_count),
                                               level=(level + 1))
 
-            for sync_point in sync_points:
+            for serial_action in serial_actions:
                 new_segment = Segment(segment_walk_count, options=walk_options,
-                                      sync_point_instance=sync_point,
+                                      serial_action_instance=serial_action,
                                       parent_period=period,
                                       level=level)
                 for child in children:
@@ -467,8 +466,8 @@ class WalkOptions(object):
         for segment in segments:
             current_end_idx = current_start_idx + segment.walk_count
             assert current_end_idx <= end_idx
-            if segment.sync_point is not None:
-                current_value = segment.sync_point.param
+            if segment.serial_action is not None:
+                current_value = segment.serial_action.param
                 values.append(current_value)
             else:
                 values.append(None)
@@ -542,7 +541,7 @@ class WalkOptions(object):
                 current_epoch = Epoch(current_walk_idx_start,
                                       current_walk_idx_start + walks_per_child,
                                       self._branch_ids,
-                                      sync_point=segment.sync_point,
+                                      serial_action=segment.serial_action,
                                       walks=current_walks,
                                       child=child,
                                       level=segment.level)
@@ -554,7 +553,7 @@ class WalkOptions(object):
             current_epoch = Epoch(walk_idx_start,
                                   walk_idx_end,
                                   self._branch_ids,
-                                  sync_point=segment.sync_point,
+                                  serial_action=segment.serial_action,
                                   walks=walks,
                                   child=None,
                                   level=segment.level)
@@ -582,7 +581,7 @@ class WalkOptions(object):
         Args:
             frontier - an iterable of Segment
         """
-        # TODO
+        # We could do something more advanced here...
         return epochs, frontier
 
     def next(self):
@@ -681,7 +680,6 @@ class StateCombinator(object):
 
         return json_iter()
 
-# TODO PORT/WRAP: add back path, lin, file_config
 class WalkOpTracer(central_logger.OpTracer):
     """
     Traces a :class:`Walk` portion + its adjacent :class:`SerialAction` and
@@ -689,14 +687,14 @@ class WalkOpTracer(central_logger.OpTracer):
     them back together later.
     """
     def trace(self, **op_info):
-        sync_point = op_info.get('sync_point', None)
+        serial_action = op_info.get('serial_action', None)
         walk = op_info['walk']
         walk_id = op_info['walk_id']
 
         info = {
                 'walk_id': walk_id,
                 'walk': walk,
-                'sync_point': sync_point,
+                'serial_action': serial_action,
                }
         super(WalkOpTracer, self).trace(**info)
 

@@ -29,7 +29,7 @@ import combtest.worker as worker
 
 
 Result = namedtuple('Result', 'walk_count error_count segment_count elapsed '
-        'states logs')
+        'states logs failed_tests')
 
 # NOTE: A WalkRunner is associated 1-to-1 with a worker_id
 class WalkRunner(object):
@@ -39,9 +39,10 @@ class WalkRunner(object):
     see fit.
     """
     def __init__(self, reporting_interval=10000):
-        self.stats = {'count': 0,
+        self.stats = {
+                      'count': 0,
                       'error_count': 0,
-                      'cancel_count': 0
+                      'cancel_count': 0,
                      }
         self.reporting_interval = reporting_interval
         self.rlock = threading.RLock()
@@ -141,7 +142,6 @@ class WalkExecutorService(worker.CoordinatorService):
         The user should probably not be calling into this directly. They
         should be starting it up via rpyc.
     """
-    # TODO: PORT/WRAP
     #: Override the type of ``WalkRunner`` used, here or in a child class
     WALK_RUNNER_TYPE = WalkRunner
     #: Override the type of ``ThreadPool`` used for executing ``Walks``, here
@@ -289,6 +289,7 @@ class WalkExecutorService(worker.CoordinatorService):
                 'count': 0,
                 'error_count': 0,
                 'cancel_count': 0,
+                'failed_walk_ids': [],
                }
         try:
             state = self._runners[worker_id].get_state()
@@ -365,6 +366,8 @@ class MultistageWalkRunner(WalkRunner):
         # Maps walk_id->dict of extra walk info (e.g. whether it has been canceled)
         self._state_supplement = {}
 
+        self.stats['failed_walk_ids'] = set()
+
     def clean_walk_states(self):
         states = copy.copy(self._walk_states)
         self._walk_states = {}
@@ -372,15 +375,15 @@ class MultistageWalkRunner(WalkRunner):
 
     # PORT/WRAP - add self.PANIC
     def run_walk(self, walk_id, branch_id, walk_to_run, state,
-            sync_point=None):
+                 serial_action=None):
         walk_id, branch_id, cancel, state = self._get_walks_state(walk_id,
                 branch_id, state=state)
 
         if cancel:
             return
 
-        if sync_point is not None:
-            self._set_supplemental_state(walk_id, sync_point=sync_point)
+        if serial_action is not None:
+            self._set_supplemental_state(walk_id, serial_action=serial_action)
 
         # PORT/WRAP - add self.PANIC
         #logger.trace_op(test_file=cur_ctx.test_file,
@@ -389,7 +392,7 @@ class MultistageWalkRunner(WalkRunner):
         #                file_config=cur_ctx['file_config'])
         logger.trace_op(walk=walk_to_run,
                         walk_id=walk_id,
-                        sync_point=sync_point,
+                        serial_action=serial_action,
                         branch_id=branch_id)
         #start_time = time.time()
 
@@ -425,12 +428,11 @@ class MultistageWalkRunner(WalkRunner):
         self._state_supplement[walk_id].update(**kwargs)
 
     def _get_walks_state(self, walk_id, branch_id, state):
-        # PORT/WRAP
         if walk_id not in self._walk_states:
             supplement = {'walk_id': walk_id,
                           'branch_id': branch_id,
                           'cancel': False,
-                          'sync_point': None,
+                          'serial_action': None,
                          }
             self._walk_states[walk_id] = copy.copy(state)
             self._state_supplement[walk_id] = supplement
@@ -457,7 +459,6 @@ class MultistageWalkRunner(WalkRunner):
         return states_out
 
     def update_walks_state(self, walk_id, state_update):
-        # PORT/WRAP
         try:
             self._walk_states[walk_id].update(state_update)
         except AttributeError:
@@ -466,19 +467,20 @@ class MultistageWalkRunner(WalkRunner):
                                  "a dict)")
 
     def prep_work_call(self, work):
-        walk_id, branch_id, walk_to_run, sync_point = work
+        walk_id, branch_id, walk_to_run, serial_action = work
 
-        if sync_point is not None:
-            sync_point = encode.decode(sync_point)
+        if serial_action is not None:
+            serial_action = encode.decode(serial_action)
 
         def run(state):
             try:
                 self.run_walk(walk_id, branch_id, walk_to_run, state,
-                              sync_point=sync_point)
+                              serial_action=serial_action)
             except CancelWalk:
                 self.count_cancel()
             except Exception as e:
                 self.count_error()
+                self.stats['failed_walk_ids'].add(walk_id)
                 try:
                     self._state_supplement[walk_id]['cancel'] = True
                 except KeyError:
@@ -503,7 +505,8 @@ class MultistageWalkRunningService(WalkExecutorService):
 
         walk_id, branch_id, current_walk = encode.decode(work)
         call = runner.prep_work_call((walk_id, branch_id, current_walk,
-                                      repack_kwargs.get('sync_point', None)))
+                                      repack_kwargs.get('serial_action',
+                                                        None)))
         return call
 
     def repack_ctx(self, state, **repack_kwargs):
@@ -596,13 +599,13 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
         raise RuntimeError("You're using this wrong; use scatter_work")
 
     def _flush_queue(self, client_key, client, queue, max_thread_count=None,
-                     state=None, sync_point=None):
+                     state=None, serial_action=None):
         logger.debug("Sending %d items to %s", len(queue), str(client_key))
 
         state = copy.copy(state)
-        if sync_point is not None:
-            sync_point = encode.encode(sync_point)
-            repack_kwargs = {'sync_point': sync_point}
+        if serial_action is not None:
+            serial_action = encode.encode(serial_action)
+            repack_kwargs = {'serial_action': serial_action}
         else:
             repack_kwargs = None
 
@@ -664,7 +667,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                 total_count += len(current_queue)
                 worker_id = self._flush_queue(target_key, clients[target_key],
                         current_queue, max_thread_count=max_thread_count,
-                        state=state, sync_point=epoch.sync_point)
+                        state=state, serial_action=epoch.serial_action)
                 worker_ids[target_key].append(worker_id)
 
         for target_key, queue in out_queues.items():
@@ -673,7 +676,7 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
             worker_id = self._flush_queue(target_key, client, queue,
                                           max_thread_count=max_thread_count,
                                           state=state,
-                                          sync_point=epoch.sync_point)
+                                          serial_action=epoch.serial_action)
             worker_ids[target_key].append(worker_id)
 
         self.id_map = id_map
@@ -722,11 +725,12 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                                 ``worker_ids`` from which we should
                                 gather responses.
         :return: count of Walk segments run, count of Walk execution errors,
-                 count of Walks run
+                 count of Walks run, list of walk_ids of failed Walks
         """
         total_segment_count = 0
         total_error_count = 0
         total_walk_count = 0
+        failed_walk_ids = []
         for connection, ids in worker_ids.items():
             for worker_id in ids:
                 resp = self.gather_runner_state(connection, worker_id)
@@ -737,7 +741,9 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
                 total_segment_count += resp['segment_count']
                 total_error_count += resp['error_count']
                 total_walk_count += resp['walk_count']
-        return total_segment_count, total_error_count, total_walk_count
+                failed_walk_ids.extend(list(resp['failed_walk_ids']))
+        return total_segment_count, total_error_count, total_walk_count, \
+               failed_walk_ids
 
     def gather_state(self, connection, worker_id, full=False):
         """
@@ -814,7 +820,6 @@ class ContinuingWalkServiceGroup(worker.ServiceGroup):
             logs[ip] = client_logs
         return logs
 
-# TODO: PORT/WRAP
 def run_tests(walk_order,
               state=None,
               verbose=1,
@@ -826,8 +831,6 @@ def run_tests(walk_order,
               max_thread_count=None,
               gather_states=False,
               log_dir=None,
-              # PORT/WRAP test_path=utils.DEFAULT_TEST_PATH,
-              #**file_config_kwargs,
              ):
     """
     Run a collection of :class:`combtest.walk.Walk`. This should be the main
@@ -897,15 +900,7 @@ def run_tests(walk_order,
         central_logger.set_level(central_logger.DEBUG)
 
 
-    # PORT/WRAP
-    #if log_dir is None:
-    #    log_dir = ac_config.get_log_dir()
-    #    if log_dir is None or log_dir == ".":
-    #        log_dir = "/var/crash"
-    #log_dir = os.path.join(log_dir, SUBDIR_NAME)
-
     my_ip = utils.get_my_IP()
-    #rtt.remote_cmd(my_ip, 'isi_for_array "mkdir -p %s"' % log_dir)
 
     if log_dir is not None:
         central_logger.log_status("Log files will be at: %s", log_dir)
@@ -934,12 +929,10 @@ def run_tests(walk_order,
                                  service_handler_class=service_handler_class
                                 )
 
-        # PORT/WRAP: pass test_path
         remote_log_locations = sg.start_remote_logging(my_ip,
                                                        logger_port,
                                                        log_dir,
                                                        verbose=verbose)
-        #            test_path, verbose=verbose)
 
         master_location = ""
 
@@ -962,39 +955,20 @@ def run_tests(walk_order,
         logger.info("Scattering work")
         start_time = time.time()
 
-        # PORT/WRAP
-        #ctx = {}
-        #if file_config_kwargs:
-        #    ctx['runner_opts'] = copy.copy(file_config_kwargs)
-        #if verbose:
-        #    ctx['verbose'] = True
-
-        #ctx['test_path'] = test_path
-        #ctx['log_dir'] = log_dir
-
-        # central_logger.log_status("Test path: %s", test_path)
-
         master_worker_ids = {}
         for epoch_list in wo:
             logger.info("Epoch list has %d epochs",
                                       len(epoch_list))
             for epoch in epoch_list:
                 state_copy = copy.copy(state)
-                if epoch.sync_point is not None:
+                if epoch.serial_action is not None:
                     for branch_id in epoch.branch_ids:
-                        # PORT/WRAP
-                        #sp_ctx = {"base_dir": test_path,
-                        #          "branch_id": branch_id,
-                        #          "service": sg,
-                        #          "worker_ids": master_worker_ids,
-                        #          "epoch": epoch
-                        #         }
-                        state_copy = epoch.sync_point(state=state_copy,
-                                                      branch_id=branch_id,
-                                                      epoch=epoch,
-                                                      service=sg,
-                                                      worker_ids=master_worker_ids
-                                                     )
+                        state_copy = epoch.serial_action(state=state_copy,
+                                                         branch_id=branch_id,
+                                                         epoch=epoch,
+                                                         service=sg,
+                                                         worker_ids=master_worker_ids
+                                                        )
 
                 _, count, worker_ids = sg.scatter_work(epoch,
                                              state=state_copy,
@@ -1015,6 +989,8 @@ def run_tests(walk_order,
         segment_count = 0
         error_count = 0
         walk_count = 0
+        # List of walk_ids
+        failed_tests = []
         for connection_info, ids in master_worker_ids.items():
             if len(ids) == 0:
                 # No work sent, e.g. because we didn't have many walks
@@ -1023,11 +999,13 @@ def run_tests(walk_order,
             # NOTE: taking advantage of singleton
             wid = ids[0]
             wids = {connection_info: [wid,]}
-            current_segment_count, current_error_count, current_walk_count = \
+            current_segment_count, current_error_count, \
+                    current_walk_count, current_failed_walk_ids = \
                     sg.gather_all_runner_states(wids)
             segment_count += current_segment_count
             error_count += current_error_count
             walk_count += current_walk_count
+            failed_tests.extend(current_failed_walk_ids)
 
         elapsed = time.time() - start_time
         central_logger.log_status("Ran %d walks (%d errors) in %0.2fs" %
@@ -1052,10 +1030,9 @@ def run_tests(walk_order,
             pass
 
     return Result(walk_count, error_count, segment_count, elapsed, states_out,
-                  master_log)
+                  master_log, failed_tests)
 
 
-# TODO: PORT/WRAP
 def replay_walk(walk_to_run, step=False, log_errors=True, state=None):
     """
     Run a single :class:`combtest.walk.Walk`
@@ -1074,8 +1051,6 @@ def replay_walk(walk_to_run, step=False, log_errors=True, state=None):
                 print(str(type(op)))
                 raw_input("Press key to continue...")
 
-        # PORT/WRAP if verify:
-        # PORT/WRAP     test_file.verify_nonsparse_logical_all()
     except CancelWalk as e:
         return True
     except Exception as e:
