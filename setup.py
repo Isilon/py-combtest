@@ -39,7 +39,7 @@ setup(
     author="Dell/EMC",
     include_package_data=True,
     author_email='matthew.bryan@isilon.com',
-    url='https://github.west.com/mbryan/py-combtest',
+    url='https://github.com/Isilon/py-combtest',
     package_dir={'': 'src'},
     packages=find_packages('src'),
     python_requires='>=2.7,!=3.0,!=3.1,!=3.2,!=3.3,!=3.4,<4',
