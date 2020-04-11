@@ -44,7 +44,7 @@
 systematically generating combinations of them.</p>
 <dl class="class">
 <dt id="combtest.action.Action">
-<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">Action</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.Action" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">Action</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#Action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.Action" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.action.BaseAction" title="combtest.action.BaseAction"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.BaseAction</span></code></a></p>
 <p>Convenience form of BaseAction: let the user provide a simple iterable of
 parameters, called <code class="docutils literal notranslate"><span class="pre">OPTIONS</span></code>.</p>
@@ -55,7 +55,7 @@ parameters, called <code class="docutils literal notranslate"><span class="pre">
 
 <dl class="classmethod">
 <dt id="combtest.action.Action.get_option_set">
-<em class="property">classmethod </em><code class="descname">get_option_set</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.Action.get_option_set" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">get_option_set</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#Action.get_option_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.Action.get_option_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the full parameterization space for this Action type. For
 example: if you are testing a GUI and this Action sets the state of a
 checkbox, then perhaps this will return <code class="docutils literal notranslate"><span class="pre">cls(True)</span></code> and
@@ -79,7 +79,7 @@ unchecked’ respectively.</p>
 
 <dl class="class">
 <dt id="combtest.action.BaseAction">
-<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">BaseAction</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.BaseAction" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">BaseAction</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#BaseAction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.BaseAction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An Action class bundles a function that performs an operation, and all
 the different parameterizations for that operation. The
@@ -99,12 +99,12 @@ condition and raise a <code class="xref py py-class docutils literal notranslate
 passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">run()</span></code> call.</p>
 <dl class="classmethod">
 <dt id="combtest.action.BaseAction.from_json">
-<em class="property">classmethod </em><code class="descname">from_json</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.BaseAction.from_json" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">from_json</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#BaseAction.from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.BaseAction.from_json" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="classmethod">
 <dt id="combtest.action.BaseAction.get_option_set">
-<em class="property">classmethod </em><code class="descname">get_option_set</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.BaseAction.get_option_set" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">get_option_set</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#BaseAction.get_option_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.BaseAction.get_option_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the full parameterization space for this Action type. For
 example: if you are testing a GUI and this Action sets the state of a
 checkbox, then perhaps this will return <code class="docutils literal notranslate"><span class="pre">cls(True)</span></code> and
@@ -132,7 +132,7 @@ unchecked’ respectively.</p>
 
 <dl class="method">
 <dt id="combtest.action.BaseAction.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>param</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.BaseAction.run" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run</code><span class="sig-paren">(</span><em>param</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#BaseAction.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.BaseAction.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is called to actually run the operation. It does not need to be
 invoked directly by the user.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -165,7 +165,7 @@ the GUI.</li>
 
 <dl class="method">
 <dt id="combtest.action.BaseAction.should_cancel">
-<code class="descname">should_cancel</code><span class="sig-paren">(</span><em>walk</em>, <em>idx</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.BaseAction.should_cancel" title="Permalink to this definition">¶</a></dt>
+<code class="descname">should_cancel</code><span class="sig-paren">(</span><em>walk</em>, <em>idx</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#BaseAction.should_cancel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.BaseAction.should_cancel" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method is called before a Walk containing this Action is run. This
 gives an opportunity to prevent the Walk from running if this
 combination just doesn’t make any sense.</p>
@@ -188,7 +188,7 @@ combination just doesn’t make any sense.</p>
 
 <dl class="method">
 <dt id="combtest.action.BaseAction.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.BaseAction.to_json" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#BaseAction.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.BaseAction.to_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return something JSONifiable that can uniquely represent this instance.</p>
 </dd></dl>
 
@@ -196,26 +196,26 @@ combination just doesn’t make any sense.</p>
 
 <dl class="exception">
 <dt id="combtest.action.CancelWalk">
-<em class="property">exception </em><code class="descclassname">combtest.action.</code><code class="descname">CancelWalk</code><a class="headerlink" href="#combtest.action.CancelWalk" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">combtest.action.</code><code class="descname">CancelWalk</code><a class="reference internal" href="_modules/combtest/action.html#CancelWalk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.CancelWalk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">exceptions.RuntimeError</span></code></p>
 <p>Raised to immediately stop the execution of a <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code></a>.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="combtest.action.OptionSet">
-<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">OptionSet</code><span class="sig-paren">(</span><em>options</em>, <em>action_class</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.OptionSet" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">OptionSet</code><span class="sig-paren">(</span><em>options</em>, <em>action_class</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#OptionSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.OptionSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>An <a class="reference internal" href="#combtest.action.OptionSet" title="combtest.action.OptionSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptionSet</span></code></a> is an iterable that provides instances of a given
 <a class="reference internal" href="#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.Action</span></code></a> class. This is typically used as a return
 value from an Action’s <code class="xref py py-func docutils literal notranslate"><span class="pre">get_option_set()</span></code> method.</p>
 <dl class="classmethod">
 <dt id="combtest.action.OptionSet.from_json">
-<em class="property">classmethod </em><code class="descname">from_json</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.OptionSet.from_json" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">from_json</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#OptionSet.from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.OptionSet.from_json" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="combtest.action.OptionSet.next">
-<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.OptionSet.next" title="Permalink to this definition">¶</a></dt>
+<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#OptionSet.next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.OptionSet.next" title="Permalink to this definition">¶</a></dt>
 <dd><p>Lazy iteration, meaning: generate the actual Actions on the fly to
 try to minimize mem footprint.
 :raise StopIteration: when the underlying options iterator is exhausted</p>
@@ -223,14 +223,14 @@ try to minimize mem footprint.
 
 <dl class="method">
 <dt id="combtest.action.OptionSet.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.OptionSet.to_json" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#OptionSet.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.OptionSet.to_json" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="combtest.action.SerialAction">
-<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">SerialAction</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.SerialAction" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.action.</code><code class="descname">SerialAction</code><span class="sig-paren">(</span><em>param</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#SerialAction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.SerialAction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.Action</span></code></a></p>
 <p>A SerialAction is a type of Action which cannot be run in parallel with
 others, e.g. for when we are running a bunch of ‘Walks’ in parallel.
@@ -265,7 +265,7 @@ can run:
 
 <dl class="function">
 <dt id="combtest.action.get_random_action_by_class">
-<code class="descclassname">combtest.action.</code><code class="descname">get_random_action_by_class</code><span class="sig-paren">(</span><em>action_class</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.action.get_random_action_by_class" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.action.</code><code class="descname">get_random_action_by_class</code><span class="sig-paren">(</span><em>action_class</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/action.html#get_random_action_by_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.action.get_random_action_by_class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an instance of the given <a class="reference internal" href="#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code></a>, randomly chosen from the set
 its <a class="reference internal" href="#combtest.action.Action.get_option_set" title="combtest.action.Action.get_option_set"><code class="xref py py-func docutils literal notranslate"><span class="pre">Action.get_option_set()</span></code></a> produces.
 :return: An instance of <code class="docutils literal notranslate"><span class="pre">action_class</span></code>.</p>
@@ -291,7 +291,7 @@ found in <a class="reference internal" href="#combtest.ssh_handle.ServiceHandler
 </dl>
 <dl class="class">
 <dt id="combtest.bootstrap.ConnectionInfo">
-<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ConnectionInfo</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em>, <em>service_info</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ConnectionInfo" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ConnectionInfo</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em>, <em>service_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ConnectionInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ConnectionInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This is a simple struct-like object meant to wrap all the stuff needed to
 bootstrap a service.</p>
@@ -317,7 +317,7 @@ authentication bits.</li>
 
 <dl class="class">
 <dt id="combtest.bootstrap.ServiceHandleArray">
-<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ServiceHandleArray</code><span class="sig-paren">(</span><em>connection_infos</em>, <em>spawn=True</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ServiceHandleArray</code><span class="sig-paren">(</span><em>connection_infos</em>, <em>spawn=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandleArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A ServiceHandlerArray is a collection of ServiceHandlers, together with
 dynamic foreach-style dispatch on attribute access. Example:</p>
@@ -351,7 +351,7 @@ spawn them manually using <a class="reference internal" href="#combtest.bootstra
 
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandleArray.attach">
-<code class="descname">attach</code><span class="sig-paren">(</span><em>connection_info</em>, <em>instance</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.attach" title="Permalink to this definition">¶</a></dt>
+<code class="descname">attach</code><span class="sig-paren">(</span><em>connection_info</em>, <em>instance</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandleArray.attach"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.attach" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach a single instance to this array.</p>
 </dd></dl>
 
@@ -372,7 +372,7 @@ they may have died for some reason.</td>
 
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandleArray.shutdown">
-<code class="descname">shutdown</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.shutdown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandleArray.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shutdown all instances this array is tracking.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -387,13 +387,13 @@ cleanly, otherwise we won’t.</td>
 
 <dl class="classmethod">
 <dt id="combtest.bootstrap.ServiceHandleArray.shutdown_all">
-<em class="property">classmethod </em><code class="descname">shutdown_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.shutdown_all" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">shutdown_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandleArray.shutdown_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.shutdown_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shutdown all arrays which have not yet been shut down.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandleArray.spawn">
-<code class="descname">spawn</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.spawn" title="Permalink to this definition">¶</a></dt>
+<code class="descname">spawn</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandleArray.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.spawn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawn a single instance and attach it to this array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -409,7 +409,7 @@ instance.</td>
 
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandleArray.spawn_many">
-<code class="descname">spawn_many</code><span class="sig-paren">(</span><em>connection_infos=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.spawn_many" title="Permalink to this definition">¶</a></dt>
+<code class="descname">spawn_many</code><span class="sig-paren">(</span><em>connection_infos=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandleArray.spawn_many"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandleArray.spawn_many" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawn and attach a bunch of instances.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -429,7 +429,7 @@ iterable of <code class="docutils literal notranslate"><span class="pre">Connect
 
 <dl class="class">
 <dt id="combtest.bootstrap.ServiceHandler">
-<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ServiceHandler</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandler" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ServiceHandler</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A <code class="docutils literal notranslate"><span class="pre">ServiceHandler</span></code> implements a way of bootstrapping an rpyc-based
 service. This base class defines the interface and should be overridden.</p>
@@ -446,7 +446,7 @@ information needed to bootstrap it.</td>
 </table>
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandler.shutdown">
-<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandler.shutdown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandler.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandler.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to shut the service down. Should be idempotent unless the class
 writer is <em>very</em> careful about how they shut their services down
 manually. The overridden method should call the super-method.</p>
@@ -454,7 +454,7 @@ manually. The overridden method should call the super-method.</p>
 
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandler.start_cmd">
-<code class="descname">start_cmd</code><span class="sig-paren">(</span><em>service_class</em>, <em>service_run_func='combtest.worker.start_service_by_name'</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandler.start_cmd" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_cmd</code><span class="sig-paren">(</span><em>service_class</em>, <em>service_run_func='combtest.worker.start_service_by_name'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandler.start_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandler.start_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method will be called to actually do the bootstrapping work. It
 should be overridden.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -480,13 +480,13 @@ Typically this can be left default.</li>
 
 <dl class="class">
 <dt id="combtest.bootstrap.ServiceHandler_Local">
-<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ServiceHandler_Local</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandler_Local" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.bootstrap.</code><code class="descname">ServiceHandler_Local</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandler_Local"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandler_Local" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.bootstrap.ServiceHandler" title="combtest.bootstrap.ServiceHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.bootstrap.ServiceHandler</span></code></a></p>
 <p>A ServiceHandler implementation foor bootstrapping locally via simple
 multiprocessing.Process call out.</p>
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandler_Local.shutdown">
-<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandler_Local.shutdown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandler_Local.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandler_Local.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to shut the service down. Should be idempotent unless the class
 writer is <em>very</em> careful about how they shut their services down
 manually. The overridden method should call the super-method.</p>
@@ -494,7 +494,7 @@ manually. The overridden method should call the super-method.</p>
 
 <dl class="method">
 <dt id="combtest.bootstrap.ServiceHandler_Local.start_cmd">
-<code class="descname">start_cmd</code><span class="sig-paren">(</span><em>service_class</em>, <em>service_run_func='combtest.worker.start_service_by_name'</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.bootstrap.ServiceHandler_Local.start_cmd" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_cmd</code><span class="sig-paren">(</span><em>service_class</em>, <em>service_run_func='combtest.worker.start_service_by_name'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/bootstrap.html#ServiceHandler_Local.start_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.bootstrap.ServiceHandler_Local.start_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method will be called to actually do the bootstrapping work. It
 should be overridden.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -541,7 +541,7 @@ that way</p>
 
 <dl class="data">
 <dt id="combtest.config.DEFAULT_MAX_THREAD_COUNT">
-<code class="descclassname">combtest.config.</code><code class="descname">DEFAULT_MAX_THREAD_COUNT</code><em class="property"> = 24</em><a class="headerlink" href="#combtest.config.DEFAULT_MAX_THREAD_COUNT" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">DEFAULT_MAX_THREAD_COUNT</code><em class="property"> = 12</em><a class="headerlink" href="#combtest.config.DEFAULT_MAX_THREAD_COUNT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default number of workers executing a <code class="docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code> at a time
 for a given service instance.</p>
 </dd></dl>
@@ -555,46 +555,46 @@ service</p>
 
 <dl class="function">
 <dt id="combtest.config.get_logger_port">
-<code class="descclassname">combtest.config.</code><code class="descname">get_logger_port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_logger_port" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_logger_port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_logger_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_logger_port" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the port we will expose locally for remote loggers to connect to.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.get_machine_ips">
-<code class="descclassname">combtest.config.</code><code class="descname">get_machine_ips</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_machine_ips" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_machine_ips</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_machine_ips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_machine_ips" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a list of IPs where we should try to set services up</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.get_max_thread_count">
-<code class="descclassname">combtest.config.</code><code class="descname">get_max_thread_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_max_thread_count" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_max_thread_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_max_thread_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_max_thread_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the max thread count for <a class="reference internal" href="#combtest.worker.ThreadPool" title="combtest.worker.ThreadPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.worker.ThreadPool</span></code></a>.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.get_service_port">
-<code class="descclassname">combtest.config.</code><code class="descname">get_service_port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_service_port" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_service_port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_service_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_service_port" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the port number where we should expect to find an rpyc service running,
 once it is bootstrapped.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.get_ssh_options">
-<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_options</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_ssh_options" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_options</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_ssh_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_ssh_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all SSH authentication options in a single call.
 :returns: a dict of options</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.get_ssh_passwords">
-<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_passwords</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_ssh_passwords" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_passwords</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_ssh_passwords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_ssh_passwords" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get passwords for SSH authentication.
 :return: password, map of ip-&gt;password</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.get_ssh_rsa_keys">
-<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_rsa_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_ssh_rsa_keys" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_rsa_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_ssh_rsa_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_ssh_rsa_keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get paths to RSA keys that we can use for SSH authentication. This can
 include a single file, or one file per e.g. IP.
 :return: path, map of ip-&gt;path</p>
@@ -602,20 +602,20 @@ include a single file, or one file per e.g. IP.
 
 <dl class="function">
 <dt id="combtest.config.get_ssh_usernames">
-<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_usernames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.get_ssh_usernames" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">get_ssh_usernames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#get_ssh_usernames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.get_ssh_usernames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get usernames for SSH authentication.
 :return: username, map of ip-&gt;username</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.refresh_cfg">
-<code class="descclassname">combtest.config.</code><code class="descname">refresh_cfg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.refresh_cfg" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">refresh_cfg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#refresh_cfg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.refresh_cfg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call to refresh config loaded from file.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.config.set_service_port">
-<code class="descclassname">combtest.config.</code><code class="descname">set_service_port</code><span class="sig-paren">(</span><em>port</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.config.set_service_port" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.config.</code><code class="descname">set_service_port</code><span class="sig-paren">(</span><em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/config.html#set_service_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.config.set_service_port" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the port number where we should expect to find an rpyc service running,
 once it is bootstrapped.</p>
 </dd></dl>
@@ -635,7 +635,7 @@ param which has no default JSON behavior.  We let them write <code class="docuti
 etc. if they want <code class="docutils literal notranslate"><span class="pre">param</span></code> to be a member of a custom class.</p>
 <dl class="function">
 <dt id="combtest.encode.decode">
-<code class="descclassname">combtest.encode.</code><code class="descname">decode</code><span class="sig-paren">(</span><em>json_str</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.encode.decode" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.encode.</code><code class="descname">decode</code><span class="sig-paren">(</span><em>json_str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/encode.html#decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.encode.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decode a JSON string which was provided by <a class="reference internal" href="#combtest.encode.encode" title="combtest.encode.encode"><code class="xref py py-func docutils literal notranslate"><span class="pre">encode()</span></code></a>. Will leverage
 a cache for single-instancing <code class="docutils literal notranslate"><span class="pre">Actions</span></code>. An <code class="docutils literal notranslate"><span class="pre">Action</span></code> is defined by a
 single, immutable <code class="docutils literal notranslate"><span class="pre">param</span></code>, so we are safe to use interning.</p>
@@ -643,7 +643,7 @@ single, immutable <code class="docutils literal notranslate"><span class="pre">p
 
 <dl class="function">
 <dt id="combtest.encode.encode">
-<code class="descclassname">combtest.encode.</code><code class="descname">encode</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.encode.encode" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.encode.</code><code class="descname">encode</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/encode.html#encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.encode.encode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return JSON equivalent to the provided obj, if possible.
 Will raise TypeError if it isn’t possible.</p>
 </dd></dl>
@@ -663,7 +663,7 @@ need to dodge the GIL, you’ll want to use something else.</dd>
 </dl>
 <dl class="class">
 <dt id="combtest.forkjoin.WorkItem">
-<em class="property">class </em><code class="descclassname">combtest.forkjoin.</code><code class="descname">WorkItem</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.forkjoin.WorkItem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.forkjoin.</code><code class="descname">WorkItem</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/forkjoin.html#WorkItem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.forkjoin.WorkItem" title="Permalink to this definition">¶</a></dt>
 <dd><p>A simple container representing a work item to be done.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -682,7 +682,7 @@ need to dodge the GIL, you’ll want to use something else.</dd>
 
 <dl class="function">
 <dt id="combtest.forkjoin.fork_join">
-<code class="descclassname">combtest.forkjoin.</code><code class="descname">fork_join</code><span class="sig-paren">(</span><em>work</em>, <em>suppress_errors=False</em>, <em>max_spawn_threads=60</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.forkjoin.fork_join" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.forkjoin.</code><code class="descname">fork_join</code><span class="sig-paren">(</span><em>work</em>, <em>suppress_errors=False</em>, <em>max_spawn_threads=60</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/forkjoin.html#fork_join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.forkjoin.fork_join" title="Permalink to this definition">¶</a></dt>
 <dd><p>Poor man’s fork/join implementation.  Run all work items in parallel up to some
 maximum number of simultaneous threads.  Wait for all work to finish, then
 return results.  Maximum number of threads that will run in parallel
@@ -720,7 +720,7 @@ main. This includes the ability to replay the <code class="docutils literal notr
 produced during a run.</p>
 <dl class="function">
 <dt id="combtest.replay.load_from_master">
-<code class="descclassname">combtest.replay.</code><code class="descname">load_from_master</code><span class="sig-paren">(</span><em>log_file</em>, <em>walk_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.replay.load_from_master" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.replay.</code><code class="descname">load_from_master</code><span class="sig-paren">(</span><em>log_file</em>, <em>walk_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/replay.html#load_from_master"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.replay.load_from_master" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a <code class="docutils literal notranslate"><span class="pre">Walk</span></code> from a master log file. A master log file provides paths to
 trace files which were produced by <code class="docutils literal notranslate"><span class="pre">Walk</span></code> running services. This presumes
 the trace files are available locally, so if they were produced on a remote
@@ -741,7 +741,7 @@ node, you’ll need to make them available by whatever method you prefer.</p>
 
 <dl class="function">
 <dt id="combtest.replay.load_from_trace">
-<code class="descclassname">combtest.replay.</code><code class="descname">load_from_trace</code><span class="sig-paren">(</span><em>trace_file</em>, <em>walk_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.replay.load_from_trace" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.replay.</code><code class="descname">load_from_trace</code><span class="sig-paren">(</span><em>trace_file</em>, <em>walk_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/replay.html#load_from_trace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.replay.load_from_trace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load a <code class="docutils literal notranslate"><span class="pre">Walk</span></code> from a trace file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -759,7 +759,7 @@ node, you’ll need to make them available by whatever method you prefer.</p>
 
 <dl class="function">
 <dt id="combtest.replay.replay_walk">
-<code class="descclassname">combtest.replay.</code><code class="descname">replay_walk</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>step=False</em>, <em>replay_func_qualname=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.replay.replay_walk" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.replay.</code><code class="descname">replay_walk</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>step=False</em>, <em>replay_func_qualname=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/replay.html#replay_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.replay.replay_walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a single <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -783,7 +783,7 @@ but the user is free to provide their own.</li>
 
 <dl class="function">
 <dt id="combtest.replay.replay_walk_by_id">
-<code class="descclassname">combtest.replay.</code><code class="descname">replay_walk_by_id</code><span class="sig-paren">(</span><em>log_file</em>, <em>walk_id</em>, <em>step=False</em>, <em>replay_func_qualname=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.replay.replay_walk_by_id" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.replay.</code><code class="descname">replay_walk_by_id</code><span class="sig-paren">(</span><em>log_file</em>, <em>walk_id</em>, <em>step=False</em>, <em>replay_func_qualname=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/replay.html#replay_walk_by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.replay.replay_walk_by_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a single <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code></a>. Load it by deserializing it from
 a trace file.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -816,14 +816,14 @@ Walks in stages using e.g. SerialActions, and ways to run Walks in parallel acro
 a cluster.</p>
 <dl class="class">
 <dt id="combtest.runner.ContinuingWalkServiceGroup">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">ContinuingWalkServiceGroup</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">ContinuingWalkServiceGroup</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.worker.ServiceGroup" title="combtest.worker.ServiceGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.worker.ServiceGroup</span></code></a></p>
 <p>A <code class="docutils literal notranslate"><span class="pre">ServiceGroup</span></code> designed for running <code class="docutils literal notranslate"><span class="pre">Walks</span></code> in stages. We need to be
 able to run <code class="docutils literal notranslate"><span class="pre">Walks</span></code> in stages in order to satisfy the semantic of
 <a class="reference internal" href="#combtest.action.SerialAction" title="combtest.action.SerialAction"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.SerialAction</span></code></a> during a run.</p>
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.gather_all_runner_states">
-<code class="descname">gather_all_runner_states</code><span class="sig-paren">(</span><em>worker_ids</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_all_runner_states" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gather_all_runner_states</code><span class="sig-paren">(</span><em>worker_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.gather_all_runner_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_all_runner_states" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gather stats from remote workers. User may want to extend this to
 include any new stats they think of.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -843,7 +843,7 @@ count of Walks run, list of walk_ids of failed Walks</td>
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.gather_all_states">
-<code class="descname">gather_all_states</code><span class="sig-paren">(</span><em>worker_ids</em>, <em>full=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_all_states" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gather_all_states</code><span class="sig-paren">(</span><em>worker_ids</em>, <em>full=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.gather_all_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_all_states" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gather states from all the given workers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -859,7 +859,7 @@ count of Walks run, list of walk_ids of failed Walks</td>
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.gather_runner_state">
-<code class="descname">gather_runner_state</code><span class="sig-paren">(</span><em>connection</em>, <em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_runner_state" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gather_runner_state</code><span class="sig-paren">(</span><em>connection</em>, <em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.gather_runner_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_runner_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gather <code class="docutils literal notranslate"><span class="pre">state</span></code> from a remote runner for a given worker. This is an
 optional internal state object provided by
 <code class="xref py py-func docutils literal notranslate"><span class="pre">WalkRunner.get_state()</span></code>.</p>
@@ -881,7 +881,7 @@ the work (see <a class="reference internal" href="#combtest.runner.ContinuingWal
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.gather_state">
-<code class="descname">gather_state</code><span class="sig-paren">(</span><em>connection</em>, <em>worker_id</em>, <em>full=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_state" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gather_state</code><span class="sig-paren">(</span><em>connection</em>, <em>worker_id</em>, <em>full=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.gather_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.gather_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gather <code class="docutils literal notranslate"><span class="pre">state</span></code> from a remote service for a given worker. A running
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code> is free to mutate its <code class="docutils literal notranslate"><span class="pre">state</span></code>, and sometimes that is
 what really constitutes the “response” or “output” of a quantum of
@@ -904,7 +904,7 @@ the work (see <a class="reference internal" href="#combtest.runner.ContinuingWal
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>work</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.run" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run</code><span class="sig-paren">(</span><em>work</em>, <em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scatter work to all remote services, wait for it to finish executing,
 then return gathered states.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -927,7 +927,7 @@ important.</p>
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.scatter_work">
-<code class="descname">scatter_work</code><span class="sig-paren">(</span><em>epoch</em>, <em>id_map=None</em>, <em>max_thread_count=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.scatter_work" title="Permalink to this definition">¶</a></dt>
+<code class="descname">scatter_work</code><span class="sig-paren">(</span><em>epoch</em>, <em>id_map=None</em>, <em>max_thread_count=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.scatter_work"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.scatter_work" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scatter some <code class="docutils literal notranslate"><span class="pre">Walk</span></code> segments out to the remote workers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -949,7 +949,7 @@ currently holding that Walk’s state.</li>
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.start_all_on">
-<code class="descname">start_all_on</code><span class="sig-paren">(</span><em>work_item</em>, <em>shared_state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.start_all_on" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_all_on</code><span class="sig-paren">(</span><em>work_item</em>, <em>shared_state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.start_all_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.start_all_on" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start a single item of work running on all remote services.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -971,7 +971,7 @@ across all threads on a given service.</li>
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.start_remote_logging">
-<code class="descname">start_remote_logging</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em>, <em>log_dir=None</em>, <em>log_namespace=None</em>, <em>verbose=1</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.start_remote_logging" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_remote_logging</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em>, <em>log_dir=None</em>, <em>log_namespace=None</em>, <em>verbose=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.start_remote_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.start_remote_logging" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start logging on all remote services.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -999,7 +999,7 @@ locations</p>
 
 <dl class="method">
 <dt id="combtest.runner.ContinuingWalkServiceGroup.update_remote_states">
-<code class="descname">update_remote_states</code><span class="sig-paren">(</span><em>ip</em>, <em>worker_ids</em>, <em>walk_ids</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.update_remote_states" title="Permalink to this definition">¶</a></dt>
+<code class="descname">update_remote_states</code><span class="sig-paren">(</span><em>ip</em>, <em>worker_ids</em>, <em>walk_ids</em>, <em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#ContinuingWalkServiceGroup.update_remote_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.ContinuingWalkServiceGroup.update_remote_states" title="Permalink to this definition">¶</a></dt>
 <dd><p>Push an update to the <code class="docutils literal notranslate"><span class="pre">states</span></code> on the remote executors. This is
 sometimes useful when a <a class="reference internal" href="#combtest.action.SerialAction" title="combtest.action.SerialAction"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.SerialAction</span></code></a> executes and
 affects the state of some set of <code class="docutils literal notranslate"><span class="pre">Walks</span></code>.</p>
@@ -1026,7 +1026,7 @@ way to support this is by using a dict as a state.</li>
 
 <dl class="class">
 <dt id="combtest.runner.MultistageWalkRunner">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">MultistageWalkRunner</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.MultistageWalkRunner" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">MultistageWalkRunner</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.runner.WalkRunner" title="combtest.runner.WalkRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.runner.WalkRunner</span></code></a></p>
 <p>Similar to <code class="docutils literal notranslate"><span class="pre">WalkRunner</span></code>, but walks are sent with an id that allows them
 to reclaim state from a prior <code class="docutils literal notranslate"><span class="pre">Walk</span></code>. Typically this is used for Walks
@@ -1038,14 +1038,14 @@ matching the first.</p>
 </dl>
 <dl class="method">
 <dt id="combtest.runner.MultistageWalkRunner.prep_work_call">
-<code class="descname">prep_work_call</code><span class="sig-paren">(</span><em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.MultistageWalkRunner.prep_work_call" title="Permalink to this definition">¶</a></dt>
+<code class="descname">prep_work_call</code><span class="sig-paren">(</span><em>work</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunner.prep_work_call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunner.prep_work_call" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to wrap a <code class="docutils literal notranslate"><span class="pre">Walk</span></code> into a callable that accepts a single
 argument: the <code class="docutils literal notranslate"><span class="pre">state</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.MultistageWalkRunner.run_walk">
-<code class="descname">run_walk</code><span class="sig-paren">(</span><em>walk_id</em>, <em>branch_id</em>, <em>walk_to_run</em>, <em>state</em>, <em>serial_action=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.MultistageWalkRunner.run_walk" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run_walk</code><span class="sig-paren">(</span><em>walk_id</em>, <em>branch_id</em>, <em>walk_to_run</em>, <em>state</em>, <em>serial_action=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunner.run_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunner.run_walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to run an individual <code class="docutils literal notranslate"><span class="pre">Walk</span></code>.</p>
 </dd></dl>
 
@@ -1053,7 +1053,7 @@ argument: the <code class="docutils literal notranslate"><span class="pre">state
 
 <dl class="class">
 <dt id="combtest.runner.MultistageWalkRunningService">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">MultistageWalkRunningService</code><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">MultistageWalkRunningService</code><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunningService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.runner.WalkExecutorService" title="combtest.runner.WalkExecutorService"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.runner.WalkExecutorService</span></code></a></p>
 <p>A <code class="docutils literal notranslate"><span class="pre">WalkExecutorService</span></code> for executing <code class="docutils literal notranslate"><span class="pre">Walks</span></code> in multiple stages. That
 is: we can execute <code class="docutils literal notranslate"><span class="pre">Walks</span></code> in parts/slices. A <code class="docutils literal notranslate"><span class="pre">walk_id</span></code> is used to
@@ -1066,7 +1066,7 @@ refer to the <code class="docutils literal notranslate"><span class="pre">Walks<
 
 <dl class="method">
 <dt id="combtest.runner.MultistageWalkRunningService.exposed_gather_state">
-<code class="descname">exposed_gather_state</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService.exposed_gather_state" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_gather_state</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunningService.exposed_gather_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService.exposed_gather_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the state associated with the given worker.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1081,14 +1081,14 @@ start work</td>
 
 <dl class="method">
 <dt id="combtest.runner.MultistageWalkRunningService.repack_ctx">
-<code class="descname">repack_ctx</code><span class="sig-paren">(</span><em>state</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService.repack_ctx" title="Permalink to this definition">¶</a></dt>
+<code class="descname">repack_ctx</code><span class="sig-paren">(</span><em>state</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunningService.repack_ctx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService.repack_ctx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called back when a new worker/runner is made to pack up kwargs that we
 pass to the runner’s initializer.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.MultistageWalkRunningService.work_repack">
-<code class="descname">work_repack</code><span class="sig-paren">(</span><em>work</em>, <em>shared_state</em>, <em>ctx=None</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService.work_repack" title="Permalink to this definition">¶</a></dt>
+<code class="descname">work_repack</code><span class="sig-paren">(</span><em>work</em>, <em>shared_state</em>, <em>ctx=None</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#MultistageWalkRunningService.work_repack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.MultistageWalkRunningService.work_repack" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is called back to repackage each work item sent to the service.
 The call is an opportunity to e.g. do some deserialization, wrap the
 <code class="docutils literal notranslate"><span class="pre">Walk</span></code> in a <code class="docutils literal notranslate"><span class="pre">WalkRunner</span></code>, or anything else the user needs to prep
@@ -1162,7 +1162,7 @@ JSONified <code class="docutils literal notranslate"><span class="pre">Walk</spa
 
 <dl class="class">
 <dt id="combtest.runner.WalkExecutorService">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">WalkExecutorService</code><a class="headerlink" href="#combtest.runner.WalkExecutorService" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">WalkExecutorService</code><a class="reference internal" href="_modules/combtest/runner.html#WalkExecutorService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkExecutorService" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.worker.CoordinatorService" title="combtest.worker.CoordinatorService"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.worker.CoordinatorService</span></code></a></p>
 <p>Simplest rpyc-based services for running walks across the cluster: the user
 only needs to provide a list of <code class="docutils literal notranslate"><span class="pre">Walks</span></code> to their corresponding ServiceGroup.
@@ -1189,7 +1189,7 @@ or in a child class</p>
 
 <dl class="method">
 <dt id="combtest.runner.WalkExecutorService.exposed_clean_worker">
-<code class="descname">exposed_clean_worker</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkExecutorService.exposed_clean_worker" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_clean_worker</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkExecutorService.exposed_clean_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkExecutorService.exposed_clean_worker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Toss all state related to a worker. Implies a join first.
 Gives the user full control over when we reap memory, since they may
 still want to retrieve/pickle results. It isn’t enough to wait until
@@ -1200,7 +1200,7 @@ results.</p>
 
 <dl class="method">
 <dt id="combtest.runner.WalkExecutorService.exposed_gather_state">
-<code class="descname">exposed_gather_state</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkExecutorService.exposed_gather_state" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_gather_state</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkExecutorService.exposed_gather_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkExecutorService.exposed_gather_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the state associated with the given worker.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1215,14 +1215,14 @@ start work</td>
 
 <dl class="method">
 <dt id="combtest.runner.WalkExecutorService.repack_ctx">
-<code class="descname">repack_ctx</code><span class="sig-paren">(</span><em>state</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkExecutorService.repack_ctx" title="Permalink to this definition">¶</a></dt>
+<code class="descname">repack_ctx</code><span class="sig-paren">(</span><em>state</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkExecutorService.repack_ctx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkExecutorService.repack_ctx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called back when a new worker/runner is made to pack up kwargs that we
 pass to the runner’s initializer.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.WalkExecutorService.work_repack">
-<code class="descname">work_repack</code><span class="sig-paren">(</span><em>work</em>, <em>shared_state</em>, <em>ctx=None</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkExecutorService.work_repack" title="Permalink to this definition">¶</a></dt>
+<code class="descname">work_repack</code><span class="sig-paren">(</span><em>work</em>, <em>shared_state</em>, <em>ctx=None</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkExecutorService.work_repack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkExecutorService.work_repack" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is called back to repackage each work item sent to the service.
 The call is an opportunity to e.g. do some deserialization, wrap the
 <code class="docutils literal notranslate"><span class="pre">Walk</span></code> in a <code class="docutils literal notranslate"><span class="pre">WalkRunner</span></code>, or anything else the user needs to prep
@@ -1248,40 +1248,40 @@ JSONified <code class="docutils literal notranslate"><span class="pre">Walk</spa
 
 <dl class="class">
 <dt id="combtest.runner.WalkRunner">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">WalkRunner</code><span class="sig-paren">(</span><em>reporting_interval=10000</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkRunner" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">WalkRunner</code><span class="sig-paren">(</span><em>reporting_interval=10000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A WalkRunner simply wraps a <code class="docutils literal notranslate"><span class="pre">Walks</span></code> execution method with some tracking
 for reporting stats. The user is free to inherit and add more stats as they
 see fit.</p>
 <dl class="method">
 <dt id="combtest.runner.WalkRunner.count_cancel">
-<code class="descname">count_cancel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkRunner.count_cancel" title="Permalink to this definition">¶</a></dt>
+<code class="descname">count_cancel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkRunner.count_cancel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkRunner.count_cancel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called when a <code class="docutils literal notranslate"><span class="pre">Walk</span></code> is canceled.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.WalkRunner.count_error">
-<code class="descname">count_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkRunner.count_error" title="Permalink to this definition">¶</a></dt>
+<code class="descname">count_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkRunner.count_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkRunner.count_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called on a <code class="docutils literal notranslate"><span class="pre">Walk</span></code> execution error.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.WalkRunner.count_total">
-<code class="descname">count_total</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkRunner.count_total" title="Permalink to this definition">¶</a></dt>
+<code class="descname">count_total</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkRunner.count_total"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkRunner.count_total" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to count the number of <code class="docutils literal notranslate"><span class="pre">Walks</span></code>/Walk segments we started
 running.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.WalkRunner.prep_work_call">
-<code class="descname">prep_work_call</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>walk_state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkRunner.prep_work_call" title="Permalink to this definition">¶</a></dt>
+<code class="descname">prep_work_call</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>walk_state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkRunner.prep_work_call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkRunner.prep_work_call" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to wrap a <code class="docutils literal notranslate"><span class="pre">Walk</span></code> into a callable that accepts a single
 argument: the <code class="docutils literal notranslate"><span class="pre">state</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.runner.WalkRunner.run_walk">
-<code class="descname">run_walk</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkRunner.run_walk" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run_walk</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkRunner.run_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkRunner.run_walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called to run an individual <code class="docutils literal notranslate"><span class="pre">Walk</span></code>.</p>
 </dd></dl>
 
@@ -1289,11 +1289,11 @@ argument: the <code class="docutils literal notranslate"><span class="pre">state
 
 <dl class="class">
 <dt id="combtest.runner.WalkThreadPool">
-<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">WalkThreadPool</code><span class="sig-paren">(</span><em>max_thread_count=None</em>, <em>work=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkThreadPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.runner.</code><code class="descname">WalkThreadPool</code><span class="sig-paren">(</span><em>max_thread_count=None</em>, <em>work=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkThreadPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkThreadPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#combtest.worker.ThreadPool" title="combtest.worker.ThreadPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.worker.ThreadPool</span></code></a></p>
 <dl class="method">
 <dt id="combtest.runner.WalkThreadPool.on_error_item">
-<code class="descname">on_error_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em>, <em>exc</em>, <em>tb</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.WalkThreadPool.on_error_item" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_error_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em>, <em>exc</em>, <em>tb</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#WalkThreadPool.on_error_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.WalkThreadPool.on_error_item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called if a work item errors out (via Exception).</p>
 </dd></dl>
 
@@ -1301,7 +1301,7 @@ argument: the <code class="docutils literal notranslate"><span class="pre">state
 
 <dl class="function">
 <dt id="combtest.runner.replay_walk">
-<code class="descclassname">combtest.runner.</code><code class="descname">replay_walk</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>step=False</em>, <em>log_errors=True</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.replay_walk" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.runner.</code><code class="descname">replay_walk</code><span class="sig-paren">(</span><em>walk_to_run</em>, <em>step=False</em>, <em>log_errors=True</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#replay_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.replay_walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a single <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code></a></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1322,7 +1322,7 @@ hits a key to proceed to the next Action.</li>
 
 <dl class="function">
 <dt id="combtest.runner.run_tests">
-<code class="descclassname">combtest.runner.</code><code class="descname">run_tests</code><span class="sig-paren">(</span><em>walk_order</em>, <em>state=None</em>, <em>verbose=1</em>, <em>logger_port=None</em>, <em>runner_class=&lt;class 'combtest.runner.MultistageWalkRunningService'&gt;</em>, <em>service_group_class=&lt;class 'combtest.runner.ContinuingWalkServiceGroup'&gt;</em>, <em>service_infos=None</em>, <em>service_handler_class=&lt;class 'combtest.bootstrap.ServiceHandler_Local'&gt;</em>, <em>max_thread_count=None</em>, <em>gather_states=False</em>, <em>log_dir=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.runner.run_tests" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.runner.</code><code class="descname">run_tests</code><span class="sig-paren">(</span><em>walk_order</em>, <em>state=None</em>, <em>verbose=1</em>, <em>logger_port=None</em>, <em>runner_class=&lt;class 'combtest.runner.MultistageWalkRunningService'&gt;</em>, <em>service_group_class=&lt;class 'combtest.runner.ContinuingWalkServiceGroup'&gt;</em>, <em>service_infos=None</em>, <em>service_handler_class=&lt;class 'combtest.bootstrap.ServiceHandler_Local'&gt;</em>, <em>max_thread_count=None</em>, <em>gather_states=False</em>, <em>log_dir=None</em>, <em>use_accountant=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/runner.html#run_tests"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.runner.run_tests" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a collection of <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code></a>. This should be the main
 way to execute <code class="docutils literal notranslate"><span class="pre">Walks</span></code> for most users. This is the only interface that
 supports correct execution of a <a class="reference internal" href="#combtest.action.SerialAction" title="combtest.action.SerialAction"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.SerialAction</span></code></a>.</p>
@@ -1377,7 +1377,17 @@ else the returned states will be None</li>
 each service will use.</li>
 <li><strong>log_dir</strong> (<em>str</em>) – Directory where we will store traces, debug logs, etc.
 Remote services will also attempt to store logs to
-the same path.</li>
+the same path. If Accountant is enabled, this argument
+will override any directory choice that Accountant may
+make automatically. Use with caution on the regression
+wheel, since this means Accountant won’t automatically
+point to a log server directory.</li>
+<li><strong>use_accountant</strong> (<em>bool</em>) – if True, use Accountant to record results. This
+will also cause testdb report back where possible
+(e.g. during a regression wheel run). You can
+also provide a SimpleAccountant here, which we
+will gladly use. It must not already be in a
+testcase or suite context.</li>
 </ul>
 </td>
 </tr>
@@ -1403,7 +1413,7 @@ have to use this, but it is provided as a default implementation for those not
 wanting to write their own connection logic.</p>
 <dl class="class">
 <dt id="combtest.ssh_handle.ServiceHandler_SSH">
-<em class="property">class </em><code class="descclassname">combtest.ssh_handle.</code><code class="descname">ServiceHandler_SSH</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.ssh_handle.ServiceHandler_SSH" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.ssh_handle.</code><code class="descname">ServiceHandler_SSH</code><span class="sig-paren">(</span><em>connection_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/ssh_handle.html#ServiceHandler_SSH"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.ssh_handle.ServiceHandler_SSH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provide an SSH-based method of bootstrapping our rpyc <code class="docutils literal notranslate"><span class="pre">Walk</span></code> executors.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1426,7 +1436,7 @@ info. You can get such a dict from
 <p>Misc utils</p>
 <dl class="class">
 <dt id="combtest.utils.RangeTree">
-<em class="property">class </em><code class="descclassname">combtest.utils.</code><code class="descname">RangeTree</code><span class="sig-paren">(</span><em>min_idx</em>, <em>max_idx</em>, <em>root_value=()</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.utils.RangeTree" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.utils.</code><code class="descname">RangeTree</code><span class="sig-paren">(</span><em>min_idx</em>, <em>max_idx</em>, <em>root_value=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/utils.html#RangeTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.utils.RangeTree" title="Permalink to this definition">¶</a></dt>
 <dd><p>A representation of a range, with the levels of the tree representing
 hierarchical splits of the range.
 O(N) mem in the number of sub-ranges.
@@ -1444,7 +1454,7 @@ Example:</p>
 
 <dl class="function">
 <dt id="combtest.utils.get_class_from_qualname">
-<code class="descclassname">combtest.utils.</code><code class="descname">get_class_from_qualname</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.utils.get_class_from_qualname" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.utils.</code><code class="descname">get_class_from_qualname</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/utils.html#get_class_from_qualname"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.utils.get_class_from_qualname" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resolve a fully qualified class name to a class, attempting any imports
 that need to be done along the way.
 :raises: ImportError or AttributeError if we can’t figure out how to import it</p>
@@ -1452,7 +1462,7 @@ that need to be done along the way.
 
 <dl class="function">
 <dt id="combtest.utils.get_class_qualname">
-<code class="descclassname">combtest.utils.</code><code class="descname">get_class_qualname</code><span class="sig-paren">(</span><em>cls</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.utils.get_class_qualname" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.utils.</code><code class="descname">get_class_qualname</code><span class="sig-paren">(</span><em>cls</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/utils.html#get_class_qualname"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.utils.get_class_qualname" title="Permalink to this definition">¶</a></dt>
 <dd><p>Give a fully qualified name for a class (and therefore a function ref as
 well). Example: ‘combtest.action.Action’.</p>
 <dl class="docutils">
@@ -1465,14 +1475,14 @@ compat.</dd>
 
 <dl class="function">
 <dt id="combtest.utils.get_my_IP">
-<code class="descclassname">combtest.utils.</code><code class="descname">get_my_IP</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.utils.get_my_IP" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.utils.</code><code class="descname">get_my_IP</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/utils.html#get_my_IP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.utils.get_my_IP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get our best guess at one of our local IPs that others could use to contact
 us (e.g. to connect to a local log server).</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="combtest.utils.set_my_IP">
-<code class="descclassname">combtest.utils.</code><code class="descname">set_my_IP</code><span class="sig-paren">(</span><em>ip</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.utils.set_my_IP" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.utils.</code><code class="descname">set_my_IP</code><span class="sig-paren">(</span><em>ip</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/utils.html#set_my_IP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.utils.set_my_IP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the IP that the rest of the system should assume is our local IP
 address. This may work for a hostname as well, but that isn’t well tested.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1485,6 +1495,12 @@ address. This may work for a hostname as well, but that isn’t well tested.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="combtest.utils.standard_strftime">
+<code class="descclassname">combtest.utils.</code><code class="descname">standard_strftime</code><span class="sig-paren">(</span><em>dt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/utils.html#standard_strftime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.utils.standard_strftime" title="Permalink to this definition">¶</a></dt>
+<dd><p>A “standard” strftime conversion of a datetime.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-combtest.walk">
 <span id="walk-module"></span><h2>walk module<a class="headerlink" href="#module-combtest.walk" title="Permalink to this headline">¶</a></h2>
@@ -1492,7 +1508,7 @@ address. This may work for a hostname as well, but that isn’t well tested.</p>
 operations, etc., and executing such sequences of operations.</p>
 <dl class="class">
 <dt id="combtest.walk.Walk">
-<em class="property">class </em><code class="descclassname">combtest.walk.</code><code class="descname">Walk</code><span class="sig-paren">(</span><em>*elems</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.walk.Walk" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.walk.</code><code class="descname">Walk</code><span class="sig-paren">(</span><em>*elems</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/walk.html#Walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.walk.Walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>A Walk, named after the graph theory concept, is a list of
 <a class="reference internal" href="#combtest.action.Action" title="combtest.action.Action"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.action.Action</span></code></a> to execute, together with a piece of
 state that the Actions can manipulate. The notion here is that each
@@ -1508,13 +1524,13 @@ in state/action space.</p>
 </table>
 <dl class="method">
 <dt id="combtest.walk.Walk.append">
-<code class="descname">append</code><span class="sig-paren">(</span><em>elem</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.walk.Walk.append" title="Permalink to this definition">¶</a></dt>
+<code class="descname">append</code><span class="sig-paren">(</span><em>elem</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/walk.html#Walk.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.walk.Walk.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Logically equivalent to list.append</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.walk.Walk.execute">
-<code class="descname">execute</code><span class="sig-paren">(</span><em>state</em>, <em>log_errors=True</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.walk.Walk.execute" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute</code><span class="sig-paren">(</span><em>state</em>, <em>log_errors=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/walk.html#Walk.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.walk.Walk.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute the <code class="docutils literal notranslate"><span class="pre">Actions</span></code> in order. If an Action raises
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CancelWalk</span></code>, we will stop executing immediately.
 :return: True if the Walk was run successfully or <cite>CancelWalk</cite> was raised, False otherwise.</p>
@@ -1524,14 +1540,14 @@ in state/action space.</p>
 
 <dl class="exception">
 <dt id="combtest.walk.WalkFailedError">
-<em class="property">exception </em><code class="descclassname">combtest.walk.</code><code class="descname">WalkFailedError</code><a class="headerlink" href="#combtest.walk.WalkFailedError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">combtest.walk.</code><code class="descname">WalkFailedError</code><a class="reference internal" href="_modules/combtest/walk.html#WalkFailedError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.walk.WalkFailedError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raised when a <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">combtest.walk.Walk</span></code></a> failed to execute to completion
 for any reason (e.g. one of its operations raised an <code class="docutils literal notranslate"><span class="pre">Exception</span></code>).</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="combtest.walk.WalkOpTracer">
-<em class="property">class </em><code class="descclassname">combtest.walk.</code><code class="descname">WalkOpTracer</code><span class="sig-paren">(</span><em>log_dir</em>, <em>*namespace</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.walk.WalkOpTracer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.walk.</code><code class="descname">WalkOpTracer</code><span class="sig-paren">(</span><em>log_dir</em>, <em>*namespace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/walk.html#WalkOpTracer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.walk.WalkOpTracer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Traces a <a class="reference internal" href="#combtest.walk.Walk" title="combtest.walk.Walk"><code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code></a> portion + its adjacent <code class="xref py py-class docutils literal notranslate"><span class="pre">SerialAction</span></code> and
 <code class="docutils literal notranslate"><span class="pre">walk_id</span></code>. The id is consistent across portions so that you can relate
 them back together later.</p>
@@ -1539,7 +1555,7 @@ them back together later.</p>
 
 <dl class="class">
 <dt id="combtest.walk.WalkOptions">
-<em class="property">class </em><code class="descclassname">combtest.walk.</code><code class="descname">WalkOptions</code><span class="sig-paren">(</span><em>walk_order</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.walk.WalkOptions" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.walk.</code><code class="descname">WalkOptions</code><span class="sig-paren">(</span><em>walk_order</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/walk.html#WalkOptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.walk.WalkOptions" title="Permalink to this definition">¶</a></dt>
 <dd><p>A WalkOptions accepts a set of <code class="xref py py-class docutils literal notranslate"><span class="pre">Action</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">SerialAction</span></code>
 options and produces an iterable of <code class="xref py py-class docutils literal notranslate"><span class="pre">Epoch</span></code>. Each <cite>Epoch</cite> represents
 a set of <code class="docutils literal notranslate"><span class="pre">Walk</span></code> segments which can run in parallel, and an optional
@@ -1609,13 +1625,13 @@ interpreter crash hard enough that we don’t run atexit handlers)</li>
 </ul>
 <dl class="class">
 <dt id="combtest.worker.CoordinatorService">
-<em class="property">class </em><code class="descclassname">combtest.worker.</code><code class="descname">CoordinatorService</code><a class="headerlink" href="#combtest.worker.CoordinatorService" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.worker.</code><code class="descname">CoordinatorService</code><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">rpyc.core.service.Service</span></code></p>
 <p>Receives work from a remote process via rpyc, starts the work running via
 <a class="reference internal" href="#combtest.worker.ThreadPool" title="combtest.worker.ThreadPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">ThreadPool</span></code></a> or some decendent class.</p>
 <dl class="attribute">
 <dt id="combtest.worker.CoordinatorService.DEFAULT_MAX_THREAD_COUNT">
-<code class="descname">DEFAULT_MAX_THREAD_COUNT</code><em class="property"> = 24</em><a class="headerlink" href="#combtest.worker.CoordinatorService.DEFAULT_MAX_THREAD_COUNT" title="Permalink to this definition">¶</a></dt>
+<code class="descname">DEFAULT_MAX_THREAD_COUNT</code><em class="property"> = 12</em><a class="headerlink" href="#combtest.worker.CoordinatorService.DEFAULT_MAX_THREAD_COUNT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Override point for max number of threads for each worker to have. The
 other ways to set this are 1. via config.py, and 2. via an option passed
 at runtime (e.g. via <a class="reference internal" href="#combtest.worker.CoordinatorService.exposed_start_workers_on" title="combtest.worker.CoordinatorService.exposed_start_workers_on"><code class="xref py py-func docutils literal notranslate"><span class="pre">exposed_start_workers_on()</span></code></a>).</p>
@@ -1631,7 +1647,7 @@ User can override</p>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_add_work">
-<code class="descname">exposed_add_work</code><span class="sig-paren">(</span><em>worker_id</em>, <em>work</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_add_work" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_add_work</code><span class="sig-paren">(</span><em>worker_id</em>, <em>work</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_add_work"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_add_work" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add work to an existing worker. The original state will be used.
 If the user wants work to be executed with a different state,
 they start a new worker up via <a class="reference internal" href="#combtest.worker.CoordinatorService.exposed_start_work" title="combtest.worker.CoordinatorService.exposed_start_work"><code class="xref py py-func docutils literal notranslate"><span class="pre">exposed_start_work()</span></code></a>.</p>
@@ -1652,7 +1668,7 @@ start work</li>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_clean_worker">
-<code class="descname">exposed_clean_worker</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_clean_worker" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_clean_worker</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_clean_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_clean_worker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Toss all state related to a worker. Implies a join first.
 Gives the user full control over when we reap memory, since they may
 still want to retrieve/pickle results. It isn’t enough to wait until
@@ -1663,7 +1679,7 @@ results.</p>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_gather_state">
-<code class="descname">exposed_gather_state</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_gather_state" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_gather_state</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_gather_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_gather_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the state associated with the given worker.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1678,13 +1694,13 @@ start work</td>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_join_all_workers">
-<code class="descname">exposed_join_all_workers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_join_all_workers" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_join_all_workers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_join_all_workers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_join_all_workers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Like join_workers, but tosses all outstanding workers.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_join_workers">
-<code class="descname">exposed_join_workers</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_join_workers" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_join_workers</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_join_workers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_join_workers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Join all working threads in a worker and toss the worker for further
 use. The responses and states will stay around until the client
 “cleans” the worker state. That means this is <em>not</em> a stateless
@@ -1702,14 +1718,14 @@ start work</td>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_run">
-<code class="descname">exposed_run</code><span class="sig-paren">(</span><em>work</em>, <em>max_thread_count=None</em>, <em>state=None</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_run" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_run</code><span class="sig-paren">(</span><em>work</em>, <em>max_thread_count=None</em>, <em>state=None</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run work synchronously. Return a <code class="docutils literal notranslate"><span class="pre">worker_id</span></code> so that responses/states
 can be reclaimed.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_signal_stop">
-<code class="descname">exposed_signal_stop</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_signal_stop" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_signal_stop</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_signal_stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_signal_stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal that a worker should stop. May not be immediate since this is
 intended to be a “clean” shutdown where workers can finish their
 current work item.</p>
@@ -1726,7 +1742,7 @@ start work</td>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_start_remote_logging">
-<code class="descname">exposed_start_remote_logging</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_start_remote_logging" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_start_remote_logging</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_start_remote_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_start_remote_logging" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start sending logs to the log server at the given ip+port.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1744,7 +1760,7 @@ start work</td>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_start_work">
-<code class="descname">exposed_start_work</code><span class="sig-paren">(</span><em>work</em>, <em>state=None</em>, <em>max_thread_count=None</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_start_work" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_start_work</code><span class="sig-paren">(</span><em>work</em>, <em>state=None</em>, <em>max_thread_count=None</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_start_work"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_start_work" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called by remote side to start some work running asynchronously. The
 work and state are pickled and pulled through to this side in whole,
 rather than accessing via netrefs.</p>
@@ -1761,7 +1777,7 @@ it or getting responses.</td>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.exposed_start_workers_on">
-<code class="descname">exposed_start_workers_on</code><span class="sig-paren">(</span><em>work</em>, <em>max_thread_count=None</em>, <em>state=None</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_start_workers_on" title="Permalink to this definition">¶</a></dt>
+<code class="descname">exposed_start_workers_on</code><span class="sig-paren">(</span><em>work</em>, <em>max_thread_count=None</em>, <em>state=None</em>, <em>repack_kwargs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.exposed_start_workers_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.exposed_start_workers_on" title="Permalink to this definition">¶</a></dt>
 <dd><p>Similar to start_work, but a single item is sent, and all threads in
 the new worker will run that single item.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1776,21 +1792,21 @@ the new worker will run that single item.</p>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.on_connect">
-<code class="descname">on_connect</code><span class="sig-paren">(</span><em>conn</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.on_connect" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_connect</code><span class="sig-paren">(</span><em>conn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.on_connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.on_connect" title="Permalink to this definition">¶</a></dt>
 <dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">rpyc.Service</span></code> is designed for this to be the de-facto
 <code class="docutils literal notranslate"><span class="pre">__init__</span></code> function.  So we are doing our initialization here.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.repack_ctx">
-<code class="descname">repack_ctx</code><span class="sig-paren">(</span><em>state</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.repack_ctx" title="Permalink to this definition">¶</a></dt>
+<code class="descname">repack_ctx</code><span class="sig-paren">(</span><em>state</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.repack_ctx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.repack_ctx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called back when a new worker/runner is made to pack up kwargs that we
 pass to the runner’s initializer.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.CoordinatorService.work_repack">
-<code class="descname">work_repack</code><span class="sig-paren">(</span><em>work</em>, <em>state</em>, <em>ctx=None</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.CoordinatorService.work_repack" title="Permalink to this definition">¶</a></dt>
+<code class="descname">work_repack</code><span class="sig-paren">(</span><em>work</em>, <em>state</em>, <em>ctx=None</em>, <em>**repack_kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#CoordinatorService.work_repack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.CoordinatorService.work_repack" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is called back to repackage each work item sent to the service.
 The call is an opportunity to e.g. do some deserialization, wrap the
 <code class="docutils literal notranslate"><span class="pre">Walk</span></code> in a <code class="docutils literal notranslate"><span class="pre">WalkRunner</span></code>, or anything else the user needs to prep
@@ -1815,7 +1831,7 @@ JSONified <code class="docutils literal notranslate"><span class="pre">Walk</spa
 
 <dl class="class">
 <dt id="combtest.worker.ServiceGroup">
-<em class="property">class </em><code class="descclassname">combtest.worker.</code><code class="descname">ServiceGroup</code><span class="sig-paren">(</span><em>service_name</em>, <em>service_infos=None</em>, <em>service_handler_class=&lt;class 'combtest.bootstrap.ServiceHandler_Local'&gt;</em>, <em>spawn_services=True</em>, <em>spawn_clients=True</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.worker.</code><code class="descname">ServiceGroup</code><span class="sig-paren">(</span><em>service_name</em>, <em>service_infos=None</em>, <em>service_handler_class=&lt;class 'combtest.bootstrap.ServiceHandler_Local'&gt;</em>, <em>spawn_services=True</em>, <em>spawn_clients=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Handles to running service instances across the nodes via e.g. SSH, and
 rpyc-based clients connected to those. This has a number of functions for
@@ -1866,7 +1882,7 @@ this size at maximum.</p>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.gather_all_states">
-<code class="descname">gather_all_states</code><span class="sig-paren">(</span><em>worker_ids</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.gather_all_states" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gather_all_states</code><span class="sig-paren">(</span><em>worker_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.gather_all_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.gather_all_states" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gather states from all the given workers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1882,7 +1898,7 @@ this size at maximum.</p>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.gather_state">
-<code class="descname">gather_state</code><span class="sig-paren">(</span><em>connection</em>, <em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.gather_state" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gather_state</code><span class="sig-paren">(</span><em>connection</em>, <em>worker_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.gather_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.gather_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gather <code class="docutils literal notranslate"><span class="pre">state</span></code> from a remote service for a given worker. A running
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Walk</span></code> is free to mutate its <code class="docutils literal notranslate"><span class="pre">state</span></code>, and sometimes that is
 what really constitutes the “response” or “output” of a quantum of
@@ -1905,7 +1921,7 @@ the work (see <a class="reference internal" href="#combtest.worker.ServiceGroup.
 
 <dl class="classmethod">
 <dt id="combtest.worker.ServiceGroup.give_up">
-<em class="property">classmethod </em><code class="descname">give_up</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.give_up" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">give_up</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.give_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.give_up" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal that all <a class="reference internal" href="#combtest.worker.ServiceGroup" title="combtest.worker.ServiceGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServiceGroup</span></code></a> should give up trying to connect
 to remote services, send work, etc. and bail immediately. We can use
 this e.g. if we receive a signal locally and don’t want to wait for a
@@ -1914,7 +1930,7 @@ long-running scatter or gather.</p>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.join">
-<code class="descname">join</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.join" title="Permalink to this definition">¶</a></dt>
+<code class="descname">join</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.join" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wait for all workers on all remote services to complete.
 We can have a finer-grained function later if it is helpful.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1933,7 +1949,7 @@ the remote side died)</td>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>work</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.run" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run</code><span class="sig-paren">(</span><em>work</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scatter work to all remote services, wait for it to finish executing,
 then return gathered states.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1956,7 +1972,7 @@ important.</p>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.scatter_work">
-<code class="descname">scatter_work</code><span class="sig-paren">(</span><em>work</em>, <em>max_thread_count=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.scatter_work" title="Permalink to this definition">¶</a></dt>
+<code class="descname">scatter_work</code><span class="sig-paren">(</span><em>work</em>, <em>max_thread_count=None</em>, <em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.scatter_work"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.scatter_work" title="Permalink to this definition">¶</a></dt>
 <dd><p>Partition the provided iterable of work into roughly even-sized
 portions and send them to each of the remote services. <code class="docutils literal notranslate"><span class="pre">state</span></code> will
 be copied to each node independently. The user must handle the logic of
@@ -1983,7 +1999,7 @@ executor should have</li>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.shutdown">
-<code class="descname">shutdown</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.shutdown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shut down both clients and services.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1998,7 +2014,7 @@ down</td>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.shutdown_clients">
-<code class="descname">shutdown_clients</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.shutdown_clients" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown_clients</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.shutdown_clients"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.shutdown_clients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shut down all running clients.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2013,7 +2029,7 @@ down</td>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.shutdown_services">
-<code class="descname">shutdown_services</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.shutdown_services" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown_services</code><span class="sig-paren">(</span><em>hard=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.shutdown_services"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.shutdown_services" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shut down all running services.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2028,26 +2044,26 @@ down</td>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.spawn">
-<code class="descname">spawn</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.spawn" title="Permalink to this definition">¶</a></dt>
+<code class="descname">spawn</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.spawn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawn both services and clients (in that order).</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.spawn_clients">
-<code class="descname">spawn_clients</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.spawn_clients" title="Permalink to this definition">¶</a></dt>
+<code class="descname">spawn_clients</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.spawn_clients"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.spawn_clients" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawn rpyc clients to the remote services. Assumes remote services are
 up, or will be within <code class="docutils literal notranslate"><span class="pre">SPAWN_TIMEOUT</span></code>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.spawn_services">
-<code class="descname">spawn_services</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.spawn_services" title="Permalink to this definition">¶</a></dt>
+<code class="descname">spawn_services</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.spawn_services"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.spawn_services" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawn remote services via some bootstrap method.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.start_all_on">
-<code class="descname">start_all_on</code><span class="sig-paren">(</span><em>work_item</em>, <em>shared_state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.start_all_on" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_all_on</code><span class="sig-paren">(</span><em>work_item</em>, <em>shared_state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.start_all_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.start_all_on" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start a single item of work running on all remote services.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2069,7 +2085,7 @@ across all threads on a given service.</li>
 
 <dl class="method">
 <dt id="combtest.worker.ServiceGroup.start_remote_logging">
-<code class="descname">start_remote_logging</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ServiceGroup.start_remote_logging" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_remote_logging</code><span class="sig-paren">(</span><em>ip</em>, <em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ServiceGroup.start_remote_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ServiceGroup.start_remote_logging" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start logging on all remote services.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2090,7 +2106,7 @@ running</li>
 
 <dl class="class">
 <dt id="combtest.worker.ThreadPool">
-<em class="property">class </em><code class="descclassname">combtest.worker.</code><code class="descname">ThreadPool</code><span class="sig-paren">(</span><em>max_thread_count=None</em>, <em>work=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">combtest.worker.</code><code class="descname">ThreadPool</code><span class="sig-paren">(</span><em>max_thread_count=None</em>, <em>work=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A set of threads doing work from a queue asynchronously to the caller. The
 caller can add additional work after the work has started. Child classes
@@ -2098,20 +2114,20 @@ can add callbacks for e.g. when work starts/finishes, how to handle errors,
 etc.</p>
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.add_work">
-<code class="descname">add_work</code><span class="sig-paren">(</span><em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.add_work" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_work</code><span class="sig-paren">(</span><em>work</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.add_work"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.add_work" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a work item to this pool. Will not kick threads into action if all
 prior work has finished. See <a class="reference internal" href="#combtest.worker.ThreadPool.kick_workers" title="combtest.worker.ThreadPool.kick_workers"><code class="xref py py-func docutils literal notranslate"><span class="pre">kick_workers()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.join">
-<code class="descname">join</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.join" title="Permalink to this definition">¶</a></dt>
+<code class="descname">join</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.join" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wait for all threads to finish, then call on_finish.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.kick_workers">
-<code class="descname">kick_workers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.kick_workers" title="Permalink to this definition">¶</a></dt>
+<code class="descname">kick_workers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.kick_workers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.kick_workers" title="Permalink to this definition">¶</a></dt>
 <dd><p>If some workers are dead, reap them and start up new ones to replace
 them. This is useful e.g. when adding work after the pool is already
 running, since some may have finished and exited.</p>
@@ -2119,39 +2135,39 @@ running, since some may have finished and exited.</p>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.on_error_item">
-<code class="descname">on_error_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em>, <em>exc</em>, <em>tb</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.on_error_item" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_error_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em>, <em>exc</em>, <em>tb</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.on_error_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.on_error_item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called if a work item errors out (via Exception).</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.on_finish">
-<code class="descname">on_finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.on_finish" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.on_finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.on_finish" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called when threads are finished up, as indicated by a call to
 <a class="reference internal" href="#combtest.worker.ThreadPool.join" title="combtest.worker.ThreadPool.join"><code class="xref py py-func docutils literal notranslate"><span class="pre">join()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.on_finish_item">
-<code class="descname">on_finish_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.on_finish_item" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_finish_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.on_finish_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.on_finish_item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called after a work item is finished running.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.on_start">
-<code class="descname">on_start</code><span class="sig-paren">(</span><em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.on_start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_start</code><span class="sig-paren">(</span><em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.on_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.on_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called when threads start up to do work for the first time. Not re-run
 when they are “kicked”.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.on_start_item">
-<code class="descname">on_start_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.on_start_item" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_start_item</code><span class="sig-paren">(</span><em>work_item</em>, <em>state</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.on_start_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.on_start_item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called after a work item is dequeued and before it is run.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>state=None</em>, <em>all_on_next=False</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.run" title="Permalink to this definition">¶</a></dt>
+<code class="descname">run</code><span class="sig-paren">(</span><em>state=None</em>, <em>all_on_next=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run all queued work all the way through to completion, then join.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2172,7 +2188,7 @@ pop a single item and have all threads run it.</li>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.signal_stop">
-<code class="descname">signal_stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.signal_stop" title="Permalink to this definition">¶</a></dt>
+<code class="descname">signal_stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.signal_stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.signal_stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Signal threads they should stop when they are done with their current
 unit of work. This means they will not stop as quickly as e.g. killing
 this proc with a signal. Gives them a chance to finish cleanly.</p>
@@ -2180,7 +2196,7 @@ this proc with a signal. Gives them a chance to finish cleanly.</p>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.start">
-<code class="descname">start</code><span class="sig-paren">(</span><em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start</code><span class="sig-paren">(</span><em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tell threads to start working on any work already queued.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2195,7 +2211,7 @@ callbacks</td>
 
 <dl class="method">
 <dt id="combtest.worker.ThreadPool.start_all_on_next">
-<code class="descname">start_all_on_next</code><span class="sig-paren">(</span><em>state=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.ThreadPool.start_all_on_next" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start_all_on_next</code><span class="sig-paren">(</span><em>state=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#ThreadPool.start_all_on_next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.ThreadPool.start_all_on_next" title="Permalink to this definition">¶</a></dt>
 <dd><p>This gets all threads running the next work item. This means the item
 will potentially be run more than once, and potentially multiple times
 in parallel.</p>
@@ -2214,7 +2230,7 @@ callbacks</td>
 
 <dl class="function">
 <dt id="combtest.worker.start_remote_services">
-<code class="descclassname">combtest.worker.</code><code class="descname">start_remote_services</code><span class="sig-paren">(</span><em>service_class</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.start_remote_services" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.worker.</code><code class="descname">start_remote_services</code><span class="sig-paren">(</span><em>service_class</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#start_remote_services"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.start_remote_services" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simplest method to start some services remotely.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2232,7 +2248,7 @@ callbacks</td>
 
 <dl class="function">
 <dt id="combtest.worker.start_service">
-<code class="descclassname">combtest.worker.</code><code class="descname">start_service</code><span class="sig-paren">(</span><em>service_class</em>, <em>port=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.start_service" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.worker.</code><code class="descname">start_service</code><span class="sig-paren">(</span><em>service_class</em>, <em>port=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#start_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.start_service" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start an rpyc service given by the provided class. Port can be overridden.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2255,7 +2271,7 @@ isn’t provided by the caller, we we get a value from
 
 <dl class="function">
 <dt id="combtest.worker.start_service_by_name">
-<code class="descclassname">combtest.worker.</code><code class="descname">start_service_by_name</code><span class="sig-paren">(</span><em>service_name</em>, <em>port=None</em><span class="sig-paren">)</span><a class="headerlink" href="#combtest.worker.start_service_by_name" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">combtest.worker.</code><code class="descname">start_service_by_name</code><span class="sig-paren">(</span><em>service_name</em>, <em>port=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/combtest/worker.html#start_service_by_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#combtest.worker.start_service_by_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start an rpyc service given by the provided class qualname.
 Port can be overridden.</p>
 <table class="docutils field-list" frame="void" rules="none">

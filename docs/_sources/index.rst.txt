@@ -24,7 +24,7 @@ that a writer of such tests is likely to need. ::
 
   class ActionInitialize(action.Action):
       # Some strings to pass to the initializer. These will be passed to the
-      # run() func as the param. If you want a more complex method to generate
+      # __init__ as the param. If you want a more complex method to generate
       # options, simply override get_option_set().
       OPTIONS = ['', ' ', '23452345', 'sdfasdfas', u'\xaa'.encode()]
 
